@@ -1,0 +1,342 @@
+/* ============================================
+   SITE FOOTER — Global Footer Component
+   ============================================ */
+.site-footer {
+  padding: 20px 24px 28px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.footer-nav a {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+  color: var(--primary);
+}
+
+.footer-sep {
+  color: var(--border);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.footer-copyright {
+  margin: 0;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   LEGAL PAGES — Privacy, Terms, About
+   ============================================ */
+.legal-page {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background-color: var(--bg-dark);
+}
+
+.legal-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 48px 24px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.legal-content h1 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 2rem;
+  font-weight: normal;
+  color: var(--text-main);
+  margin: 0 0 8px;
+  text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.15);
+}
+
+.legal-updated {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0 0 32px;
+  padding: 4px 12px;
+  display: inline-block;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+
+.legal-intro {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin: 0 0 32px;
+}
+
+.legal-section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.legal-section:last-of-type {
+  border-bottom: none;
+}
+
+.legal-section h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.15rem;
+  font-weight: normal;
+  color: var(--primary);
+  margin: 0 0 12px;
+}
+
+.legal-section p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.85;
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* ============================================
+   ABOUT PAGE — Additional Styles
+   ============================================ */
+.about-intro-section {
+  margin-bottom: 40px;
+}
+
+.about-intro-section p {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin: 0 0 16px;
+}
+
+.about-features-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: var(--text-main);
+  text-align: center;
+  margin: 0 0 28px;
+}
+
+.about-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.about-feature-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  padding: 24px;
+  transition: border-color 0.2s;
+}
+
+.about-feature-card:hover {
+  border-color: var(--primary);
+}
+
+.about-feature-card .feature-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(187, 134, 252, 0.1);
+  border: 2px solid var(--primary);
+  margin-bottom: 12px;
+}
+
+.about-feature-card .feature-icon .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--primary);
+}
+
+.about-feature-card h3 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--text-main);
+  margin: 0 0 8px;
+}
+
+.about-feature-card p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.about-contact-card {
+  background: var(--bg-panel);
+  border: 3px solid var(--border);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+  padding: 28px;
+  text-align: center;
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.about-contact-card h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.2rem;
+  font-weight: normal;
+  color: var(--text-main);
+  margin: 0 0 16px;
+}
+
+.about-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.about-contact-info p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.about-contact-info a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.about-contact-info a:hover {
+  color: var(--secondary);
+}
+
+/* ============================================
+   SPRITE EMPTY STATE — Enhanced Content
+   ============================================ */
+.sprite-welcome {
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 8px 0 0;
+}
+
+.sprite-welcome h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.1rem;
+  font-weight: normal;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+
+.sprite-welcome > p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.sprite-howto {
+  text-align: left;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  margin: 0 auto;
+  max-width: 360px;
+}
+
+.sprite-howto h3 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: var(--secondary);
+  margin: 0 0 10px;
+}
+
+.sprite-howto ol {
+  margin: 0;
+  padding: 0 0 0 20px;
+  list-style: none;
+  counter-reset: step;
+}
+
+.sprite-howto ol li {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  counter-increment: step;
+  position: relative;
+  padding-left: 4px;
+}
+
+.sprite-howto ol li::before {
+  content: counter(step) ".";
+  color: var(--primary);
+  font-family: 'DungGeunMo', monospace;
+  font-weight: normal;
+  position: absolute;
+  left: -20px;
+}
+
+/* ============================================
+   EDITOR WELCOME — Description Text
+   ============================================ */
+.editor-welcome-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px 12px;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .legal-content {
+    padding: 32px 20px 24px;
+  }
+
+  .legal-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .about-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .legal-content {
+    padding: 24px 16px 20px;
+  }
+
+  .legal-content h1 {
+    font-size: 1.3rem;
+  }
+
+  .footer-nav {
+    gap: 8px;
+  }
+
+  .footer-nav a {
+    font-size: 0.75rem;
+  }
+}

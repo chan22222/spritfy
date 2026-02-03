@@ -5,6 +5,9 @@ import { Lang, i18n } from '@/i18n.ts';
 import { Header } from '@/header.tsx';
 import { PixelEditor } from '@/editor.tsx';
 import { LandingPage } from '@/landing.tsx';
+import { PrivacyPage } from '@/privacy.tsx';
+import { TermsPage } from '@/terms.tsx';
+import { AboutPage } from '@/about.tsx';
 
 // ===== Language Context =====
 interface LangContextType {
@@ -149,6 +152,10 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
   const [editBgApplied, setEditBgApplied] = useState(false);
   const editBackupRef = useRef<{ url: string; blob: Blob } | null>(null);
   const editCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // File Drag & Drop
+  const [isFileDragOver, setIsFileDragOver] = useState(false);
+  const fileDragCounterRef = useRef(0);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -484,6 +491,57 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
     }
 
     setIsDeduping(false);
+  };
+
+  // --- File Drag & Drop ---
+  const handleFileDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileDragCounterRef.current++;
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsFileDragOver(true);
+    }
+  };
+
+  const handleFileDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileDragCounterRef.current--;
+    if (fileDragCounterRef.current === 0) {
+      setIsFileDragOver(false);
+    }
+  };
+
+  const handleFileDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFileDragOver(false);
+    fileDragCounterRef.current = 0;
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const isGif = file.type === 'image/gif';
+    const isImage = file.type.startsWith('image/') && !isGif;
+
+    if (isVideo || isGif) {
+      const url = URL.createObjectURL(file);
+      if (videoRef.current) {
+        videoRef.current.src = url;
+        setIsLoading(true);
+        setProgress(0);
+      }
+    } else if (isImage) {
+      const url = URL.createObjectURL(file);
+      setSplitImageUrl(url);
+      setSplitMode(true);
+    }
   };
 
   // --- File Handling ---
@@ -1733,11 +1791,54 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
              )}
           </div>
 
-          <div className="frame-grid-scroll">
+          <div
+            className={`frame-grid-scroll ${isFileDragOver ? 'file-drag-over' : ''}`}
+            onDragEnter={handleFileDragEnter}
+            onDragLeave={handleFileDragLeave}
+            onDragOver={handleFileDragOver}
+            onDrop={handleFileDrop}
+          >
+            {isFileDragOver && (
+              <div className="file-drop-overlay">
+                <span className="material-symbols-outlined" style={{ fontSize: 64 }}>upload_file</span>
+                <p>{t.dropFileHere}</p>
+              </div>
+            )}
             {frames.length === 0 ? (
                 <div className="empty-state">
-                    <span className="material-symbols-outlined" style={{ fontSize: 48 }}>movie</span>
-                    <p>{t.uploadPrompt}</p>
+                    <div className="empty-drop-zone">
+                      <span className="material-symbols-outlined">upload_file</span>
+                      <p className="empty-drop-title">{t.dropOrUpload}</p>
+                      <p className="empty-drop-sub">{t.dropSupportedFormats}</p>
+                    </div>
+
+                    <div className="empty-features">
+                      <div className="empty-feature-card">
+                        <span className="material-symbols-outlined">movie</span>
+                        <h4>{t.featureVideoTitle}</h4>
+                        <p>{t.featureVideoDesc}</p>
+                      </div>
+                      <div className="empty-feature-card">
+                        <span className="material-symbols-outlined">grid_on</span>
+                        <h4>{t.featureSheetTitle}</h4>
+                        <p>{t.featureSheetDesc}</p>
+                      </div>
+                      <div className="empty-feature-card">
+                        <span className="material-symbols-outlined">hide_image</span>
+                        <h4>{t.featureBgTitle}</h4>
+                        <p>{t.featureBgDesc}</p>
+                      </div>
+                      <div className="empty-feature-card">
+                        <span className="material-symbols-outlined">tune</span>
+                        <h4>{t.featureAdjustTitle}</h4>
+                        <p>{t.featureAdjustDesc}</p>
+                      </div>
+                      <div className="empty-feature-card">
+                        <span className="material-symbols-outlined">download</span>
+                        <h4>{t.featureExportTitle}</h4>
+                        <p>{t.featureExportDesc}</p>
+                      </div>
+                    </div>
                 </div>
             ) : (
                 <div className="frame-grid" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${gridSize}px, 1fr))` }}>
@@ -2180,6 +2281,21 @@ const LandingWrapper = () => {
   return <LandingPage lang={lang} t={t} />;
 };
 
+const PrivacyWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <PrivacyPage lang={lang} t={t} />;
+};
+
+const TermsWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <TermsPage lang={lang} t={t} />;
+};
+
+const AboutWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <AboutPage lang={lang} t={t} />;
+};
+
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -2187,13 +2303,16 @@ const router = createBrowserRouter([
       { index: true, element: <LandingWrapper /> },
       { path: '/sprite', element: <SpriteWrapper /> },
       { path: '/editor', element: <EditorWrapper /> },
+      { path: '/privacy', element: <PrivacyWrapper /> },
+      { path: '/terms', element: <TermsWrapper /> },
+      { path: '/about', element: <AboutWrapper /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ]);
 
 const detectLang = (): Lang => {
-  const nav = navigator.language || (navigator as Record<string, string>).userLanguage || '';
+  const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
   return nav.startsWith('ko') ? 'ko' : 'en';
 };
 

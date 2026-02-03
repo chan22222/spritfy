@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
+import { Footer } from '@/footer.tsx';
 
 interface LandingProps {
   lang: Lang;
@@ -152,10 +153,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
       </section>
 
       {/* Footer */}
-      <footer className="landing-footer">
-        <div className="footer-pixel-row" aria-hidden="true" />
-        <p>{t.footerText}</p>
-      </footer>
+      <Footer lang={lang} t={t} />
     </div>
   );
 };
