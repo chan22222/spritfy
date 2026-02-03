@@ -58,6 +58,33 @@ const i18n: Record<Lang, Record<string, string>> = {
     frameSize: '프레임 크기',
     scale: '비율',
     fixedSize: '고정',
+    tabDefault: '기본',
+    tabBgRemove: '배경 제거',
+    tabAnimation: '애니메이션',
+    bgRemoveTolerance: '허용 범위',
+    bgRemoveApply: '적용',
+    bgRemoveUndo: '되돌리기',
+    reverse: '역재생',
+    pingPong: '핑퐁',
+    duplicateFrames: '프레임 복제',
+    trimStart: '앞 제거',
+    trimEnd: '뒤 제거',
+    trimApply: '트리밍 적용',
+    bgRemoveNotice: '크로마키가 더 정확합니다. 단색 배경이 아니거나 크로마키로 처리가 어려운 경우에만 사용하세요.',
+    resetAll: '전체 초기화',
+    resetConfirm: '모든 프레임과 작업 내역이 삭제됩니다. 정말 초기화하시겠습니까?',
+    tabAdjust: '보정',
+    brightness: '밝기',
+    contrast: '대비',
+    saturation: '채도',
+    hue: '색조',
+    blur: '블러',
+    sharpen: '샤프닝',
+    invert: '반전',
+    grayscale: '흑백',
+    adjustApply: '보정 적용',
+    adjustUndo: '되돌리기',
+    adjustReset: '초기화',
   },
   en: {
     uploadVideo: 'Upload Video / GIF',
@@ -101,7 +128,55 @@ const i18n: Record<Lang, Record<string, string>> = {
     frameSize: 'Frame Size',
     scale: 'Scale',
     fixedSize: 'Fixed',
+    tabDefault: 'Default',
+    tabBgRemove: 'BG Remove',
+    tabAnimation: 'Animation',
+    bgRemoveTolerance: 'Tolerance',
+    bgRemoveApply: 'Apply',
+    bgRemoveUndo: 'Undo',
+    reverse: 'Reverse',
+    pingPong: 'Ping-Pong',
+    duplicateFrames: 'Duplicate',
+    trimStart: 'Trim Start',
+    trimEnd: 'Trim End',
+    trimApply: 'Apply Trim',
+    bgRemoveNotice: 'Chroma Key is more accurate. Use this only when Chroma Key cannot handle the background.',
+    resetAll: 'Reset All',
+    resetConfirm: 'All frames and work will be deleted. Are you sure you want to reset?',
+    tabAdjust: 'Adjust',
+    brightness: 'Brightness',
+    contrast: 'Contrast',
+    saturation: 'Saturation',
+    hue: 'Hue',
+    blur: 'Blur',
+    sharpen: 'Sharpen',
+    invert: 'Invert',
+    grayscale: 'Grayscale',
+    adjustApply: 'Apply',
+    adjustUndo: 'Undo',
+    adjustReset: 'Reset',
   },
+};
+
+const applySharpenKernel = (ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) => {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const copy = new Uint8ClampedArray(data);
+  const s = amount / 5;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        const val = copy[i + c] * (1 + 4 * s)
+          - copy[((y - 1) * w + x) * 4 + c] * s
+          - copy[((y + 1) * w + x) * 4 + c] * s
+          - copy[(y * w + (x - 1)) * 4 + c] * s
+          - copy[(y * w + (x + 1)) * 4 + c] * s;
+        data[i + c] = Math.max(0, Math.min(255, Math.round(val)));
+      }
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
 };
 
 const App = () => {
@@ -149,6 +224,30 @@ const App = () => {
   const [dragOverId, setDragOverId] = useState<number | null>(null);
   const draggedIdRef = useRef<number | null>(null);
 
+  // Toolbar Tabs
+  const [activeTab, setActiveTab] = useState<'default' | 'bgRemove' | 'animation' | 'adjust'>('default');
+
+  // Background Removal
+  const [bgRemoveTolerance, setBgRemoveTolerance] = useState(20);
+  const bgBackupRef = useRef<{ id: number; url: string; blob: Blob }[]>([]);
+  const [hasBgBackup, setHasBgBackup] = useState(false);
+
+  // Image Adjustment
+  const [adjustBrightness, setAdjustBrightness] = useState(100);
+  const [adjustContrast, setAdjustContrast] = useState(100);
+  const [adjustSaturation, setAdjustSaturation] = useState(100);
+  const [adjustHue, setAdjustHue] = useState(0);
+  const [adjustBlur, setAdjustBlur] = useState(0);
+  const [adjustSharpen, setAdjustSharpen] = useState(0);
+  const [adjustInvert, setAdjustInvert] = useState(false);
+  const [adjustGrayscale, setAdjustGrayscale] = useState(false);
+  const adjustBackupRef = useRef<{ id: number; url: string; blob: Blob }[]>([]);
+  const [hasAdjustBackup, setHasAdjustBackup] = useState(false);
+
+  // Animation - Trim
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(0);
+
   // Onion Skin
   const [onionSkinEnabled, setOnionSkinEnabled] = useState(false);
   const [onionSkinOpacity, setOnionSkinOpacity] = useState(40);
@@ -159,8 +258,9 @@ const App = () => {
   const [splitCols, setSplitCols] = useState(4);
   const [splitRows, setSplitRows] = useState(4);
 
-  // Delete
+  // Delete & Reset
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -320,6 +420,19 @@ const App = () => {
     };
   }, [isPlaying, activeFrames]);
 
+  // --- Image Adjustment Filter String ---
+  const adjustFilterStr = useMemo(() => {
+    const parts: string[] = [];
+    if (adjustBrightness !== 100) parts.push(`brightness(${adjustBrightness}%)`);
+    if (adjustContrast !== 100) parts.push(`contrast(${adjustContrast}%)`);
+    if (adjustSaturation !== 100) parts.push(`saturate(${adjustSaturation}%)`);
+    if (adjustHue !== 0) parts.push(`hue-rotate(${adjustHue}deg)`);
+    if (adjustBlur > 0) parts.push(`blur(${adjustBlur}px)`);
+    if (adjustInvert) parts.push(`invert(100%)`);
+    if (adjustGrayscale) parts.push(`grayscale(100%)`);
+    return parts.length > 0 ? parts.join(' ') : '';
+  }, [adjustBrightness, adjustContrast, adjustSaturation, adjustHue, adjustBlur, adjustInvert, adjustGrayscale]);
+
   // --- Draw Preview (with Onion Skin) ---
   useEffect(() => {
     const canvas = previewCanvasRef.current;
@@ -363,13 +476,17 @@ const App = () => {
         }
       }
 
-      // Draw current frame (chroma key applied)
+      // Draw current frame (chroma key applied) with adjustment preview
       const currentProcessed = processFrame(img);
+      if (adjustFilterStr) ctx.filter = adjustFilterStr;
       ctx.drawImage(currentProcessed, 0, 0);
+      ctx.filter = 'none';
+
+      if (adjustSharpen > 0) applySharpenKernel(ctx, w, h, adjustSharpen);
     };
 
     drawFrame();
-  }, [currentPreviewFrameIndex, activeFrames, chromaColor, chromaTolerance, onionSkinEnabled, onionSkinOpacity, loadImage, getExportSize]);
+  }, [currentPreviewFrameIndex, activeFrames, chromaColor, chromaTolerance, onionSkinEnabled, onionSkinOpacity, loadImage, getExportSize, adjustFilterStr, adjustSharpen]);
 
 
   // --- Helper: Apply Chroma Key ---
@@ -596,6 +713,266 @@ const App = () => {
     };
 
     processFrame();
+  };
+
+  // --- Background Removal (Flood Fill from corners) ---
+  const applyBgRemoval = async () => {
+    const targetFrames = selectedFrameIds.size > 0
+      ? frames.filter(f => selectedFrameIds.has(f.id))
+      : frames;
+    if (targetFrames.length === 0) return;
+
+    setIsLoading(true);
+    setProgress(0);
+
+    // Backup for undo
+    bgBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+
+    const tolerance = bgRemoveTolerance;
+    const newFrames = [...frames];
+
+    for (let fi = 0; fi < targetFrames.length; fi++) {
+      const frame = targetFrames[fi];
+      const img = await loadImage(frame.url);
+      const w = img.width;
+      const h = img.height;
+
+      const cvs = document.createElement('canvas');
+      cvs.width = w;
+      cvs.height = h;
+      const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const visited = new Uint8Array(w * h);
+
+      // BFS flood fill from a seed pixel
+      const floodFill = (sx: number, sy: number) => {
+        const seedIdx = (sy * w + sx) * 4;
+        const sr = data[seedIdx], sg = data[seedIdx + 1], sb = data[seedIdx + 2];
+        const queue: number[] = [sx, sy];
+        const maxDist = tolerance * 765 / 100;
+
+        while (queue.length > 0) {
+          const cy = queue.pop()!;
+          const cx = queue.pop()!;
+          const pi = cy * w + cx;
+          if (visited[pi]) continue;
+          visited[pi] = 1;
+
+          const i = pi * 4;
+          const dist = Math.abs(data[i] - sr) + Math.abs(data[i + 1] - sg) + Math.abs(data[i + 2] - sb);
+          if (dist > maxDist) continue;
+
+          data[i + 3] = 0; // transparent
+
+          if (cx > 0) queue.push(cx - 1, cy);
+          if (cx < w - 1) queue.push(cx + 1, cy);
+          if (cy > 0) queue.push(cx, cy - 1);
+          if (cy < h - 1) queue.push(cx, cy + 1);
+        }
+      };
+
+      // Fill from 4 corners
+      floodFill(0, 0);
+      floodFill(w - 1, 0);
+      floodFill(0, h - 1);
+      floodFill(w - 1, h - 1);
+
+      ctx.putImageData(imageData, 0, 0);
+
+      const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
+      if (blob) {
+        const newUrl = URL.createObjectURL(blob);
+        const idx = newFrames.findIndex(f => f.id === frame.id);
+        if (idx !== -1) {
+          newFrames[idx] = { ...newFrames[idx], blob, url: newUrl };
+        }
+      }
+      setProgress(Math.round(((fi + 1) / targetFrames.length) * 100));
+    }
+
+    setFrames(newFrames);
+    setHasBgBackup(true);
+    setIsLoading(false);
+    setProgress(0);
+  };
+
+  const undoBgRemoval = () => {
+    if (bgBackupRef.current.length === 0) return;
+    const backup = bgBackupRef.current;
+    setFrames(prev => prev.map(f => {
+      const b = backup.find(bk => bk.id === f.id);
+      if (b) {
+        URL.revokeObjectURL(f.url);
+        return { ...f, url: b.url, blob: b.blob };
+      }
+      return f;
+    }));
+    bgBackupRef.current = [];
+    setHasBgBackup(false);
+  };
+
+  // --- Image Adjustment ---
+  const applyAdjustment = async () => {
+    const targetFrames = selectedFrameIds.size > 0
+      ? frames.filter(f => selectedFrameIds.has(f.id))
+      : frames;
+    if (targetFrames.length === 0) return;
+    if (adjustFilterStr === '' && adjustSharpen === 0) return;
+
+    setIsLoading(true);
+    setProgress(0);
+
+    adjustBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+
+    const newFrames = [...frames];
+    for (let fi = 0; fi < targetFrames.length; fi++) {
+      const frame = targetFrames[fi];
+      const img = await loadImage(frame.url);
+      const w = img.width;
+      const h = img.height;
+
+      const cvs = document.createElement('canvas');
+      cvs.width = w;
+      cvs.height = h;
+      const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+
+      if (adjustFilterStr) ctx.filter = adjustFilterStr;
+      ctx.drawImage(img, 0, 0);
+      ctx.filter = 'none';
+
+      if (adjustSharpen > 0) applySharpenKernel(ctx, w, h, adjustSharpen);
+
+      const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
+      if (blob) {
+        const newUrl = URL.createObjectURL(blob);
+        const idx = newFrames.findIndex(f => f.id === frame.id);
+        if (idx !== -1) {
+          newFrames[idx] = { ...newFrames[idx], blob, url: newUrl };
+        }
+      }
+      setProgress(Math.round(((fi + 1) / targetFrames.length) * 100));
+    }
+
+    setFrames(newFrames);
+    setHasAdjustBackup(true);
+    resetAdjustSliders();
+    setIsLoading(false);
+    setProgress(0);
+  };
+
+  const undoAdjustment = () => {
+    if (adjustBackupRef.current.length === 0) return;
+    const backup = adjustBackupRef.current;
+    setFrames(prev => prev.map(f => {
+      const b = backup.find(bk => bk.id === f.id);
+      if (b) {
+        URL.revokeObjectURL(f.url);
+        return { ...f, url: b.url, blob: b.blob };
+      }
+      return f;
+    }));
+    adjustBackupRef.current = [];
+    setHasAdjustBackup(false);
+  };
+
+  const resetAdjustSliders = () => {
+    setAdjustBrightness(100);
+    setAdjustContrast(100);
+    setAdjustSaturation(100);
+    setAdjustHue(0);
+    setAdjustBlur(0);
+    setAdjustSharpen(0);
+    setAdjustInvert(false);
+    setAdjustGrayscale(false);
+  };
+
+  // --- Animation Editing ---
+  const handleReverse = () => {
+    setFrameOrder(prev => [...prev].reverse());
+  };
+
+  const handlePingPong = async () => {
+    if (frames.length < 2) return;
+    setIsLoading(true);
+    setProgress(0);
+
+    const order = frameOrder.length > 0 ? frameOrder : frames.map(f => f.id);
+    // Reverse without first and last to avoid duplicates at boundaries
+    const reverseIds = [...order].reverse().slice(1, -1);
+    const maxId = Math.max(...frames.map(f => f.id));
+    const newFrames: Frame[] = [];
+
+    for (let i = 0; i < reverseIds.length; i++) {
+      const srcFrame = frames.find(f => f.id === reverseIds[i]);
+      if (!srcFrame) continue;
+
+      // Clone the blob
+      const blob = new Blob([srcFrame.blob], { type: 'image/png' });
+      const url = URL.createObjectURL(blob);
+      newFrames.push({
+        id: maxId + 1 + i,
+        blob,
+        url,
+        timestamp: srcFrame.timestamp,
+      });
+      setProgress(Math.round(((i + 1) / reverseIds.length) * 100));
+    }
+
+    setFrames(prev => [...prev, ...newFrames]);
+    setFrameOrder([...order, ...newFrames.map(f => f.id)]);
+    setIsLoading(false);
+    setProgress(0);
+  };
+
+  const handleDuplicateFrames = async () => {
+    const selected = frames.filter(f => selectedFrameIds.has(f.id));
+    if (selected.length === 0) return;
+
+    const maxId = Math.max(...frames.map(f => f.id));
+    const newFrames: Frame[] = [];
+
+    for (let i = 0; i < selected.length; i++) {
+      const src = selected[i];
+      const blob = new Blob([src.blob], { type: 'image/png' });
+      const url = URL.createObjectURL(blob);
+      newFrames.push({
+        id: maxId + 1 + i,
+        blob,
+        url,
+        timestamp: src.timestamp,
+      });
+    }
+
+    setFrames(prev => [...prev, ...newFrames]);
+    setSelectedFrameIds(prev => {
+      const s = new Set(prev);
+      newFrames.forEach(f => s.add(f.id));
+      return s;
+    });
+  };
+
+  const handleTrim = () => {
+    if (frames.length === 0) return;
+    const order = frameOrder.length > 0 ? frameOrder : frames.map(f => f.id);
+    const start = Math.min(trimStart, order.length - 1);
+    const end = Math.min(trimEnd, order.length - 1 - start);
+    if (start + end >= order.length) return;
+
+    const keepIds = new Set(order.slice(start, order.length - end));
+    const removedFrames = frames.filter(f => !keepIds.has(f.id));
+    removedFrames.forEach(f => URL.revokeObjectURL(f.url));
+
+    setFrames(prev => prev.filter(f => keepIds.has(f.id)));
+    setSelectedFrameIds(prev => {
+      const s = new Set<number>();
+      prev.forEach(id => { if (keepIds.has(id)) s.add(id); });
+      return s;
+    });
+    setTrimStart(0);
+    setTrimEnd(0);
   };
 
   // --- Drag & Drop ---
@@ -957,111 +1334,279 @@ const App = () => {
                             />
                         </div>
                     </div>
-                    <div className="row" style={{ gap: 12 }}>
-                        <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
-                            <label>{t.threshold} ({dedupThreshold})</label>
-                            <input
-                               type="range"
-                               min="1"
-                               max="50"
-                               value={dedupThreshold}
-                               onChange={(e) => { setDedupThreshold(Number(e.target.value)); setDedupResult(null); }}
-                            />
-                        </div>
+                    {/* Tab Bar */}
+                    <div className="toolbar-tabs">
                         <button
-                           className="btn btn-secondary"
-                           onClick={removeDuplicates}
-                           disabled={frames.length < 2 || isDeduping}
-                           style={{ whiteSpace: 'nowrap' }}
-                        >
-                           <span className="material-symbols-outlined">auto_fix_high</span>
-                           {isDeduping ? t.processingDedup : t.removeDuplicates}
-                        </button>
-                        {dedupResult && dedupResult !== 'error' && (
-                           <span className="badge">
-                               {dedupResult.removed}{t.dedupRemoved} ({dedupResult.remaining}{t.dedupRemaining})
-                           </span>
-                        )}
-                        {dedupResult === 'error' && (
-                           <span style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>{t.dedupError}</span>
-                        )}
+                            className={`toolbar-tab ${activeTab === 'default' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('default')}
+                        >{t.tabDefault}</button>
+                        <button
+                            className={`toolbar-tab ${activeTab === 'bgRemove' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('bgRemove')}
+                        >{t.tabBgRemove}</button>
+                        <button
+                            className={`toolbar-tab ${activeTab === 'animation' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('animation')}
+                        >{t.tabAnimation}</button>
+                        <button
+                            className={`toolbar-tab ${activeTab === 'adjust' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('adjust')}
+                        >{t.tabAdjust}</button>
+                        <div className="flex-grow"></div>
+                        <button
+                            className="toolbar-tab"
+                            style={{ color: 'var(--danger)' }}
+                            onClick={() => setShowResetModal(true)}
+                        >{t.resetAll}</button>
                     </div>
-                    <div className="row" style={{ gap: 12 }}>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.frameSize}</label>
-                        <div className="row" style={{ gap: 0 }}>
-                            <button
-                                className={`btn ${exportSizeMode === 'fixed' ? '' : 'btn-secondary'}`}
-                                style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
-                                onClick={() => setExportSizeMode('fixed')}
-                            >{t.fixedSize}</button>
-                            <button
-                                className={`btn ${exportSizeMode === 'scale' ? '' : 'btn-secondary'}`}
-                                style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
-                                onClick={() => setExportSizeMode('scale')}
-                            >{t.scale}</button>
-                        </div>
-                        {exportSizeMode === 'scale' ? (
-                            <div className="row" style={{ gap: 8, width: 240 }}>
-                                <input
-                                    type="range"
-                                    min="10"
-                                    max="300"
-                                    step="5"
-                                    value={exportScale}
-                                    onChange={(e) => setExportScale(Number(e.target.value))}
-                                    style={{ flex: 1 }}
-                                />
-                                <span className="badge">{exportScale}%</span>
-                            </div>
-                        ) : (
-                            <div className="row" style={{ gap: 4 }}>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="4096"
-                                    value={exportFixedW || ''}
-                                    onChange={(e) => {
-                                        const v = Number(e.target.value) || 0;
-                                        setExportFixedW(v);
-                                        if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
-                                            setExportFixedH(Math.max(1, Math.round(v / lockedRatioRef.current)));
-                                        }
-                                    }}
-                                    onBlur={() => { if (exportFixedW < 1) setExportFixedW(1); }}
-                                    style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
-                                />
+
+                    {/* Tab: Default */}
+                    {activeTab === 'default' && (
+                        <div className="tab-content">
+                            <div className="row" style={{ gap: 12 }}>
+                                <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
+                                    <label>{t.threshold} ({dedupThreshold})</label>
+                                    <input
+                                       type="range"
+                                       min="1"
+                                       max="50"
+                                       value={dedupThreshold}
+                                       onChange={(e) => { setDedupThreshold(Number(e.target.value)); setDedupResult(null); }}
+                                    />
+                                </div>
                                 <button
-                                    className={`btn btn-icon ${lockAspectRatio ? '' : 'btn-secondary'}`}
-                                    style={{ padding: 4 }}
-                                    onClick={() => {
-                                        if (!lockAspectRatio && exportFixedW > 0 && exportFixedH > 0) {
-                                            lockedRatioRef.current = exportFixedW / exportFixedH;
-                                        }
-                                        setLockAspectRatio(!lockAspectRatio);
-                                    }}
-                                    title={lockAspectRatio ? 'Unlock' : 'Lock aspect ratio'}
+                                   className="btn btn-secondary"
+                                   onClick={removeDuplicates}
+                                   disabled={frames.length < 2 || isDeduping}
+                                   style={{ whiteSpace: 'nowrap' }}
                                 >
-                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{lockAspectRatio ? 'lock' : 'lock_open'}</span>
+                                   <span className="material-symbols-outlined">auto_fix_high</span>
+                                   {isDeduping ? t.processingDedup : t.removeDuplicates}
                                 </button>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="4096"
-                                    value={exportFixedH || ''}
-                                    onChange={(e) => {
-                                        const v = Number(e.target.value) || 0;
-                                        setExportFixedH(v);
-                                        if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
-                                            setExportFixedW(Math.max(1, Math.round(v * lockedRatioRef.current)));
-                                        }
-                                    }}
-                                    onBlur={() => { if (exportFixedH < 1) setExportFixedH(1); }}
-                                    style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
-                                />
-                                <span className="badge">px</span>
+                                {dedupResult && dedupResult !== 'error' && (
+                                   <span className="badge">
+                                       {dedupResult.removed}{t.dedupRemoved} ({dedupResult.remaining}{t.dedupRemaining})
+                                   </span>
+                                )}
+                                {dedupResult === 'error' && (
+                                   <span style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>{t.dedupError}</span>
+                                )}
                             </div>
-                        )}
-                    </div>
+                            <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.frameSize}</label>
+                                <div className="row" style={{ gap: 0 }}>
+                                    <button
+                                        className={`btn ${exportSizeMode === 'fixed' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        onClick={() => setExportSizeMode('fixed')}
+                                    >{t.fixedSize}</button>
+                                    <button
+                                        className={`btn ${exportSizeMode === 'scale' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        onClick={() => setExportSizeMode('scale')}
+                                    >{t.scale}</button>
+                                </div>
+                                {exportSizeMode === 'scale' ? (
+                                    <div className="row" style={{ gap: 8, width: 240 }}>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="300"
+                                            step="5"
+                                            value={exportScale}
+                                            onChange={(e) => setExportScale(Number(e.target.value))}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <span className="badge">{exportScale}%</span>
+                                    </div>
+                                ) : (
+                                    <div className="row" style={{ gap: 4 }}>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="4096"
+                                            value={exportFixedW || ''}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value) || 0;
+                                                setExportFixedW(v);
+                                                if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
+                                                    setExportFixedH(Math.max(1, Math.round(v / lockedRatioRef.current)));
+                                                }
+                                            }}
+                                            onBlur={() => { if (exportFixedW < 1) setExportFixedW(1); }}
+                                            style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
+                                        />
+                                        <button
+                                            className={`btn btn-icon ${lockAspectRatio ? '' : 'btn-secondary'}`}
+                                            style={{ padding: 4 }}
+                                            onClick={() => {
+                                                if (!lockAspectRatio && exportFixedW > 0 && exportFixedH > 0) {
+                                                    lockedRatioRef.current = exportFixedW / exportFixedH;
+                                                }
+                                                setLockAspectRatio(!lockAspectRatio);
+                                            }}
+                                            title={lockAspectRatio ? 'Unlock' : 'Lock aspect ratio'}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{lockAspectRatio ? 'lock' : 'lock_open'}</span>
+                                        </button>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="4096"
+                                            value={exportFixedH || ''}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value) || 0;
+                                                setExportFixedH(v);
+                                                if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
+                                                    setExportFixedW(Math.max(1, Math.round(v * lockedRatioRef.current)));
+                                                }
+                                            }}
+                                            onBlur={() => { if (exportFixedH < 1) setExportFixedH(1); }}
+                                            style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
+                                        />
+                                        <span className="badge">px</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab: BG Remove */}
+                    {activeTab === 'bgRemove' && (
+                        <div className="tab-content">
+                            <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+                                <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
+                                    <label>{t.bgRemoveTolerance} ({bgRemoveTolerance})</label>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="50"
+                                        value={bgRemoveTolerance}
+                                        onChange={(e) => setBgRemoveTolerance(Number(e.target.value))}
+                                    />
+                                </div>
+                                <button className="btn btn-secondary" onClick={applyBgRemoval} disabled={frames.length === 0 || hasBgBackup}>
+                                    <span className="material-symbols-outlined">auto_fix</span>
+                                    {t.bgRemoveApply}
+                                </button>
+                                <button className="btn btn-secondary" onClick={undoBgRemoval} disabled={!hasBgBackup}>
+                                    <span className="material-symbols-outlined">undo</span>
+                                    {t.bgRemoveUndo}
+                                </button>
+                            </div>
+                            <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--secondary)' }}>info</span>
+                                {t.bgRemoveNotice}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab: Animation */}
+                    {activeTab === 'animation' && (
+                        <div className="tab-content">
+                            <div className="row" style={{ gap: 8 }}>
+                                <button className="btn btn-secondary" onClick={handleReverse} disabled={frames.length === 0}>
+                                    <span className="material-symbols-outlined">swap_horiz</span>
+                                    {t.reverse}
+                                </button>
+                                <button className="btn btn-secondary" onClick={handlePingPong} disabled={frames.length < 2}>
+                                    <span className="material-symbols-outlined">repeat</span>
+                                    {t.pingPong}
+                                </button>
+                                <button className="btn btn-secondary" onClick={handleDuplicateFrames} disabled={selectedFrameIds.size === 0}>
+                                    <span className="material-symbols-outlined">content_copy</span>
+                                    {t.duplicateFrames}
+                                </button>
+                            </div>
+                            <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.trimStart} ({trimStart})</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={Math.max(0, frames.length - 1)}
+                                        value={trimStart}
+                                        onChange={(e) => setTrimStart(Number(e.target.value))}
+                                    />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.trimEnd} ({trimEnd})</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={Math.max(0, frames.length - 1)}
+                                        value={trimEnd}
+                                        onChange={(e) => setTrimEnd(Number(e.target.value))}
+                                    />
+                                </div>
+                                <button className="btn btn-secondary" onClick={handleTrim} disabled={trimStart + trimEnd === 0 || trimStart + trimEnd >= frames.length}>
+                                    <span className="material-symbols-outlined">content_cut</span>
+                                    {t.trimApply}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab: Adjust */}
+                    {activeTab === 'adjust' && (
+                        <div className="tab-content">
+                            <div className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.brightness} ({adjustBrightness}%)</label>
+                                    <input type="range" min="0" max="200" value={adjustBrightness}
+                                        onChange={(e) => setAdjustBrightness(Number(e.target.value))} />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.contrast} ({adjustContrast}%)</label>
+                                    <input type="range" min="0" max="200" value={adjustContrast}
+                                        onChange={(e) => setAdjustContrast(Number(e.target.value))} />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.saturation} ({adjustSaturation}%)</label>
+                                    <input type="range" min="0" max="200" value={adjustSaturation}
+                                        onChange={(e) => setAdjustSaturation(Number(e.target.value))} />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.hue} ({adjustHue}°)</label>
+                                    <input type="range" min="0" max="360" value={adjustHue}
+                                        onChange={(e) => setAdjustHue(Number(e.target.value))} />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.blur} ({adjustBlur}px)</label>
+                                    <input type="range" min="0" max="10" value={adjustBlur}
+                                        onChange={(e) => setAdjustBlur(Number(e.target.value))} />
+                                </div>
+                                <div className="control-group" style={{ marginBottom: 0, width: 160 }}>
+                                    <label>{t.sharpen} ({adjustSharpen})</label>
+                                    <input type="range" min="0" max="10" value={adjustSharpen}
+                                        onChange={(e) => setAdjustSharpen(Number(e.target.value))} />
+                                </div>
+                            </div>
+                            <div className="row" style={{ gap: 12, marginTop: 8, alignItems: 'center' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={adjustInvert} onChange={(e) => setAdjustInvert(e.target.checked)} />
+                                    {t.invert}
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={adjustGrayscale} onChange={(e) => setAdjustGrayscale(e.target.checked)} />
+                                    {t.grayscale}
+                                </label>
+                                <div className="flex-grow"></div>
+                                <button className="btn btn-secondary" onClick={resetAdjustSliders} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>refresh</span>
+                                    {t.adjustReset}
+                                </button>
+                                <button className="btn btn-secondary" onClick={undoAdjustment} disabled={!hasAdjustBackup} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>undo</span>
+                                    {t.adjustUndo}
+                                </button>
+                                <button className="btn" onClick={applyAdjustment} disabled={frames.length === 0 || hasAdjustBackup || (adjustFilterStr === '' && adjustSharpen === 0)} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check</span>
+                                    {t.adjustApply}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </>
              )}
           </div>
@@ -1322,6 +1867,60 @@ const App = () => {
                 {t.delete}
               </button>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setDeleteTargetId(null)}>
+                {t.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset All Confirmation Modal */}
+      {showResetModal && (
+        <div className="loading-overlay" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) setShowResetModal(false);
+        }}>
+          <div className="split-modal" style={{ maxWidth: 400 }}>
+            <p style={{ margin: '0 0 16px', fontSize: '1rem' }}>{t.resetConfirm}</p>
+            <div className="row" style={{ gap: 8 }}>
+              <button
+                className="btn"
+                style={{ flex: 1, background: 'var(--danger)' }}
+                autoFocus
+                onClick={() => {
+                  frames.forEach(f => URL.revokeObjectURL(f.url));
+                  bgBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
+                  bgBackupRef.current = [];
+                  adjustBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
+                  adjustBackupRef.current = [];
+                  setFrames([]);
+                  setSelectedFrameIds(new Set());
+                  setIsLoading(false);
+                  setProgress(0);
+                  setChromaColor(null);
+                  setDedupResult(null);
+                  setCurrentPreviewFrameIndex(0);
+                  setExportColumns(0);
+                  setFrameOrder([]);
+                  setOnionSkinEnabled(false);
+                  setOnionSkinOpacity(40);
+                  setIsExportingGif(false);
+                  setHasBgBackup(false);
+                  setHasAdjustBackup(false);
+                  resetAdjustSliders();
+                  setActiveTab('default');
+                  setTrimStart(0);
+                  setTrimEnd(0);
+                  if (splitImageUrl) URL.revokeObjectURL(splitImageUrl);
+                  setSplitImageUrl(null);
+                  setSplitMode(false);
+                  if (videoRef.current) videoRef.current.src = '';
+                  setShowResetModal(false);
+                }}
+              >
+                <span className="material-symbols-outlined">restart_alt</span>
+                {t.resetAll}
+              </button>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowResetModal(false)}>
                 {t.cancel}
               </button>
             </div>

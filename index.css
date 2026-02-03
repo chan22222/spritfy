@@ -301,6 +301,15 @@ select {
   background: rgba(255,255,255,0.05);
 }
 
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  opacity: 0.35;
+}
+
 .btn-icon {
   padding: 8px;
   border-radius: 50%;
@@ -452,6 +461,41 @@ select {
 .frame-card.drag-over {
   border-color: var(--secondary);
   box-shadow: 0 0 0 2px rgba(3, 218, 198, 0.3);
+}
+
+/* Toolbar Tabs */
+.toolbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-top: 4px;
+}
+
+.toolbar-tab {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toolbar-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.toolbar-tab:hover {
+  color: var(--text-main);
+}
+
+.tab-content {
+  padding: 12px 0 0;
 }
 
 /* Split Modal */
