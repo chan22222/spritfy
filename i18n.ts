@@ -181,7 +181,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     privacyS8Title: '8. 방침의 변경',
     privacyS8Content: '본 개인정보처리방침은 법률 변경이나 서비스 정책 변경에 따라 수정될 수 있습니다. 변경 시 본 페이지에 게시하며, 중요한 변경 사항은 서비스 내 공지를 통해 안내합니다.',
     privacyS9Title: '9. 문의',
-    privacyS9Content: '개인정보처리방침에 관한 문의 사항이 있으시면 아래로 연락해 주시기 바랍니다.\n이메일: contact@spritfy.xyz',
+    privacyS9Content: '개인정보처리방침에 관한 문의 사항이 있으시면 아래로 연락해 주시기 바랍니다.\n이메일: hckwon@kakao.com',
 
     // Terms page
     termsTitle: '이용약관',
@@ -204,7 +204,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     termsS8Title: '8. 약관의 변경',
     termsS8Content: '본 약관은 필요에 따라 변경될 수 있으며, 변경된 약관은 본 페이지에 게시됩니다. 변경 후에도 서비스를 계속 이용하면 변경된 약관에 동의한 것으로 간주합니다.',
     termsS9Title: '9. 문의',
-    termsS9Content: '이용약관에 관한 문의 사항이 있으시면 아래로 연락해 주시기 바랍니다.\n이메일: contact@spritfy.xyz',
+    termsS9Content: '이용약관에 관한 문의 사항이 있으시면 아래로 연락해 주시기 바랍니다.\n이메일: hckwon@kakao.com',
 
     // About page
     aboutTitle: '스프릿파이 소개',
@@ -221,7 +221,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     aboutFeature4Desc: '모든 기능을 회원가입 없이 무료로 제한 없이 사용할 수 있습니다.',
     aboutOperatorTitle: '운영 정보',
     aboutOperator: '운영: Spritfy Team',
-    aboutContact: '문의: contact@spritfy.xyz',
+    aboutContact: '문의: hckwon@kakao.com',
     aboutGithub: 'GitHub',
 
     // Sprite page empty state
@@ -459,7 +459,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     privacyS8Title: '8. Changes to This Policy',
     privacyS8Content: 'This Privacy Policy may be updated due to changes in laws or service policies. Changes will be posted on this page, and significant changes will be announced through the service.',
     privacyS9Title: '9. Contact',
-    privacyS9Content: 'If you have questions about this Privacy Policy, please contact us at:\nEmail: contact@spritfy.xyz',
+    privacyS9Content: 'If you have questions about this Privacy Policy, please contact us at:\nEmail: hckwon@kakao.com',
 
     // Terms page
     termsTitle: 'Terms of Service',
@@ -482,7 +482,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     termsS8Title: '8. Changes to Terms',
     termsS8Content: 'These Terms may be changed as needed, and updated Terms will be posted on this page. Continued use of the Service after changes constitutes acceptance of the updated Terms.',
     termsS9Title: '9. Contact',
-    termsS9Content: 'If you have questions about these Terms, please contact us at:\nEmail: contact@spritfy.xyz',
+    termsS9Content: 'If you have questions about these Terms, please contact us at:\nEmail: hckwon@kakao.com',
 
     // About page
     aboutTitle: 'About Spritfy',
@@ -499,7 +499,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     aboutFeature4Desc: 'Use all features without limits or registration, completely free of charge.',
     aboutOperatorTitle: 'About Us',
     aboutOperator: 'Operated by: Spritfy Team',
-    aboutContact: 'Contact: contact@spritfy.xyz',
+    aboutContact: 'Contact: hckwon@kakao.com',
     aboutGithub: 'GitHub',
 
     // Sprite page empty state

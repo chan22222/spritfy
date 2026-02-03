@@ -481,6 +481,14 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const activeLayer = activeFrame?.layers.find(l => l.id === activeFrame.activeLayerId) ?? null;
   const activeLayerIndex = activeFrame?.layers.findIndex(l => l.id === activeFrame.activeLayerId) ?? -1;
 
+  const isLayerEmpty = useCallback((layer: Layer): boolean => {
+    const d = layer.data.data;
+    for (let i = 3; i < d.length; i += 4) {
+      if (d[i] !== 0) return false;
+    }
+    return true;
+  }, []);
+
   // ===== History =====
   const getMaxHistory = useCallback(() => {
     const bytesPerSnapshot = canvasWidth * canvasHeight * 4 * (activeFrame?.layers.length ?? 1);
@@ -1424,7 +1432,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
                 <button className="panel-icon-btn" onClick={addLayer} title={t.addLayer}>
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
                 </button>
-                <button className="panel-icon-btn" onClick={() => { if (isDirty) setShowDeleteLayerConfirm(true); else removeLayer(); }} title={t.removeLayer} disabled={!activeFrame || activeFrame.layers.length <= 1}>
+                <button className="panel-icon-btn" onClick={() => { if (activeLayer && !isLayerEmpty(activeLayer)) setShowDeleteLayerConfirm(true); else removeLayer(); }} title={t.removeLayer} disabled={!activeFrame || activeFrame.layers.length <= 1}>
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>remove</span>
                 </button>
                 <button className="panel-icon-btn" onClick={() => moveLayer('up')} title="Move Up" disabled={!activeFrame || activeLayerIndex >= activeFrame.layers.length - 1}>

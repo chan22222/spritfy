@@ -49,7 +49,7 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
             </p>
             <p>
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>mail</span>
-              <a href="mailto:contact@spritfy.xyz">{t.aboutContact}</a>
+              <a href="mailto:hckwon@kakao.com">{t.aboutContact}</a>
             </p>
           </div>
         </div>
