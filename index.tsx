@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 interface Frame {
   id: number;
@@ -56,6 +55,9 @@ const i18n: Record<Lang, Record<string, string>> = {
     exportingGif: 'GIF 생성 중...',
     deleteConfirm: '삭제하시겠습니까?',
     delete: '삭제',
+    frameSize: '프레임 크기',
+    scale: '비율',
+    fixedSize: '고정',
   },
   en: {
     uploadVideo: 'Upload Video / GIF',
@@ -96,6 +98,9 @@ const i18n: Record<Lang, Record<string, string>> = {
     exportingGif: 'Generating GIF...',
     deleteConfirm: 'Delete this frame?',
     delete: 'Delete',
+    frameSize: 'Frame Size',
+    scale: 'Scale',
+    fixedSize: 'Fixed',
   },
 };
 
@@ -132,6 +137,12 @@ const App = () => {
   const [gridSize, setGridSize] = useState(100); // frame thumbnail size in px
   const [sidebarWidth, setSidebarWidth] = useState(360);
   const [isExportingGif, setIsExportingGif] = useState(false);
+  const [exportSizeMode, setExportSizeMode] = useState<'scale' | 'fixed'>('fixed');
+  const [exportScale, setExportScale] = useState(100);
+  const [exportFixedW, setExportFixedW] = useState(64);
+  const [exportFixedH, setExportFixedH] = useState(64);
+  const [lockAspectRatio, setLockAspectRatio] = useState(true);
+  const lockedRatioRef = useRef(1); // W / H
 
   // Drag & Drop
   const [frameOrder, setFrameOrder] = useState<number[]>([]);
@@ -157,6 +168,17 @@ const App = () => {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const isDraggingRef = useRef(false);
+
+  // --- Helper: Get export frame dimensions ---
+  const getExportSize = useCallback((origW: number, origH: number) => {
+    if (exportSizeMode === 'fixed') {
+      return { w: exportFixedW, h: exportFixedH };
+    }
+    return {
+      w: Math.round(origW * exportScale / 100),
+      h: Math.round(origH * exportScale / 100),
+    };
+  }, [exportSizeMode, exportScale, exportFixedW, exportFixedH]);
 
   // --- Helper: Load Image ---
   const loadImage = useCallback((url: string): Promise<HTMLImageElement> => {
@@ -195,6 +217,19 @@ const App = () => {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   }, [sidebarWidth]);
+
+  // Set export fixed size from original frame dimensions on first load
+  const prevFrameCountRef = useRef(0);
+  useEffect(() => {
+    if (prevFrameCountRef.current === 0 && frames.length > 0) {
+      loadImage(frames[0].url).then(img => {
+        setExportFixedW(img.width);
+        setExportFixedH(img.height);
+        lockedRatioRef.current = img.width / img.height;
+      });
+    }
+    prevFrameCountRef.current = frames.length;
+  }, [frames, loadImage]);
 
   // Sync frameOrder when frames change
   useEffect(() => {
@@ -298,19 +333,20 @@ const App = () => {
 
     const drawFrame = async () => {
       const img = await loadImage(frame.url);
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { w, h } = getExportSize(img.width, img.height);
+      canvas.width = w;
+      canvas.height = h;
+      ctx.clearRect(0, 0, w, h);
 
       // Helper: render a frame image onto a temp canvas with chroma key
       const processFrame = (sourceImg: HTMLImageElement) => {
         const tmp = document.createElement('canvas');
-        tmp.width = canvas.width;
-        tmp.height = canvas.height;
+        tmp.width = w;
+        tmp.height = h;
         const tmpCtx = tmp.getContext('2d', { willReadFrequently: true })!;
-        tmpCtx.drawImage(sourceImg, 0, 0);
+        tmpCtx.drawImage(sourceImg, 0, 0, w, h);
         if (chromaColor) {
-          applyChromaKey(tmpCtx, tmp.width, tmp.height);
+          applyChromaKey(tmpCtx, w, h);
         }
         return tmp;
       };
@@ -333,7 +369,7 @@ const App = () => {
     };
 
     drawFrame();
-  }, [currentPreviewFrameIndex, activeFrames, chromaColor, chromaTolerance, onionSkinEnabled, onionSkinOpacity, loadImage]);
+  }, [currentPreviewFrameIndex, activeFrames, chromaColor, chromaTolerance, onionSkinEnabled, onionSkinOpacity, loadImage, getExportSize]);
 
 
   // --- Helper: Apply Chroma Key ---
@@ -632,41 +668,36 @@ const App = () => {
     const sampleImg = new Image();
     sampleImg.src = activeFrames[0].url;
     sampleImg.onload = async () => {
-      const frameW = sampleImg.width;
-      const frameH = sampleImg.height;
-      
+      const { w: frameW, h: frameH } = getExportSize(sampleImg.width, sampleImg.height);
+
       const cols = exportColumns > 0 ? exportColumns : Math.ceil(Math.sqrt(activeFrames.length));
       const rows = Math.ceil(activeFrames.length / cols);
-      
+
       canvas.width = cols * frameW;
       canvas.height = rows * frameH;
 
-      // Draw all frames
-      // We need to process them sequentially to apply chroma key if needed
       for (let i = 0; i < activeFrames.length; i++) {
         const frame = activeFrames[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = col * frameW;
         const y = row * frameH;
-        
+
         const img = new Image();
         img.src = frame.url;
         await new Promise<void>(resolve => {
             img.onload = () => resolve();
         });
 
-        // Draw to temp canvas to apply chroma key
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = frameW;
         tempCanvas.height = frameH;
         const tempCtx = tempCanvas.getContext('2d');
         if (tempCtx) {
-            tempCtx.drawImage(img, 0, 0);
+            tempCtx.drawImage(img, 0, 0, frameW, frameH);
             if (chromaColor) {
                 applyChromaKey(tempCtx, frameW, frameH);
             }
-            // Draw temp canvas to main sprite sheet
             ctx.drawImage(tempCanvas, x, y);
         }
       }
@@ -686,9 +717,9 @@ const App = () => {
     setProgress(0);
 
     try {
+      const { GIFEncoder, quantize, applyPalette } = await import('gifenc');
       const firstImg = await loadImage(activeFrames[0].url);
-      const width = firstImg.width;
-      const height = firstImg.height;
+      const { w: width, h: height } = getExportSize(firstImg.width, firstImg.height);
 
       const gif = GIFEncoder();
       const tempCanvas = document.createElement('canvas');
@@ -700,7 +731,7 @@ const App = () => {
       for (let i = 0; i < activeFrames.length; i++) {
         const img = await loadImage(activeFrames[i].url);
         tempCtx.clearRect(0, 0, width, height);
-        tempCtx.drawImage(img, 0, 0);
+        tempCtx.drawImage(img, 0, 0, width, height);
 
         if (chromaColor) {
           applyChromaKey(tempCtx, width, height);
@@ -955,6 +986,82 @@ const App = () => {
                            <span style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>{t.dedupError}</span>
                         )}
                     </div>
+                    <div className="row" style={{ gap: 12 }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.frameSize}</label>
+                        <div className="row" style={{ gap: 0 }}>
+                            <button
+                                className={`btn ${exportSizeMode === 'fixed' ? '' : 'btn-secondary'}`}
+                                style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
+                                onClick={() => setExportSizeMode('fixed')}
+                            >{t.fixedSize}</button>
+                            <button
+                                className={`btn ${exportSizeMode === 'scale' ? '' : 'btn-secondary'}`}
+                                style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
+                                onClick={() => setExportSizeMode('scale')}
+                            >{t.scale}</button>
+                        </div>
+                        {exportSizeMode === 'scale' ? (
+                            <div className="row" style={{ gap: 8, width: 240 }}>
+                                <input
+                                    type="range"
+                                    min="10"
+                                    max="300"
+                                    step="5"
+                                    value={exportScale}
+                                    onChange={(e) => setExportScale(Number(e.target.value))}
+                                    style={{ flex: 1 }}
+                                />
+                                <span className="badge">{exportScale}%</span>
+                            </div>
+                        ) : (
+                            <div className="row" style={{ gap: 4 }}>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="4096"
+                                    value={exportFixedW || ''}
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value) || 0;
+                                        setExportFixedW(v);
+                                        if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
+                                            setExportFixedH(Math.max(1, Math.round(v / lockedRatioRef.current)));
+                                        }
+                                    }}
+                                    onBlur={() => { if (exportFixedW < 1) setExportFixedW(1); }}
+                                    style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
+                                />
+                                <button
+                                    className={`btn btn-icon ${lockAspectRatio ? '' : 'btn-secondary'}`}
+                                    style={{ padding: 4 }}
+                                    onClick={() => {
+                                        if (!lockAspectRatio && exportFixedW > 0 && exportFixedH > 0) {
+                                            lockedRatioRef.current = exportFixedW / exportFixedH;
+                                        }
+                                        setLockAspectRatio(!lockAspectRatio);
+                                    }}
+                                    title={lockAspectRatio ? 'Unlock' : 'Lock aspect ratio'}
+                                >
+                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{lockAspectRatio ? 'lock' : 'lock_open'}</span>
+                                </button>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="4096"
+                                    value={exportFixedH || ''}
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value) || 0;
+                                        setExportFixedH(v);
+                                        if (lockAspectRatio && v > 0 && lockedRatioRef.current > 0) {
+                                            setExportFixedW(Math.max(1, Math.round(v * lockedRatioRef.current)));
+                                        }
+                                    }}
+                                    onBlur={() => { if (exportFixedH < 1) setExportFixedH(1); }}
+                                    style={{ width: 60, padding: '4px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4, textAlign: 'center' }}
+                                />
+                                <span className="badge">px</span>
+                            </div>
+                        )}
+                    </div>
                 </>
              )}
           </div>
@@ -1050,7 +1157,6 @@ const App = () => {
                             type="checkbox"
                             checked={onionSkinEnabled}
                             onChange={(e) => setOnionSkinEnabled(e.target.checked)}
-                            style={{ accentColor: 'var(--primary)' }}
                         />
                     </div>
                     {onionSkinEnabled && (
@@ -1162,8 +1268,9 @@ const App = () => {
                   type="number"
                   min="1"
                   max="50"
-                  value={splitCols}
-                  onChange={(e) => setSplitCols(Math.max(1, Number(e.target.value)))}
+                  value={splitCols || ''}
+                  onChange={(e) => setSplitCols(Number(e.target.value) || 0)}
+                  onBlur={() => { if (splitCols < 1) setSplitCols(1); }}
                   style={{ width: '100%', padding: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4 }}
                 />
               </div>
@@ -1173,8 +1280,9 @@ const App = () => {
                   type="number"
                   min="1"
                   max="50"
-                  value={splitRows}
-                  onChange={(e) => setSplitRows(Math.max(1, Number(e.target.value)))}
+                  value={splitRows || ''}
+                  onChange={(e) => setSplitRows(Number(e.target.value) || 0)}
+                  onBlur={() => { if (splitRows < 1) setSplitRows(1); }}
                   style={{ width: '100%', padding: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4 }}
                 />
               </div>

@@ -237,6 +237,40 @@ input[type="range"] {
   accent-color: var(--primary);
 }
 
+input[type="number"] {
+  color-scheme: dark;
+  accent-color: var(--primary);
+  font-family: inherit;
+}
+
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+input[type="color"] {
+  color-scheme: dark;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+}
+
+select {
+  color-scheme: dark;
+  accent-color: var(--primary);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+}
+
 .btn {
   background: var(--primary);
   color: #000;
