@@ -24,6 +24,10 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
           <span className="nav-label">{t.navSprite}</span>
         </NavLink>
+        <NavLink to="/converter" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>swap_horiz</span>
+          <span className="nav-label">{t.navConverter}</span>
+        </NavLink>
       </nav>
       <button
         className="btn btn-secondary lang-toggle"

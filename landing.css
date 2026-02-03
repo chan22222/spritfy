@@ -397,6 +397,30 @@
   color: var(--secondary);
 }
 
+.card-tertiary.pixel-border:hover {
+  border-color: #ff9800;
+}
+
+.icon-tertiary {
+  background: rgba(255, 152, 0, 0.08);
+  border-color: #ff9800;
+}
+
+.icon-tertiary .material-symbols-outlined {
+  color: #ff9800;
+}
+
+.pixel-check.check-tertiary {
+  background: #ff9800;
+  box-shadow:
+    4px 4px 0 #ff9800,
+    -4px 0 0 #ff9800;
+}
+
+.link-tertiary {
+  color: #ff9800;
+}
+
 /* ---- Highlights Section ---- */
 .landing-highlights {
   padding: 40px 24px 48px;

@@ -12,6 +12,7 @@ import { GuideSpriteSheetPage } from '@/guide-sprite.tsx';
 import { GuidePixelArtPage } from '@/guide-pixel-art.tsx';
 import { LangContext } from '@/lang-context.ts';
 import { SpritePage } from '@/sprite-page.tsx';
+import { ConverterPage } from '@/converter.tsx';
 
 const RootLayout = () => {
   const { lang, setLang } = useContext(LangContext);
@@ -63,6 +64,11 @@ const GuidePixelArtWrapper = () => {
   return <GuidePixelArtPage lang={lang} t={t} />;
 };
 
+const ConverterWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <ConverterPage lang={lang} t={t} />;
+};
+
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -70,6 +76,7 @@ const router = createBrowserRouter([
       { index: true, element: <LandingWrapper /> },
       { path: '/sprite', element: <SpriteWrapper /> },
       { path: '/editor', element: <EditorWrapper /> },
+      { path: '/converter', element: <ConverterWrapper /> },
       { path: '/privacy', element: <PrivacyWrapper /> },
       { path: '/terms', element: <TermsWrapper /> },
       { path: '/about', element: <AboutWrapper /> },

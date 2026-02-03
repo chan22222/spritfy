@@ -108,6 +108,25 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
         </div>
+        <div className="landing-feature-card pixel-border card-tertiary">
+          <div className="feature-card-corner tl" /><div className="feature-card-corner tr" />
+          <div className="feature-card-corner bl" /><div className="feature-card-corner br" />
+          <div className="landing-feature-icon icon-tertiary">
+            <span className="material-symbols-outlined">swap_horiz</span>
+          </div>
+          <h2>{t.featureConverterTitle}</h2>
+          <p>{t.featureConverterDesc}</p>
+          <ul className="landing-feature-list">
+            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet1}</li>
+            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet2}</li>
+            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet3}</li>
+            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet4}</li>
+          </ul>
+          <Link to="/converter" className="feature-cta-link link-tertiary">
+            {t.ctaConverter}
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </Link>
+        </div>
       </section>
 
       {/* Pixel Divider */}
