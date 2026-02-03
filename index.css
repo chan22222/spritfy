@@ -73,6 +73,12 @@ body {
   font-weight: 600;
   font-size: 1.2rem;
   color: var(--primary);
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.brand:hover {
+  filter: drop-shadow(0 0 6px rgba(187, 134, 252, 0.4));
+  transform: scale(1.05);
 }
 
 /* Header Navigation */
