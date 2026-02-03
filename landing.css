@@ -1,0 +1,571 @@
+/* ============================================
+   LANDING PAGE — Retro Pixel Art Aesthetic
+   ============================================ */
+
+.landing-page {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background-color: var(--bg-dark);
+}
+
+/* ---- Pixel Grid Background ---- */
+.pixel-grid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(187, 134, 252, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(187, 134, 252, 0.015) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* ---- Floating Pixel Stars ---- */
+.pixel-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.pixel-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  image-rendering: pixelated;
+  animation: starTwinkle 3s ease-in-out infinite;
+}
+
+.pixel-star::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  box-shadow:
+    4px 0 0 var(--primary),
+    -4px 0 0 var(--primary),
+    0 4px 0 var(--primary),
+    0 -4px 0 var(--primary);
+}
+
+.star-1 { top: 8%; left: 12%; animation-delay: 0s; }
+.star-2 { top: 15%; right: 18%; animation-delay: 0.8s; }
+.star-2::before { background: var(--secondary); box-shadow: 4px 0 0 var(--secondary), -4px 0 0 var(--secondary), 0 4px 0 var(--secondary), 0 -4px 0 var(--secondary); }
+.star-3 { top: 35%; left: 6%; animation-delay: 1.6s; }
+.star-4 { top: 55%; right: 8%; animation-delay: 2.2s; }
+.star-4::before { background: var(--secondary); box-shadow: 4px 0 0 var(--secondary), -4px 0 0 var(--secondary), 0 4px 0 var(--secondary), 0 -4px 0 var(--secondary); }
+.star-5 { top: 75%; left: 15%; animation-delay: 0.4s; }
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+/* ---- Pixel Character ---- */
+.pixel-character {
+  margin-top: 40px;
+  height: 96px;
+  image-rendering: pixelated;
+  animation: charBounce 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(187, 134, 252, 0.3));
+}
+
+@keyframes charBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ---- Pixel Divider ---- */
+.pixel-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.pixel-divider-line {
+  flex: 1;
+  height: 4px;
+  image-rendering: pixelated;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--border) 0px, var(--border) 8px,
+    transparent 8px, transparent 16px
+  );
+}
+
+.pixel-divider-diamond {
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ---- Hero Section ---- */
+.landing-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px 32px;
+  position: relative;
+  z-index: 1;
+  background: radial-gradient(ellipse at 50% 20%, rgba(187, 134, 252, 0.06) 0%, transparent 50%);
+}
+
+.hero-badge {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 4px;
+  color: var(--secondary);
+  border: 2px solid var(--secondary);
+  padding: 4px 16px;
+  margin-bottom: 20px;
+  image-rendering: pixelated;
+  position: relative;
+}
+
+.hero-badge::before,
+.hero-badge::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--bg-dark);
+}
+
+.hero-badge::before { top: -2px; left: -2px; }
+.hero-badge::after { top: -2px; right: -2px; }
+
+.landing-hero-logo {
+  height: 140px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 32px rgba(187, 134, 252, 0.3));
+  image-rendering: auto;
+}
+
+.landing-hero-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 2.6rem;
+  font-weight: normal;
+  margin: 0 0 16px;
+  color: var(--text-main);
+  text-shadow: 4px 4px 0 rgba(187, 134, 252, 0.2);
+  image-rendering: pixelated;
+}
+
+.landing-hero-subtitle {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.1rem;
+  color: var(--primary);
+  margin: 0 0 8px;
+  max-width: 560px;
+  line-height: 1.8;
+}
+
+.landing-hero-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  margin: 0 0 32px;
+  max-width: 500px;
+  line-height: 1.7;
+}
+
+/* ---- Pixel Buttons ---- */
+.landing-hero-cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pixel-btn {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 28px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s, box-shadow 0.1s;
+  image-rendering: pixelated;
+  border: none;
+}
+
+.pixel-btn:active {
+  transform: translate(3px, 3px);
+}
+
+.pixel-btn-primary {
+  background: var(--primary);
+  color: #000;
+  box-shadow:
+    3px 3px 0 #7c4dff,
+    -1px -1px 0 #d4b0ff inset;
+}
+
+.pixel-btn-primary:hover {
+  background: #c99dfd;
+  box-shadow:
+    4px 4px 0 #7c4dff,
+    -1px -1px 0 #d4b0ff inset;
+}
+
+.pixel-btn-primary:active {
+  box-shadow: none;
+}
+
+.pixel-btn-ghost {
+  background: transparent;
+  color: var(--text-main);
+  border: 2px solid var(--border);
+  box-shadow: 3px 3px 0 var(--border);
+}
+
+.pixel-btn-ghost:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
+  box-shadow: 4px 4px 0 rgba(3, 218, 198, 0.3);
+}
+
+.pixel-btn-ghost:active {
+  box-shadow: none;
+}
+
+.pixel-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ---- Feature Cards ---- */
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-feature-card {
+  background: var(--bg-panel);
+  padding: 28px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Pixel-style border using stacked box-shadow */
+.pixel-border {
+  border: 3px solid var(--border);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+}
+
+.pixel-border:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
+  border-color: var(--primary);
+}
+
+.card-secondary.pixel-border:hover {
+  border-color: var(--secondary);
+}
+
+/* Notched corners */
+.feature-card-corner {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--bg-dark);
+  z-index: 2;
+}
+
+.feature-card-corner.tl { top: -3px; left: -3px; }
+.feature-card-corner.tr { top: -3px; right: -3px; }
+.feature-card-corner.bl { bottom: -3px; left: -3px; }
+.feature-card-corner.br { bottom: -3px; right: -3px; }
+
+.landing-feature-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  background: rgba(187, 134, 252, 0.1);
+  border: 2px solid var(--primary);
+  position: relative;
+}
+
+.landing-feature-icon .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--primary);
+}
+
+.icon-secondary {
+  background: rgba(3, 218, 198, 0.08);
+  border-color: var(--secondary);
+}
+
+.icon-secondary .material-symbols-outlined {
+  color: var(--secondary);
+}
+
+.landing-feature-card h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.3rem;
+  font-weight: normal;
+  margin: 0 0 12px;
+  color: var(--text-main);
+}
+
+.landing-feature-card p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+
+/* Pixel-style checkmarks */
+.landing-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.landing-feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pixel-check {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  background: var(--primary);
+  box-shadow:
+    4px 4px 0 var(--primary),
+    -4px 0 0 var(--primary);
+  image-rendering: pixelated;
+}
+
+.pixel-check.check-secondary {
+  background: var(--secondary);
+  box-shadow:
+    4px 4px 0 var(--secondary),
+    -4px 0 0 var(--secondary);
+}
+
+/* Feature CTA links */
+.feature-cta-link {
+  font-family: 'DungGeunMo', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  color: var(--primary);
+  text-decoration: none;
+  transition: gap 0.2s;
+}
+
+.feature-cta-link:hover {
+  gap: 12px;
+}
+
+.feature-cta-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.link-secondary {
+  color: var(--secondary);
+}
+
+/* ---- Highlights Section ---- */
+.landing-highlights {
+  padding: 40px 24px 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-highlights-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.5rem;
+  font-weight: normal;
+  text-align: center;
+  margin: 0 0 36px;
+  color: var(--text-main);
+  text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.15);
+}
+
+.landing-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.landing-highlight-item {
+  text-align: center;
+  padding: 24px 12px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.landing-highlight-item:hover {
+  border-color: var(--border);
+}
+
+.highlight-pixel-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  position: relative;
+}
+
+/* Notched pixel corners on icons */
+.highlight-pixel-icon::before,
+.highlight-pixel-icon::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--bg-dark);
+}
+
+.highlight-pixel-icon::before { top: -2px; left: -2px; }
+.highlight-pixel-icon::after { top: -2px; right: -2px; }
+
+.highlight-pixel-icon .material-symbols-outlined {
+  font-size: 22px;
+  color: var(--primary);
+}
+
+.landing-highlight-item h3 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.95rem;
+  font-weight: normal;
+  margin: 0 0 8px;
+  color: var(--text-main);
+}
+
+.landing-highlight-item p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ---- Footer ---- */
+.landing-footer {
+  padding: 20px 24px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-pixel-row {
+  height: 4px;
+  margin-bottom: 16px;
+  image-rendering: pixelated;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--primary) 0px, var(--primary) 8px,
+    var(--secondary) 8px, var(--secondary) 16px,
+    var(--border) 16px, var(--border) 24px,
+    transparent 24px, transparent 32px
+  );
+  opacity: 0.3;
+}
+
+.landing-footer p {
+  margin: 0;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .landing-hero {
+    padding: 40px 20px 24px;
+  }
+
+  .landing-hero-logo {
+    height: 100px;
+  }
+
+  .landing-hero-title {
+    font-size: 1.8rem;
+  }
+
+  .landing-hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .landing-features {
+    grid-template-columns: 1fr;
+    padding: 24px 20px 32px;
+  }
+
+  .landing-highlights-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pixel-character {
+    transform: scale(0.8);
+  }
+
+  .pixel-star { display: none; }
+}
+
+@media (max-width: 480px) {
+  .landing-hero-title {
+    font-size: 1.5rem;
+    text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.2);
+  }
+
+  .landing-hero-cta {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 12px;
+  }
+
+  .pixel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing-highlights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pixel-character {
+    display: none;
+  }
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://spritfy.xyz/sitemap.xml

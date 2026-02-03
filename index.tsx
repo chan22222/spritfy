@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { Lang, i18n } from '@/i18n.ts';
 import { Header } from '@/header.tsx';
 import { PixelEditor } from '@/editor.tsx';
+import { LandingPage } from '@/landing.tsx';
 
 // ===== Language Context =====
 interface LangContextType {
@@ -2178,13 +2179,19 @@ const EditorWrapper = () => {
   return <PixelEditor lang={lang} t={t} />;
 };
 
+const LandingWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <LandingPage lang={lang} t={t} />;
+};
+
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
+      { index: true, element: <LandingWrapper /> },
       { path: '/sprite', element: <SpriteWrapper /> },
       { path: '/editor', element: <EditorWrapper /> },
-      { path: '*', element: <Navigate to="/editor" replace /> },
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ]);
