@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 
 // ===== Types =====
@@ -455,6 +456,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [newH, setNewH] = useState(32);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; frameIndex: number } | null>(null);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showDeleteLayerConfirm, setShowDeleteLayerConfirm] = useState(false);
 
   // Drawing refs
   const isDrawingRef = useRef(false);
@@ -497,6 +500,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       return next;
     });
     setRedoStack([]);
+    setIsDirty(true);
   }, [activeFrame, getMaxHistory]);
 
   const performUndo = useCallback(() => {
@@ -1186,6 +1190,18 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     }
   }, [frames, canvasWidth, canvasHeight, fps]);
 
+  // ===== Unsaved changes guard =====
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  const blocker = useBlocker(isDirty);
+
   // ===== New Canvas =====
   const handleNewCanvas = useCallback(() => {
     const w = Math.max(1, Math.min(256, newW));
@@ -1197,6 +1213,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     setUndoStack([]);
     setRedoStack([]);
     setShowNewCanvasModal(false);
+    setIsDirty(false);
   }, [newW, newH]);
 
   // ===== Context Menu Prevention =====
@@ -1409,7 +1426,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
                 <button className="panel-icon-btn" onClick={addLayer} title={t.addLayer}>
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
                 </button>
-                <button className="panel-icon-btn" onClick={removeLayer} title={t.removeLayer} disabled={!activeFrame || activeFrame.layers.length <= 1}>
+                <button className="panel-icon-btn" onClick={() => { if (isDirty) setShowDeleteLayerConfirm(true); else removeLayer(); }} title={t.removeLayer} disabled={!activeFrame || activeFrame.layers.length <= 1}>
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>remove</span>
                 </button>
                 <button className="panel-icon-btn" onClick={() => moveLayer('up')} title="Move Up" disabled={!activeFrame || activeLayerIndex >= activeFrame.layers.length - 1}>
@@ -1670,6 +1687,59 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       )}
 
       {/* New Canvas Modal */}
+      {/* Unsaved Changes Blocker */}
+      {blocker.state === 'blocked' && (
+        <div className="editor-modal-overlay">
+          <div
+            className="editor-modal"
+            onKeyDown={e => {
+              if (e.key === 'Enter') blocker.proceed();
+              if (e.key === 'Escape') blocker.reset();
+            }}
+            tabIndex={-1}
+            ref={el => el?.focus()}
+          >
+            <h3>{t.unsavedTitle}</h3>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              {t.unsavedMessage}
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => blocker.reset()}>{t.cancel}</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={() => blocker.proceed()}>
+                {t.unsavedLeave}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Layer Confirm */}
+      {showDeleteLayerConfirm && (
+        <div className="editor-modal-overlay" onClick={() => setShowDeleteLayerConfirm(false)}>
+          <div
+            className="editor-modal"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { removeLayer(); setShowDeleteLayerConfirm(false); }
+              if (e.key === 'Escape') setShowDeleteLayerConfirm(false);
+            }}
+            tabIndex={-1}
+            ref={el => el?.focus()}
+          >
+            <h3>{t.removeLayer}</h3>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              {t.confirmDeleteLayer}
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowDeleteLayerConfirm(false)}>{t.cancel}</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={() => { removeLayer(); setShowDeleteLayerConfirm(false); }}>
+                {t.removeLayer}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Frame Confirm */}
       {deleteConfirmIndex !== null && (
         <div className="editor-modal-overlay" onClick={() => setDeleteConfirmIndex(null)}>

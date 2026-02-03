@@ -1,9 +1,21 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Header } from '@/header.tsx';
 import { PixelEditor } from '@/editor.tsx';
+
+// ===== Language Context =====
+interface LangContextType {
+  lang: Lang;
+  t: Record<string, string>;
+  setLang: (l: Lang) => void;
+}
+export const LangContext = createContext<LangContextType>({
+  lang: 'ko',
+  t: i18n['ko'],
+  setLang: () => {},
+});
 
 interface Frame {
   id: number;
@@ -2146,19 +2158,45 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
   );
 };
 
+const RootLayout = () => {
+  const { lang, setLang } = useContext(LangContext);
+  return (
+    <>
+      <Header lang={lang} setLang={setLang} />
+      <Outlet />
+    </>
+  );
+};
+
+const SpriteWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <SpritePage lang={lang} t={t} />;
+};
+
+const EditorWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <PixelEditor lang={lang} t={t} />;
+};
+
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      { path: '/sprite', element: <SpriteWrapper /> },
+      { path: '/editor', element: <EditorWrapper /> },
+      { path: '*', element: <Navigate to="/sprite" replace /> },
+    ],
+  },
+]);
+
 const Root = () => {
   const [lang, setLang] = useState<Lang>('ko');
   const t = i18n[lang];
 
   return (
-    <BrowserRouter>
-      <Header lang={lang} setLang={setLang} />
-      <Routes>
-        <Route path="/sprite" element={<SpritePage lang={lang} t={t} />} />
-        <Route path="/editor" element={<PixelEditor lang={lang} t={t} />} />
-        <Route path="*" element={<Navigate to="/sprite" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <LangContext.Provider value={{ lang, t, setLang }}>
+      <RouterProvider router={router} />
+    </LangContext.Provider>
   );
 };
 
