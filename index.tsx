@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Lang, i18n } from '@/i18n.ts';
+import { Header } from '@/header.tsx';
+import { PixelEditor } from '@/editor.tsx';
 
 interface Frame {
   id: number;
@@ -12,157 +16,6 @@ interface SpriteConfig {
   columns: number;
   padding: number;
 }
-
-type Lang = 'ko' | 'en';
-
-const i18n: Record<Lang, Record<string, string>> = {
-  ko: {
-    uploadVideo: '동영상 / GIF 업로드',
-    newFile: '새 파일',
-    totalFrames: '전체 프레임',
-    clearSelection: '선택 해제',
-    selectAll: '전체 선택',
-    extractInterval: '추출 간격 (N프레임마다)',
-    dedupSensitivity: '중복 제거 감도',
-    uploadPrompt: '동영상이나 GIF를 업로드하여 스프라이트를 추출하세요',
-    processing: '동영상 처리 중...',
-    preview: '미리보기',
-    pickingColor: '색상 선택 중...',
-    noFrames: '프레임 없음',
-    selfDedup: 'Self Deduplicate',
-    threshold: '임계값',
-    removeDuplicates: '중복 프레임 제거',
-    processingDedup: '처리 중...',
-    chromaKey: '크로마 키',
-    transparentColor: '투명 색상',
-    tolerance: '허용 범위',
-    export: '내보내기',
-    columns: '열 (0 = 자동)',
-    selected: '선택됨',
-    frames: '프레임',
-    downloadSprite: '스프라이트 시트 다운로드',
-    dedupRemoved: '개 중복 제거',
-    dedupRemaining: '개 남음',
-    dedupError: '처리 중 오류가 발생했습니다.',
-    downloadGif: 'GIF 다운로드',
-    onionSkin: '어니언 스킨',
-    opacity: '투명도',
-    importSpriteSheet: '시트 가져오기',
-    splitRows: '행',
-    splitCols: '열',
-    splitFrames: '프레임 분리',
-    cancel: '취소',
-    exportingGif: 'GIF 생성 중...',
-    deleteConfirm: '삭제하시겠습니까?',
-    delete: '삭제',
-    frameSize: '프레임 크기',
-    scale: '비율',
-    fixedSize: '고정',
-    tabDefault: '기본',
-    tabBgRemove: '배경 제거',
-    tabAnimation: '애니메이션',
-    bgRemoveTolerance: '허용 범위',
-    bgRemoveApply: '적용',
-    bgRemoveUndo: '되돌리기',
-    reverse: '역재생',
-    pingPong: '핑퐁',
-    duplicateFrames: '프레임 복제',
-    trimStart: '앞 제거',
-    trimEnd: '뒤 제거',
-    trimApply: '트리밍 적용',
-    bgModeChroma: '크로마키',
-    bgModeFlood: '모서리 제거',
-    additionalChromaKey: '추가 크로마키',
-    resetAll: '전체 초기화',
-    resetConfirm: '모든 프레임과 작업 내역이 삭제됩니다. 정말 초기화하시겠습니까?',
-    tabAdjust: '보정',
-    brightness: '밝기',
-    contrast: '대비',
-    saturation: '채도',
-    hue: '색조',
-    blur: '블러',
-    sharpen: '샤프닝',
-    invert: '반전',
-    grayscale: '흑백',
-    adjustApply: '보정 적용',
-    adjustUndo: '되돌리기',
-    adjustReset: '초기화',
-    editFrame: '프레임 편집',
-  },
-  en: {
-    uploadVideo: 'Upload Video / GIF',
-    newFile: 'New File',
-    totalFrames: 'Total Frames',
-    clearSelection: 'Clear Selection',
-    selectAll: 'Select All',
-    extractInterval: 'Extract Interval (Every N frames)',
-    dedupSensitivity: 'Dedup Sensitivity',
-    uploadPrompt: 'Upload a video or GIF to extract sprites',
-    processing: 'Processing Video...',
-    preview: 'Preview',
-    pickingColor: 'Picking Color...',
-    noFrames: 'No frames selected',
-    selfDedup: 'Self Deduplicate',
-    threshold: 'Threshold',
-    removeDuplicates: 'Remove Duplicates',
-    processingDedup: 'Processing...',
-    chromaKey: 'Chroma Key',
-    transparentColor: 'Transparent Color',
-    tolerance: 'Tolerance',
-    export: 'Export',
-    columns: 'Columns (0 = Auto)',
-    selected: 'Selected',
-    frames: 'frames',
-    downloadSprite: 'Download Sprite Sheet',
-    dedupRemoved: ' duplicates removed',
-    dedupRemaining: ' remaining',
-    dedupError: 'An error occurred during processing.',
-    downloadGif: 'Download GIF',
-    onionSkin: 'Onion Skin',
-    opacity: 'Opacity',
-    importSpriteSheet: 'Import Sheet',
-    splitRows: 'Rows',
-    splitCols: 'Columns',
-    splitFrames: 'Split Frames',
-    cancel: 'Cancel',
-    exportingGif: 'Generating GIF...',
-    deleteConfirm: 'Delete this frame?',
-    delete: 'Delete',
-    frameSize: 'Frame Size',
-    scale: 'Scale',
-    fixedSize: 'Fixed',
-    tabDefault: 'Default',
-    tabBgRemove: 'BG Remove',
-    tabAnimation: 'Animation',
-    bgRemoveTolerance: 'Tolerance',
-    bgRemoveApply: 'Apply',
-    bgRemoveUndo: 'Undo',
-    reverse: 'Reverse',
-    pingPong: 'Ping-Pong',
-    duplicateFrames: 'Duplicate',
-    trimStart: 'Trim Start',
-    trimEnd: 'Trim End',
-    trimApply: 'Apply Trim',
-    bgModeChroma: 'Chroma Key',
-    bgModeFlood: 'Corner Fill',
-    additionalChromaKey: 'Extra Chroma Key',
-    resetAll: 'Reset All',
-    resetConfirm: 'All frames and work will be deleted. Are you sure you want to reset?',
-    tabAdjust: 'Adjust',
-    brightness: 'Brightness',
-    contrast: 'Contrast',
-    saturation: 'Saturation',
-    hue: 'Hue',
-    blur: 'Blur',
-    sharpen: 'Sharpen',
-    invert: 'Invert',
-    grayscale: 'Grayscale',
-    adjustApply: 'Apply',
-    adjustUndo: 'Undo',
-    adjustReset: 'Reset',
-    editFrame: 'Edit Frame',
-  },
-};
 
 const applySharpenKernel = (ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) => {
   const imageData = ctx.getImageData(0, 0, w, h);
@@ -185,10 +38,7 @@ const applySharpenKernel = (ctx: CanvasRenderingContext2D, w: number, h: number,
   ctx.putImageData(imageData, 0, 0);
 };
 
-const App = () => {
-  // Language
-  const [lang, setLang] = useState<Lang>('ko');
-  const t = i18n[lang];
+const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang, t }) => {
 
   // State
   const [frames, setFrames] = useState<Frame[]>([]);
@@ -1478,39 +1328,6 @@ const App = () => {
 
   return (
     <>
-      <div className="app-header">
-        <div className="brand" style={{ cursor: 'pointer' }} onClick={() => {
-          frames.forEach(f => URL.revokeObjectURL(f.url));
-          setFrames([]);
-          setSelectedFrameIds(new Set());
-          setIsLoading(false);
-          setProgress(0);
-          setChromaColor(null);
-          setDedupResult(null);
-          setCurrentPreviewFrameIndex(0);
-          setExportColumns(0);
-          setFrameOrder([]);
-          setOnionSkinEnabled(false);
-          setOnionSkinOpacity(40);
-          setIsExportingGif(false);
-          if (splitImageUrl) URL.revokeObjectURL(splitImageUrl);
-          setSplitImageUrl(null);
-          setSplitMode(false);
-          if (videoRef.current) videoRef.current.src = '';
-        }}>
-          <img src="/logo.png" alt="Spritfy" style={{ width: 42, height: 42 }} />
-          <span style={{ fontFamily: "'DungGeunMo', monospace", fontSize: '1.5rem' }}>Spritfy.xyz</span>
-        </div>
-        <button
-            className="btn btn-secondary"
-            onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}
-            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
-        >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
-            {lang === 'ko' ? 'EN' : '한국어'}
-        </button>
-      </div>
-
       <div className="main-workspace">
         {/* LEFT AD */}
         <div className="ad-slot ad-slot-left">
@@ -2329,5 +2146,21 @@ const App = () => {
   );
 };
 
+const Root = () => {
+  const [lang, setLang] = useState<Lang>('ko');
+  const t = i18n[lang];
+
+  return (
+    <BrowserRouter>
+      <Header lang={lang} setLang={setLang} />
+      <Routes>
+        <Route path="/sprite" element={<SpritePage lang={lang} t={t} />} />
+        <Route path="/editor" element={<PixelEditor lang={lang} t={t} />} />
+        <Route path="*" element={<Navigate to="/sprite" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
 const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
+root.render(<Root />);

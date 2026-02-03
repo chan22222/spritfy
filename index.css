@@ -75,6 +75,35 @@ body {
   color: var(--primary);
 }
 
+/* Header Navigation */
+.header-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+}
+
+.nav-link.active {
+  background: rgba(187, 134, 252, 0.15);
+  color: var(--primary);
+}
+
 /* Layout */
 .main-workspace {
   display: flex;
