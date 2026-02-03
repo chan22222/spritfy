@@ -110,6 +110,40 @@ body {
   color: var(--primary);
 }
 
+.lang-toggle {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Mobile Header */
+@media (max-width: 600px) {
+  .app-header {
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .brand img {
+    height: 36px !important;
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    gap: 0;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .lang-toggle {
+    padding: 6px 8px;
+  }
+
+  .lang-toggle .nav-label {
+    display: none;
+  }
+}
+
 /* Layout */
 .main-workspace {
   display: flex;

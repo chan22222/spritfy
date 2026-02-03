@@ -18,20 +18,19 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
       <nav className="header-nav">
         <NavLink to="/editor" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>draw</span>
-          {t.navEditor}
+          <span className="nav-label">{t.navEditor}</span>
         </NavLink>
         <NavLink to="/sprite" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
-          {t.navSprite}
+          <span className="nav-label">{t.navSprite}</span>
         </NavLink>
       </nav>
       <button
-        className="btn btn-secondary"
+        className="btn btn-secondary lang-toggle"
         onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}
-        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
       >
         <span className="material-symbols-outlined" style={{ fontSize: 18 }}>translate</span>
-        {lang === 'ko' ? 'EN' : '한국어'}
+        <span className="nav-label">{lang === 'ko' ? 'EN' : '한국어'}</span>
       </button>
     </div>
   );

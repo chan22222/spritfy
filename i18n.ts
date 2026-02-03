@@ -129,7 +129,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Landing page
     heroTitle: 'Ready? Press Start! Spritfy!',
-    heroSubtitle: '스프릿파이(Spritfy) 당신의 게임 개발을 도와드릴게요!',
+    heroSubtitle: '스프릿파이(Spritfy)가 당신의 게임 개발을 도와드릴게요!',
     heroDescription: '스프릿파이에서 도트를 찍고, 애니메이션을 만들고, 시트를 생성하세요.\n설치 없이 누구나 무료로 사용할 수 있습니다.',
     ctaEditor: '에디터 시작하기',
     ctaSprite: '스프라이트 만들기',

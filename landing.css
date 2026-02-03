@@ -154,9 +154,9 @@
 
 .landing-hero-title {
   font-family: 'DungGeunMo', monospace;
-  font-size: 2.6rem;
+  font-size: 3rem;
   font-weight: normal;
-  margin: 0 0 16px;
+  margin: 0 0 24px;
   color: var(--text-main);
   text-shadow: 4px 4px 0 rgba(187, 134, 252, 0.2);
   image-rendering: pixelated;
@@ -164,18 +164,18 @@
 
 .landing-hero-subtitle {
   font-family: 'DungGeunMo', monospace;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   color: var(--primary);
-  margin: 0 0 8px;
-  max-width: 560px;
+  margin: 0 0 20px;
+  max-width: none;
   line-height: 1.8;
 }
 
 .landing-hero-desc {
-  font-size: 0.92rem;
+  font-size: 1.05rem;
   color: var(--text-muted);
-  margin: 0 0 32px;
-  max-width: 500px;
+  margin: 0 0 36px;
+  max-width: none;
   line-height: 1.7;
 }
 
@@ -189,7 +189,7 @@
 
 .pixel-btn {
   font-family: 'DungGeunMo', monospace;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   padding: 12px 28px;
   text-decoration: none;
@@ -210,16 +210,12 @@
 .pixel-btn-primary {
   background: var(--primary);
   color: #000;
-  box-shadow:
-    3px 3px 0 #7c4dff,
-    -1px -1px 0 #d4b0ff inset;
+  box-shadow: 3px 3px 0 #7c4dff;
 }
 
 .pixel-btn-primary:hover {
   background: #c99dfd;
-  box-shadow:
-    4px 4px 0 #7c4dff,
-    -1px -1px 0 #d4b0ff inset;
+  box-shadow: 4px 4px 0 #7c4dff;
 }
 
 .pixel-btn-primary:active {
@@ -227,13 +223,16 @@
 }
 
 .pixel-btn-ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-main);
   border: 2px solid var(--border);
   box-shadow: 3px 3px 0 var(--border);
+  text-shadow: none;
+  -webkit-text-stroke: 0;
 }
 
 .pixel-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
   border-color: var(--secondary);
   color: var(--secondary);
   box-shadow: 4px 4px 0 rgba(3, 218, 198, 0.3);

@@ -13,8 +13,8 @@ interface LangContextType {
   setLang: (l: Lang) => void;
 }
 export const LangContext = createContext<LangContextType>({
-  lang: 'ko',
-  t: i18n['ko'],
+  lang: 'en',
+  t: i18n['en'],
   setLang: () => {},
 });
 
@@ -2196,8 +2196,13 @@ const router = createBrowserRouter([
   },
 ]);
 
+const detectLang = (): Lang => {
+  const nav = navigator.language || (navigator as Record<string, string>).userLanguage || '';
+  return nav.startsWith('ko') ? 'ko' : 'en';
+};
+
 const Root = () => {
-  const [lang, setLang] = useState<Lang>('ko');
+  const [lang, setLang] = useState<Lang>(detectLang);
   const t = i18n[lang];
 
   return (
