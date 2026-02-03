@@ -13,8 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   return (
     <div className="app-header">
       <div className="brand" style={{ cursor: 'pointer' }}>
-        <img src="/favicon.png" alt="Spritfy" style={{ width: 42, height: 42 }} />
-        <span style={{ fontFamily: "'DungGeunMo', monospace", fontSize: '1.5rem' }}>Spritfy.xyz</span>
+        <img src="/logo.png" alt="Spritfy" style={{ height: 32 }} />
       </div>
       <nav className="header-nav">
         <NavLink to="/sprite" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
