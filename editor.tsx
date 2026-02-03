@@ -1242,9 +1242,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     <div className="editor-container">
       <div className="editor-main">
         {/* LEFT AD */}
-        <div className="ad-slot ad-slot-left">
-          <span className="ad-placeholder">AD</span>
-        </div>
+        <div className="ad-slot ad-slot-left" />
 
         {/* Left Toolbar */}
         <div className="editor-toolbar">
@@ -1569,9 +1567,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         </div>
 
         {/* RIGHT AD */}
-        <div className="ad-slot ad-slot-right">
-          <span className="ad-placeholder">AD</span>
-        </div>
+        <div className="ad-slot ad-slot-right" />
       </div>
 
       {/* Timeline */}

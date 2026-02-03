@@ -468,25 +468,7 @@ select {
 .ad-slot {
   width: 160px;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--bg-panel);
-  border: 1px dashed var(--border);
-}
-
-.ad-slot-left {
-  border-right: none;
-}
-
-.ad-slot-right {
-  border-left: none;
-}
-
-.ad-placeholder {
-  color: var(--border);
-  font-size: 0.85rem;
-  letter-spacing: 2px;
 }
 
 /* Frame Delete Button */

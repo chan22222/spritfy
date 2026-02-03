@@ -1343,9 +1343,7 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
     <>
       <div className="main-workspace">
         {/* LEFT AD */}
-        <div className="ad-slot ad-slot-left">
-            <span className="ad-placeholder">AD</span>
-        </div>
+        <div className="ad-slot ad-slot-left" />
 
         {/* Hidden Video for processing */}
         <video 
@@ -1917,9 +1915,7 @@ const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang,
         </div>
 
         {/* RIGHT AD */}
-        <div className="ad-slot ad-slot-right">
-            <span className="ad-placeholder">AD</span>
-        </div>
+        <div className="ad-slot ad-slot-right" />
       </div>
 
       {/* Sprite Sheet Split Modal */}
