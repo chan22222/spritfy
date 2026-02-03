@@ -70,7 +70,9 @@ const i18n: Record<Lang, Record<string, string>> = {
     trimStart: '앞 제거',
     trimEnd: '뒤 제거',
     trimApply: '트리밍 적용',
-    bgRemoveNotice: '크로마키가 더 정확합니다. 단색 배경이 아니거나 크로마키로 처리가 어려운 경우에만 사용하세요.',
+    bgModeChroma: '크로마키',
+    bgModeFlood: '모서리 제거',
+    additionalChromaKey: '추가 크로마키',
     resetAll: '전체 초기화',
     resetConfirm: '모든 프레임과 작업 내역이 삭제됩니다. 정말 초기화하시겠습니까?',
     tabAdjust: '보정',
@@ -85,6 +87,7 @@ const i18n: Record<Lang, Record<string, string>> = {
     adjustApply: '보정 적용',
     adjustUndo: '되돌리기',
     adjustReset: '초기화',
+    editFrame: '프레임 편집',
   },
   en: {
     uploadVideo: 'Upload Video / GIF',
@@ -140,7 +143,9 @@ const i18n: Record<Lang, Record<string, string>> = {
     trimStart: 'Trim Start',
     trimEnd: 'Trim End',
     trimApply: 'Apply Trim',
-    bgRemoveNotice: 'Chroma Key is more accurate. Use this only when Chroma Key cannot handle the background.',
+    bgModeChroma: 'Chroma Key',
+    bgModeFlood: 'Corner Fill',
+    additionalChromaKey: 'Extra Chroma Key',
     resetAll: 'Reset All',
     resetConfirm: 'All frames and work will be deleted. Are you sure you want to reset?',
     tabAdjust: 'Adjust',
@@ -155,6 +160,7 @@ const i18n: Record<Lang, Record<string, string>> = {
     adjustApply: 'Apply',
     adjustUndo: 'Undo',
     adjustReset: 'Reset',
+    editFrame: 'Edit Frame',
   },
 };
 
@@ -212,7 +218,7 @@ const App = () => {
   const [gridSize, setGridSize] = useState(100); // frame thumbnail size in px
   const [sidebarWidth, setSidebarWidth] = useState(360);
   const [isExportingGif, setIsExportingGif] = useState(false);
-  const [exportSizeMode, setExportSizeMode] = useState<'scale' | 'fixed'>('fixed');
+  const [exportSizeMode, setExportSizeMode] = useState<'scale' | 'fixed'>('scale');
   const [exportScale, setExportScale] = useState(100);
   const [exportFixedW, setExportFixedW] = useState(64);
   const [exportFixedH, setExportFixedH] = useState(64);
@@ -228,6 +234,10 @@ const App = () => {
   const [activeTab, setActiveTab] = useState<'default' | 'bgRemove' | 'animation' | 'adjust'>('default');
 
   // Background Removal
+  const [bgMode, setBgMode] = useState<'chroma' | 'flood'>('chroma');
+  const [bgChromaColor, setBgChromaColor] = useState<string>('#00ff00');
+  const [bgChromaTolerance, setBgChromaTolerance] = useState(30);
+  const [isBgPickingColor, setIsBgPickingColor] = useState(false);
   const [bgRemoveTolerance, setBgRemoveTolerance] = useState(20);
   const bgBackupRef = useRef<{ id: number; url: string; blob: Blob }[]>([]);
   const [hasBgBackup, setHasBgBackup] = useState(false);
@@ -261,6 +271,21 @@ const App = () => {
   // Delete & Reset
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  // Frame Edit Modal
+  const [editTargetId, setEditTargetId] = useState<number | null>(null);
+  const [editBrightness, setEditBrightness] = useState(100);
+  const [editContrast, setEditContrast] = useState(100);
+  const [editSaturation, setEditSaturation] = useState(100);
+  const [editHue, setEditHue] = useState(0);
+  const [editBlur, setEditBlur] = useState(0);
+  const [editSharpen, setEditSharpen] = useState(0);
+  const [editInvert, setEditInvert] = useState(false);
+  const [editGrayscale, setEditGrayscale] = useState(false);
+  const [editBgTolerance, setEditBgTolerance] = useState(20);
+  const [editBgApplied, setEditBgApplied] = useState(false);
+  const editBackupRef = useRef<{ url: string; blob: Blob } | null>(null);
+  const editCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -432,6 +457,19 @@ const App = () => {
     if (adjustGrayscale) parts.push(`grayscale(100%)`);
     return parts.length > 0 ? parts.join(' ') : '';
   }, [adjustBrightness, adjustContrast, adjustSaturation, adjustHue, adjustBlur, adjustInvert, adjustGrayscale]);
+
+  // --- Frame Edit Filter String ---
+  const editFilterStr = useMemo(() => {
+    const parts: string[] = [];
+    if (editBrightness !== 100) parts.push(`brightness(${editBrightness}%)`);
+    if (editContrast !== 100) parts.push(`contrast(${editContrast}%)`);
+    if (editSaturation !== 100) parts.push(`saturate(${editSaturation}%)`);
+    if (editHue !== 0) parts.push(`hue-rotate(${editHue}deg)`);
+    if (editBlur > 0) parts.push(`blur(${editBlur}px)`);
+    if (editInvert) parts.push(`invert(100%)`);
+    if (editGrayscale) parts.push(`grayscale(100%)`);
+    return parts.length > 0 ? parts.join(' ') : '';
+  }, [editBrightness, editContrast, editSaturation, editHue, editBlur, editInvert, editGrayscale]);
 
   // --- Draw Preview (with Onion Skin) ---
   useEffect(() => {
@@ -799,6 +837,61 @@ const App = () => {
     setProgress(0);
   };
 
+  const applyChromaKeyRemoval = async () => {
+    const targetFrames = selectedFrameIds.size > 0
+      ? frames.filter(f => selectedFrameIds.has(f.id))
+      : frames;
+    if (targetFrames.length === 0) return;
+
+    setIsLoading(true);
+    setProgress(0);
+
+    bgBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+
+    const rTarget = parseInt(bgChromaColor.slice(1, 3), 16);
+    const gTarget = parseInt(bgChromaColor.slice(3, 5), 16);
+    const bTarget = parseInt(bgChromaColor.slice(5, 7), 16);
+    const maxDist = 765;
+    const threshold = (bgChromaTolerance / 100) * maxDist;
+
+    const newFrames = [...frames];
+    for (let fi = 0; fi < targetFrames.length; fi++) {
+      const frame = targetFrames[fi];
+      const img = await loadImage(frame.url);
+      const w = img.width;
+      const h = img.height;
+
+      const cvs = document.createElement('canvas');
+      cvs.width = w;
+      cvs.height = h;
+      const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const dist = Math.abs(data[i] - rTarget) + Math.abs(data[i + 1] - gTarget) + Math.abs(data[i + 2] - bTarget);
+        if (dist < threshold) data[i + 3] = 0;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
+      if (blob) {
+        const newUrl = URL.createObjectURL(blob);
+        const idx = newFrames.findIndex(f => f.id === frame.id);
+        if (idx !== -1) {
+          newFrames[idx] = { ...newFrames[idx], blob, url: newUrl };
+        }
+      }
+      setProgress(Math.round(((fi + 1) / targetFrames.length) * 100));
+    }
+
+    setFrames(newFrames);
+    setHasBgBackup(true);
+    setIsLoading(false);
+    setProgress(0);
+  };
+
   const undoBgRemoval = () => {
     if (bgBackupRef.current.length === 0) return;
     const backup = bgBackupRef.current;
@@ -1000,6 +1093,177 @@ const App = () => {
     setDeleteTargetId(null);
   };
 
+  // --- Frame Edit Modal ---
+  const openEditModal = (frameId: number) => {
+    setEditTargetId(frameId);
+    setEditBrightness(100);
+    setEditContrast(100);
+    setEditSaturation(100);
+    setEditHue(0);
+    setEditBlur(0);
+    setEditSharpen(0);
+    setEditInvert(false);
+    setEditGrayscale(false);
+    setEditBgTolerance(20);
+    setEditBgApplied(false);
+    editBackupRef.current = null;
+  };
+
+  const resetEditSliders = () => {
+    setEditBrightness(100);
+    setEditContrast(100);
+    setEditSaturation(100);
+    setEditHue(0);
+    setEditBlur(0);
+    setEditSharpen(0);
+    setEditInvert(false);
+    setEditGrayscale(false);
+  };
+
+  const applyEditBgRemoval = async () => {
+    if (editTargetId === null) return;
+    const frame = frames.find(f => f.id === editTargetId);
+    if (!frame) return;
+
+    if (!editBackupRef.current) {
+      editBackupRef.current = { url: frame.url, blob: frame.blob };
+    }
+
+    const img = await loadImage(frame.url);
+    const w = img.width;
+    const h = img.height;
+    const cvs = document.createElement('canvas');
+    cvs.width = w;
+    cvs.height = h;
+    const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(img, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+    const visited = new Uint8Array(w * h);
+    const tolerance = editBgTolerance;
+    const maxDist = tolerance * 765 / 100;
+
+    const floodFill = (sx: number, sy: number) => {
+      const seedIdx = (sy * w + sx) * 4;
+      const sr = data[seedIdx], sg = data[seedIdx + 1], sb = data[seedIdx + 2];
+      const queue: number[] = [sx, sy];
+      while (queue.length > 0) {
+        const cy = queue.pop()!;
+        const cx = queue.pop()!;
+        const pi = cy * w + cx;
+        if (visited[pi]) continue;
+        visited[pi] = 1;
+        const i = pi * 4;
+        const dist = Math.abs(data[i] - sr) + Math.abs(data[i + 1] - sg) + Math.abs(data[i + 2] - sb);
+        if (dist > maxDist) continue;
+        data[i + 3] = 0;
+        if (cx > 0) queue.push(cx - 1, cy);
+        if (cx < w - 1) queue.push(cx + 1, cy);
+        if (cy > 0) queue.push(cx, cy - 1);
+        if (cy < h - 1) queue.push(cx, cy + 1);
+      }
+    };
+
+    floodFill(0, 0);
+    floodFill(w - 1, 0);
+    floodFill(0, h - 1);
+    floodFill(w - 1, h - 1);
+    ctx.putImageData(imageData, 0, 0);
+
+    const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
+    if (blob) {
+      const newUrl = URL.createObjectURL(blob);
+      setFrames(prev => prev.map(f =>
+        f.id === editTargetId ? { ...f, blob, url: newUrl } : f
+      ));
+    }
+    setEditBgApplied(true);
+  };
+
+  const undoEditBgRemoval = () => {
+    if (!editBackupRef.current || editTargetId === null) return;
+    const backup = editBackupRef.current;
+    setFrames(prev => prev.map(f => {
+      if (f.id === editTargetId) {
+        URL.revokeObjectURL(f.url);
+        return { ...f, url: backup.url, blob: backup.blob };
+      }
+      return f;
+    }));
+    editBackupRef.current = null;
+    setEditBgApplied(false);
+  };
+
+  const applyEditToFrame = async () => {
+    if (editTargetId === null) return;
+    const frame = frames.find(f => f.id === editTargetId);
+    if (!frame) return;
+    if (editFilterStr === '' && editSharpen === 0) {
+      setEditTargetId(null);
+      return;
+    }
+
+    const img = await loadImage(frame.url);
+    const w = img.width;
+    const h = img.height;
+    const cvs = document.createElement('canvas');
+    cvs.width = w;
+    cvs.height = h;
+    const ctx = cvs.getContext('2d', { willReadFrequently: true })!;
+
+    if (editFilterStr) ctx.filter = editFilterStr;
+    ctx.drawImage(img, 0, 0);
+    ctx.filter = 'none';
+    if (editSharpen > 0) applySharpenKernel(ctx, w, h, editSharpen);
+
+    const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
+    if (blob) {
+      const newUrl = URL.createObjectURL(blob);
+      URL.revokeObjectURL(frame.url);
+      setFrames(prev => prev.map(f =>
+        f.id === editTargetId ? { ...f, blob, url: newUrl } : f
+      ));
+    }
+    setEditTargetId(null);
+  };
+
+  const cancelEdit = () => {
+    if (editBgApplied && editBackupRef.current && editTargetId !== null) {
+      const backup = editBackupRef.current;
+      setFrames(prev => prev.map(f => {
+        if (f.id === editTargetId) {
+          URL.revokeObjectURL(f.url);
+          return { ...f, url: backup.url, blob: backup.blob };
+        }
+        return f;
+      }));
+      editBackupRef.current = null;
+    }
+    setEditTargetId(null);
+  };
+
+  // Edit modal preview
+  const editFrame = editTargetId !== null ? frames.find(f => f.id === editTargetId) : null;
+  useEffect(() => {
+    const canvas = editCanvasRef.current;
+    if (!canvas || !editFrame) return;
+
+    const draw = async () => {
+      const img = await loadImage(editFrame.url);
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+      ctx.clearRect(0, 0, img.width, img.height);
+      if (editFilterStr) ctx.filter = editFilterStr;
+      ctx.drawImage(img, 0, 0);
+      ctx.filter = 'none';
+      if (editSharpen > 0) applySharpenKernel(ctx, img.width, img.height, editSharpen);
+    };
+
+    draw();
+  }, [editFrame, editFilterStr, editSharpen, loadImage]);
+
   // --- Interaction Handlers ---
   const toggleFrameSelection = (id: number, multi: boolean) => {
     const newSet = new Set(selectedFrameIds);
@@ -1015,21 +1279,26 @@ const App = () => {
   };
 
   const handlePreviewClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isPickingColor) return;
-    
+    if (!isPickingColor && !isBgPickingColor) return;
+
     const canvas = previewCanvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (canvas.width / rect.width);
     const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-    
+
     const ctx = canvas.getContext('2d');
     if (ctx) {
       const p = ctx.getImageData(x, y, 1, 1).data;
       const hex = "#" + ("000000" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
-      setChromaColor(hex);
-      setIsPickingColor(false);
+      if (isBgPickingColor) {
+        setBgChromaColor(hex);
+        setIsBgPickingColor(false);
+      } else {
+        setChromaColor(hex);
+        setIsPickingColor(false);
+      }
     }
   };
 
@@ -1396,22 +1665,22 @@ const App = () => {
                                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.frameSize}</label>
                                 <div className="row" style={{ gap: 0 }}>
                                     <button
-                                        className={`btn ${exportSizeMode === 'fixed' ? '' : 'btn-secondary'}`}
-                                        style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
-                                        onClick={() => setExportSizeMode('fixed')}
-                                    >{t.fixedSize}</button>
-                                    <button
                                         className={`btn ${exportSizeMode === 'scale' ? '' : 'btn-secondary'}`}
-                                        style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
                                         onClick={() => setExportSizeMode('scale')}
                                     >{t.scale}</button>
+                                    <button
+                                        className={`btn ${exportSizeMode === 'fixed' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        onClick={() => setExportSizeMode('fixed')}
+                                    >{t.fixedSize}</button>
                                 </div>
                                 {exportSizeMode === 'scale' ? (
                                     <div className="row" style={{ gap: 8, width: 240 }}>
                                         <input
                                             type="range"
                                             min="10"
-                                            max="300"
+                                            max="200"
                                             step="5"
                                             value={exportScale}
                                             onChange={(e) => setExportScale(Number(e.target.value))}
@@ -1475,17 +1744,46 @@ const App = () => {
                     {activeTab === 'bgRemove' && (
                         <div className="tab-content">
                             <div className="row" style={{ gap: 12, alignItems: 'center' }}>
-                                <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
-                                    <label>{t.bgRemoveTolerance} ({bgRemoveTolerance})</label>
-                                    <input
-                                        type="range"
-                                        min="1"
-                                        max="50"
-                                        value={bgRemoveTolerance}
-                                        onChange={(e) => setBgRemoveTolerance(Number(e.target.value))}
-                                    />
+                                <div className="row" style={{ gap: 0 }}>
+                                    <button
+                                        className={`btn ${bgMode === 'chroma' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        onClick={() => setBgMode('chroma')}
+                                    >{t.bgModeChroma}</button>
+                                    <button
+                                        className={`btn ${bgMode === 'flood' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem' }}
+                                        onClick={() => setBgMode('flood')}
+                                    >{t.bgModeFlood}</button>
                                 </div>
-                                <button className="btn btn-secondary" onClick={applyBgRemoval} disabled={frames.length === 0 || hasBgBackup}>
+                                {bgMode === 'chroma' ? (
+                                    <>
+                                        <button
+                                            className={`btn ${isBgPickingColor ? '' : 'btn-secondary'}`}
+                                            style={{ padding: '6px 10px' }}
+                                            onClick={() => { setIsBgPickingColor(!isBgPickingColor); setIsPickingColor(false); }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>colorize</span>
+                                        </button>
+                                        <input
+                                            type="color"
+                                            value={bgChromaColor}
+                                            onChange={(e) => setBgChromaColor(e.target.value)}
+                                        />
+                                        <div className="control-group" style={{ marginBottom: 0, width: 180 }}>
+                                            <label>{t.tolerance} ({bgChromaTolerance}%)</label>
+                                            <input type="range" min="1" max="50" value={bgChromaTolerance}
+                                                onChange={(e) => setBgChromaTolerance(Number(e.target.value))} />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
+                                        <label>{t.bgRemoveTolerance} ({bgRemoveTolerance})</label>
+                                        <input type="range" min="1" max="50" value={bgRemoveTolerance}
+                                            onChange={(e) => setBgRemoveTolerance(Number(e.target.value))} />
+                                    </div>
+                                )}
+                                <button className="btn btn-secondary" onClick={bgMode === 'chroma' ? applyChromaKeyRemoval : applyBgRemoval} disabled={frames.length === 0 || hasBgBackup}>
                                     <span className="material-symbols-outlined">auto_fix</span>
                                     {t.bgRemoveApply}
                                 </button>
@@ -1493,10 +1791,6 @@ const App = () => {
                                     <span className="material-symbols-outlined">undo</span>
                                     {t.bgRemoveUndo}
                                 </button>
-                            </div>
-                            <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--secondary)' }}>info</span>
-                                {t.bgRemoveNotice}
                             </div>
                         </div>
                     )}
@@ -1637,6 +1931,12 @@ const App = () => {
                             <img src={frame.url} alt={`Frame ${frame.id}`} draggable={false} />
                             <div className="frame-index">{visualIdx + 1}</div>
                             <button
+                                className="frame-edit-btn"
+                                onClick={(e) => { e.stopPropagation(); openEditModal(frame.id); }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                            </button>
+                            <button
                                 className="frame-delete-btn"
                                 onClick={(e) => { e.stopPropagation(); setDeleteTargetId(frame.id); }}
                             >
@@ -1657,11 +1957,11 @@ const App = () => {
             <div className="sidebar-section">
                 <h3>{t.preview}</h3>
                 <div 
-                    className={`preview-container ${isPickingColor ? 'picking' : ''}`} 
+                    className={`preview-container ${isPickingColor || isBgPickingColor ? 'picking' : ''}`}
                     onClick={handlePreviewClick}
                 >
                     {activeFrames.length > 0 && <canvas ref={previewCanvasRef} />}
-                    {isPickingColor && <div className="eyedropper-active-indicator">{t.pickingColor}</div>}
+                    {(isPickingColor || isBgPickingColor) && <div className="eyedropper-active-indicator">{t.pickingColor}</div>}
                     {activeFrames.length === 0 && <span style={{ color: 'var(--text-muted)' }}>{t.noFrames}</span>}
                 </div>
                 
@@ -1720,7 +2020,7 @@ const App = () => {
             </div>
 
             <div className="sidebar-section">
-                <h3>{t.chromaKey}</h3>
+                <h3>{t.additionalChromaKey}</h3>
                 <div className="control-group">
                     <label>{t.transparentColor}</label>
                     <div className="row">
@@ -1923,6 +2223,104 @@ const App = () => {
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowResetModal(false)}>
                 {t.cancel}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Frame Edit Modal */}
+      {editTargetId !== null && editFrame && (
+        <div className="loading-overlay" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) cancelEdit();
+        }}>
+          <div className="edit-modal">
+            <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1rem' }}>
+                {t.editFrame} (#{frameOrder.indexOf(editTargetId) + 1})
+              </h3>
+              <button className="btn btn-icon btn-secondary" onClick={cancelEdit}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="edit-modal-body">
+              <div className="edit-modal-preview">
+                <canvas ref={editCanvasRef} />
+              </div>
+              <div className="edit-modal-controls">
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.brightness} ({editBrightness}%)</label>
+                  <input type="range" min="0" max="200" value={editBrightness}
+                    onChange={(e) => setEditBrightness(Number(e.target.value))} />
+                </div>
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.contrast} ({editContrast}%)</label>
+                  <input type="range" min="0" max="200" value={editContrast}
+                    onChange={(e) => setEditContrast(Number(e.target.value))} />
+                </div>
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.saturation} ({editSaturation}%)</label>
+                  <input type="range" min="0" max="200" value={editSaturation}
+                    onChange={(e) => setEditSaturation(Number(e.target.value))} />
+                </div>
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.hue} ({editHue}°)</label>
+                  <input type="range" min="0" max="360" value={editHue}
+                    onChange={(e) => setEditHue(Number(e.target.value))} />
+                </div>
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.blur} ({editBlur}px)</label>
+                  <input type="range" min="0" max="10" value={editBlur}
+                    onChange={(e) => setEditBlur(Number(e.target.value))} />
+                </div>
+                <div className="control-group" style={{ marginBottom: 0 }}>
+                  <label>{t.sharpen} ({editSharpen})</label>
+                  <input type="range" min="0" max="10" value={editSharpen}
+                    onChange={(e) => setEditSharpen(Number(e.target.value))} />
+                </div>
+                <div className="row" style={{ gap: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editInvert} onChange={(e) => setEditInvert(e.target.checked)} />
+                    {t.invert}
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editGrayscale} onChange={(e) => setEditGrayscale(e.target.checked)} />
+                    {t.grayscale}
+                  </label>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 4 }}>
+                  <div className="control-group" style={{ marginBottom: 0 }}>
+                    <label>{t.tabBgRemove} - {t.bgRemoveTolerance} ({editBgTolerance})</label>
+                    <input type="range" min="1" max="50" value={editBgTolerance}
+                      onChange={(e) => setEditBgTolerance(Number(e.target.value))} />
+                  </div>
+                  <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                    <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                      onClick={applyEditBgRemoval} disabled={editBgApplied}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_fix</span>
+                      {t.bgRemoveApply}
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                      onClick={undoEditBgRemoval} disabled={!editBgApplied}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>undo</span>
+                      {t.bgRemoveUndo}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 4 }}>
+                  <div className="row" style={{ gap: 8 }}>
+                    <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                      onClick={resetEditSliders}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>refresh</span>
+                      {t.adjustReset}
+                    </button>
+                    <button className="btn" style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                      onClick={applyEditToFrame}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check</span>
+                      {t.adjustApply}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
