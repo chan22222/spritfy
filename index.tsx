@@ -2184,7 +2184,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/sprite', element: <SpriteWrapper /> },
       { path: '/editor', element: <EditorWrapper /> },
-      { path: '*', element: <Navigate to="/sprite" replace /> },
+      { path: '*', element: <Navigate to="/editor" replace /> },
     ],
   },
 ]);

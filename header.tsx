@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 
 interface HeaderProps {
@@ -12,17 +12,17 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
 
   return (
     <div className="app-header">
-      <div className="brand" style={{ cursor: 'pointer' }}>
+      <Link to="/" className="brand">
         <img src="/logo.png" alt="Spritfy" style={{ height: 52 }} />
-      </div>
+      </Link>
       <nav className="header-nav">
-        <NavLink to="/sprite" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
-          {t.navSprite}
-        </NavLink>
         <NavLink to="/editor" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>draw</span>
           {t.navEditor}
+        </NavLink>
+        <NavLink to="/sprite" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
+          {t.navSprite}
         </NavLink>
       </nav>
       <button
