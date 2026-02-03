@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useContext } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
@@ -8,18 +8,7 @@ import { LandingPage } from '@/landing.tsx';
 import { PrivacyPage } from '@/privacy.tsx';
 import { TermsPage } from '@/terms.tsx';
 import { AboutPage } from '@/about.tsx';
-
-// ===== Language Context =====
-interface LangContextType {
-  lang: Lang;
-  t: Record<string, string>;
-  setLang: (l: Lang) => void;
-}
-export const LangContext = createContext<LangContextType>({
-  lang: 'en',
-  t: i18n['en'],
-  setLang: () => {},
-});
+import { LangContext } from '@/lang-context.ts';
 
 interface Frame {
   id: number;
