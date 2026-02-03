@@ -8,6 +8,8 @@ import { LandingPage } from '@/landing.tsx';
 import { PrivacyPage } from '@/privacy.tsx';
 import { TermsPage } from '@/terms.tsx';
 import { AboutPage } from '@/about.tsx';
+import { GuideSpriteSheetPage } from '@/guide-sprite.tsx';
+import { GuidePixelArtPage } from '@/guide-pixel-art.tsx';
 import { LangContext } from '@/lang-context.ts';
 
 interface Frame {
@@ -2285,6 +2287,16 @@ const AboutWrapper = () => {
   return <AboutPage lang={lang} t={t} />;
 };
 
+const GuideSpriteWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <GuideSpriteSheetPage lang={lang} t={t} />;
+};
+
+const GuidePixelArtWrapper = () => {
+  const { lang, t } = useContext(LangContext);
+  return <GuidePixelArtPage lang={lang} t={t} />;
+};
+
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -2295,6 +2307,8 @@ const router = createBrowserRouter([
       { path: '/privacy', element: <PrivacyWrapper /> },
       { path: '/terms', element: <TermsWrapper /> },
       { path: '/about', element: <AboutWrapper /> },
+      { path: '/guide/sprite-sheet', element: <GuideSpriteWrapper /> },
+      { path: '/guide/pixel-art', element: <GuidePixelArtWrapper /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

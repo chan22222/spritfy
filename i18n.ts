@@ -241,6 +241,43 @@ export const i18n: Record<Lang, Record<string, string>> = {
     // Editor description content
     editorWelcomeDesc: '레이어, 애니메이션, 대칭 그리기 등 전문 기능을 갖춘 무료 온라인 픽셀 아트 에디터입니다.',
     editorShortcuts: '단축키: B(연필) E(지우개) G(채우기) I(스포이드) L(직선) U(사각형) O(원)',
+
+    // Guide: Sprite Sheet
+    guideSpriteTitle: '스프라이트 시트 완벽 가이드',
+    guideSpriteIntro: '게임 개발에서 필수적인 스프라이트 시트의 개념부터 제작 방법까지, Spritfy를 활용한 실전 가이드를 소개합니다.',
+    guideSpriteS1Title: '1. 스프라이트 시트란?',
+    guideSpriteS1Content: '스프라이트 시트(Sprite Sheet)란 게임이나 애니메이션에서 사용하는 여러 개의 이미지 프레임을 하나의 큰 이미지 파일에 격자 형태로 배치한 것입니다. 예를 들어 캐릭터의 걷기 애니메이션이 8프레임이라면, 8개의 개별 이미지를 하나의 PNG 파일에 가로 또는 격자로 나열합니다.\n\n이렇게 하면 게임 엔진은 하나의 이미지만 로드한 뒤, 좌표를 이동하며 필요한 프레임을 잘라 보여주는 방식으로 애니메이션을 재생합니다. 이것은 개별 파일을 여러 번 불러오는 것보다 훨씬 효율적입니다.',
+    guideSpriteS2Title: '2. 게임에서 스프라이트 시트가 중요한 이유',
+    guideSpriteS2Content: '스프라이트 시트를 사용하면 다음과 같은 이점이 있습니다:\n\n• 성능 최적화: 하나의 이미지 파일에서 여러 프레임을 읽으므로, GPU 텍스처 전환(draw call)이 줄어들어 렌더링 성능이 향상됩니다.\n• 메모리 효율: 여러 개의 작은 파일 대신 하나의 텍스처 아틀라스를 사용하면 메모리 낭비가 줄어듭니다.\n• 관리 편의성: 캐릭터 하나의 모든 애니메이션을 한 파일로 관리할 수 있어 프로젝트 구조가 깔끔해집니다.\n• 로딩 속도: HTTP 요청 수가 줄어 웹 게임이나 모바일 게임에서 초기 로딩 시간이 단축됩니다.\n\n특히 Unity, Godot, Phaser, RPG Maker 등 대부분의 게임 엔진은 스프라이트 시트를 기본적으로 지원하며, 표준적인 에셋 형식으로 사용됩니다.',
+    guideSpriteS3Title: '3. Spritfy로 스프라이트 시트 만드는 법',
+    guideSpriteS3Content: 'Spritfy의 스프라이트 도구를 사용하면 두 가지 방법으로 시트를 만들 수 있습니다.\n\n[방법 1] 동영상/GIF에서 프레임 추출\n1. 스프라이트 페이지에서 "동영상 / GIF 업로드" 버튼을 클릭하거나, 파일을 드래그 앤 드롭합니다.\n2. 추출 간격(N프레임마다)을 설정하여 필요한 프레임만 추출합니다.\n3. 불필요한 프레임을 선택 해제하거나, 중복 제거 기능을 사용합니다.\n4. 열 수와 크기를 설정한 뒤 "스프라이트 시트 다운로드"를 클릭합니다.\n\n[방법 2] 기존 시트 분할\n1. "시트 가져오기" 버튼으로 기존 스프라이트 시트 이미지를 업로드합니다.\n2. 행과 열 수를 지정하면 자동으로 개별 프레임으로 분리됩니다.\n3. 분리된 프레임을 편집하거나, 새로운 구성으로 다시 내보낼 수 있습니다.',
+    guideSpriteS4Title: '4. 배경 제거 팁',
+    guideSpriteS4Content: '스프라이트 시트에서 배경을 투명하게 만드는 것은 매우 중요합니다. Spritfy는 두 가지 배경 제거 방법을 제공합니다.\n\n• 크로마키 방식: 특정 색상(초록, 파랑 등)을 선택하여 해당 색상을 투명하게 변환합니다. 단색 배경의 동영상에서 촬영한 소재에 적합합니다. 허용 범위(Tolerance)를 조절하면 유사한 색상까지 함께 제거할 수 있습니다.\n• 모서리 제거(Flood Fill) 방식: 이미지의 모서리(꼭짓점)부터 시작하여 연결된 동일 색상 영역을 제거합니다. 배경색이 일정하지만 피사체 내부에 같은 색이 있을 때 유용합니다.\n\n팁: 크로마키 기능을 사용하면 여러 색상을 순차적으로 제거할 수 있습니다. 먼저 주요 배경색을 제거한 뒤, 남은 잔여 색상을 추가로 정리하세요.',
+    guideSpriteS5Title: '5. 내보내기 최적화 팁',
+    guideSpriteS5Content: '완성된 스프라이트 시트를 게임에서 효과적으로 사용하려면 다음 사항을 고려하세요.\n\n• 2의 거듭제곱 크기: 많은 게임 엔진은 2의 거듭제곱(32, 64, 128, 256, 512...) 크기의 텍스처를 선호합니다. 프레임 크기와 열 수를 조절하여 최종 시트가 이 규칙에 맞도록 설정하면 GPU 호환성이 좋아집니다.\n• 프레임 크기 통일: 모든 프레임의 가로/세로 크기가 동일해야 게임 엔진에서 올바르게 잘라 쓸 수 있습니다. Spritfy의 "고정" 크기 옵션을 사용하면 모든 프레임을 동일한 크기로 맞출 수 있습니다.\n• 열 수 설정: 열 수를 0으로 두면 자동으로 적절한 배치를 계산합니다. 직접 지정하면 게임 엔진에서 프레임을 읽기 쉬운 구조로 만들 수 있습니다.\n• PNG 형식: 스프라이트 시트는 투명도를 지원하는 PNG 형식으로 내보내는 것이 표준입니다. JPG는 투명도를 지원하지 않으므로 권장하지 않습니다.\n• GIF 내보내기: 애니메이션 미리보기나 커뮤니티 공유 목적이라면 GIF로 내보내는 것도 좋습니다. FPS를 조절하여 원하는 재생 속도를 설정하세요.',
+    guideSpriteCtaTop: '스프라이트 도구 바로가기',
+    guideSpriteCtaBottom: '이제 직접 스프라이트 시트를 만들어 보세요!',
+    guideSpriteCtaButton: '스프라이트 만들기',
+
+    // Guide: Pixel Art
+    guidePixelTitle: '픽셀 아트 입문 가이드',
+    guidePixelIntro: '픽셀 아트의 기초 개념부터 실전 기법까지, 처음 시작하는 분들을 위한 가이드입니다. Spritfy 에디터와 함께 픽셀 아트의 세계로 들어가 보세요.',
+    guidePixelS1Title: '1. 픽셀 아트란?',
+    guidePixelS1Content: '픽셀 아트(Pixel Art)는 하나하나의 픽셀(화소)을 수작업으로 배치하여 그림을 완성하는 디지털 아트 형식입니다. 1970~90년대 컴퓨터와 게임기의 하드웨어 제약으로 인해 자연스럽게 발전한 표현 방식으로, 제한된 해상도와 색상 수 안에서 최대한의 표현력을 이끌어내는 것이 핵심입니다.\n\n오늘날에는 기술적 제약이 사라졌지만, 픽셀 아트 특유의 레트로 감성과 명확한 시각적 스타일 때문에 인디 게임, 소셜 미디어 아바타, NFT 아트 등 다양한 분야에서 인기를 얻고 있습니다. Stardew Valley, Celeste, Undertale 같은 인디 게임의 성공이 픽셀 아트의 매력을 잘 보여줍니다.',
+    guidePixelS2Title: '2. 시작하기: 캔버스 크기와 팔레트',
+    guidePixelS2Content: '픽셀 아트를 시작할 때 가장 먼저 결정해야 할 것은 캔버스 크기와 색상 팔레트입니다.\n\n캔버스 크기 가이드:\n• 16x16: 아이콘, 아이템, 작은 오브젝트에 적합합니다. 가장 작은 단위로 연습하기 좋습니다.\n• 32x32: 게임 캐릭터, 타일에 가장 많이 사용되는 크기입니다. 충분한 디테일을 표현하면서도 픽셀 아트의 매력을 살릴 수 있습니다.\n• 64x64: 큰 캐릭터나 상세한 오브젝트에 사용합니다.\n• 128x128 이상: 배경이나 대형 일러스트에 적합합니다.\n\n팔레트 선택:\nSpritfy 에디터에는 다양한 프리셋 팔레트가 내장되어 있습니다. 처음에는 8~16색 정도의 제한된 팔레트로 시작하는 것을 권장합니다. 색상이 적을수록 조화로운 그림을 그리기 쉽고, 픽셀 아트의 본질에 더 가까워집니다.',
+    guidePixelS3Title: '3. 기본 기법',
+    guidePixelS3Content: '픽셀 아트에서 자주 사용되는 핵심 기법들을 알아봅시다.\n\n아웃라인(Outline)\n외곽선은 픽셀 아트에서 형태를 정의하는 가장 기본적인 요소입니다. 검은색 외곽선은 강렬하고 명확한 느낌을 주고, 색상 외곽선(셀아웃)은 부드럽고 자연스러운 느낌을 줍니다. 대각선을 그릴 때는 "계단 현상"을 최소화하기 위해 픽셀을 2-1-2-1 또는 2-2-1-2-2 패턴으로 배치하세요.\n\n안티앨리어싱(Anti-aliasing)\n계단 현상을 부드럽게 만드는 기법입니다. 두 색상이 만나는 경계에 중간 톤의 픽셀을 배치하여 시각적으로 매끄러운 곡선이나 대각선을 만듭니다. 단, 너무 많이 사용하면 픽셀 아트 특유의 선명함이 사라질 수 있으니 주의하세요.\n\n디더링(Dithering)\n제한된 색상으로 중간 톤이나 텍스처를 표현하는 기법입니다. 두 가지 색상의 픽셀을 체크무늬처럼 교차 배치하면, 멀리서 보았을 때 두 색의 중간색처럼 보입니다. 그라데이션, 그림자, 질감 표현에 효과적입니다.',
+    guidePixelS4Title: '4. 애니메이션 기초',
+    guidePixelS4Content: '정지된 픽셀 아트에 생명을 불어넣는 애니메이션의 기초를 알아봅시다.\n\n프레임 수와 FPS:\n• 걷기 애니메이션: 4~8프레임이 일반적입니다. 최소한 접지 포즈, 통과 포즈, 반대쪽 접지, 반대쪽 통과 4개 프레임이면 자연스러운 걸음걸이를 표현할 수 있습니다.\n• 대기(Idle) 애니메이션: 2~4프레임으로 미세한 움직임(숨쉬기 등)을 표현합니다.\n• 공격 애니메이션: 예비 동작 → 실행 → 후 동작 3단계 구조가 기본입니다.\n\n핵심 원칙:\n• 키프레임 먼저: 애니메이션의 핵심이 되는 포즈(키프레임)를 먼저 그린 뒤, 중간 동작을 채워 넣습니다.\n• 어니언 스킨 활용: Spritfy 에디터의 어니언 스킨 기능을 켜면 이전/다음 프레임이 반투명하게 보여, 자연스러운 동작 연결을 만들기 쉽습니다.\n• 과장(Squash & Stretch): 움직임을 약간 과장하면 더 생동감 있는 애니메이션이 됩니다. 예를 들어 점프할 때 캐릭터를 살짝 납작하게(squash), 공중에서 늘씬하게(stretch) 표현합니다.\n• 반복 확인: 애니메이션 재생으로 루프가 자연스러운지 반드시 확인하세요.',
+    guidePixelS5Title: '5. Spritfy 에디터 활용 팁',
+    guidePixelS5Content: 'Spritfy 에디터를 더 효율적으로 사용하기 위한 팁과 단축키를 소개합니다.\n\n키보드 단축키:\n• B: 연필 도구 — 기본 그리기 도구입니다.\n• E: 지우개 도구 — 픽셀을 투명하게 지웁니다.\n• G: 채우기 도구 — 연결된 같은 색상 영역을 한 번에 칠합니다.\n• I: 스포이드 도구 — 캔버스에서 색상을 추출합니다.\n• L: 직선 도구 — 시작점에서 끝점까지 직선을 긋습니다.\n• U: 사각형 도구 — 사각형을 그립니다.\n• O: 원/타원 도구 — 원이나 타원을 그립니다.\n• Ctrl+Z: 되돌리기\n• Ctrl+Y: 다시 실행\n\n레이어 활용:\n여러 레이어를 사용하면 작업이 훨씬 편해집니다. 예를 들어 캐릭터의 몸통, 머리, 장비를 각각 다른 레이어에 그리면 개별적으로 수정할 수 있습니다. 레이어 투명도를 조절하면 스케치 위에 클린업 작업을 하기에도 좋습니다.\n\n대칭 그리기:\n좌우 대칭 기능을 켜면 한쪽만 그려도 반대쪽이 자동으로 완성됩니다. 정면을 바라보는 캐릭터나 대칭적인 오브젝트를 그릴 때 시간을 크게 절약할 수 있습니다.\n\n내보내기:\n• 단일 프레임: PNG로 내보내면 투명 배경이 유지됩니다.\n• 애니메이션: 스프라이트 시트로 내보내면 게임 엔진에서 바로 사용할 수 있고, GIF로 내보내면 SNS나 커뮤니티에서 공유하기 좋습니다.',
+    guidePixelCtaTop: '에디터 바로가기',
+    guidePixelCtaBottom: '지금 바로 첫 번째 픽셀 아트를 그려보세요!',
+    guidePixelCtaButton: '에디터 시작하기',
+
+    // Footer
+    footerGuide: '가이드',
   },
   en: {
     // Navigation
@@ -482,5 +519,42 @@ export const i18n: Record<Lang, Record<string, string>> = {
     // Editor description content
     editorWelcomeDesc: 'A free online pixel art editor with professional features including layers, animation, and symmetry drawing.',
     editorShortcuts: 'Shortcuts: B(Pencil) E(Eraser) G(Fill) I(Eyedropper) L(Line) U(Rect) O(Ellipse)',
+
+    // Guide: Sprite Sheet
+    guideSpriteTitle: 'The Complete Guide to Sprite Sheets',
+    guideSpriteIntro: 'From the concept of sprite sheets essential for game development to practical creation methods — a hands-on guide using Spritfy.',
+    guideSpriteS1Title: '1. What is a Sprite Sheet?',
+    guideSpriteS1Content: 'A sprite sheet is a single image file that contains multiple image frames arranged in a grid layout, used in games and animations. For example, if a character\'s walk animation has 8 frames, all 8 individual images are arranged horizontally or in a grid within one PNG file.\n\nThe game engine loads just one image and displays animation by shifting coordinates to crop the needed frame. This is far more efficient than loading multiple separate files.',
+    guideSpriteS2Title: '2. Why Sprite Sheets Matter in Games',
+    guideSpriteS2Content: 'Using sprite sheets offers several key advantages:\n\n• Performance Optimization: Reading multiple frames from a single image file reduces GPU texture switching (draw calls), improving rendering performance.\n• Memory Efficiency: Using one texture atlas instead of many small files reduces memory waste.\n• Easy Management: All animations for a single character can be managed in one file, keeping your project structure clean.\n• Faster Loading: Fewer HTTP requests mean shorter initial load times for web and mobile games.\n\nMost game engines like Unity, Godot, Phaser, and RPG Maker natively support sprite sheets as a standard asset format.',
+    guideSpriteS3Title: '3. Creating Sprite Sheets with Spritfy',
+    guideSpriteS3Content: 'Spritfy\'s sprite tool offers two methods for creating sheets.\n\n[Method 1] Extract Frames from Video/GIF\n1. Click "Upload Video / GIF" on the Sprite page, or drag and drop a file.\n2. Set the extraction interval (every N frames) to extract only the frames you need.\n3. Deselect unnecessary frames or use the duplicate removal feature.\n4. Set the column count and size, then click "Download Sprite Sheet."\n\n[Method 2] Split an Existing Sheet\n1. Upload an existing sprite sheet image using "Import Sheet."\n2. Specify the number of rows and columns to automatically split into individual frames.\n3. Edit the separated frames or re-export with a new configuration.',
+    guideSpriteS4Title: '4. Background Removal Tips',
+    guideSpriteS4Content: 'Making the background transparent in sprite sheets is crucial. Spritfy provides two background removal methods.\n\n• Chroma Key: Select a specific color (green, blue, etc.) and convert it to transparent. Ideal for footage shot against a solid color background. Adjust the Tolerance to remove similar colors as well.\n• Corner Fill (Flood Fill): Starts from the corners of the image and removes connected regions of the same color. Useful when the background color is consistent but the same color appears inside the subject.\n\nTip: Use the chroma key feature to remove multiple colors sequentially. First remove the main background color, then clean up any remaining residual colors.',
+    guideSpriteS5Title: '5. Export Optimization Tips',
+    guideSpriteS5Content: 'Consider the following when exporting your finished sprite sheet for game use.\n\n• Power of Two Sizes: Many game engines prefer textures in powers of two (32, 64, 128, 256, 512...). Adjusting frame size and column count so the final sheet follows this rule improves GPU compatibility.\n• Uniform Frame Sizes: All frames must have the same width and height for the game engine to crop them correctly. Use Spritfy\'s "Fixed" size option to ensure uniform dimensions.\n• Column Count: Setting columns to 0 automatically calculates the optimal layout. Manual setting lets you create a structure that\'s easy for game engines to read.\n• PNG Format: Exporting sprite sheets in PNG format, which supports transparency, is the standard. JPG does not support transparency and is not recommended.\n• GIF Export: For animation previews or sharing in communities, exporting as GIF is also a great option. Adjust FPS to set your desired playback speed.',
+    guideSpriteCtaTop: 'Go to Sprite Tool',
+    guideSpriteCtaBottom: 'Ready to create your own sprite sheet?',
+    guideSpriteCtaButton: 'Make Sprites',
+
+    // Guide: Pixel Art
+    guidePixelTitle: 'Pixel Art Beginner\'s Guide',
+    guidePixelIntro: 'From the fundamentals of pixel art to practical techniques — a guide for complete beginners. Dive into the world of pixel art with Spritfy Editor.',
+    guidePixelS1Title: '1. What is Pixel Art?',
+    guidePixelS1Content: 'Pixel art is a form of digital art where each individual pixel is manually placed to create an image. It naturally evolved from the hardware limitations of computers and game consoles in the 1970s-90s, where the key challenge was maximizing expressiveness within limited resolution and color counts.\n\nToday, while those technical constraints are gone, pixel art remains popular across indie games, social media avatars, NFT art, and more — thanks to its unique retro aesthetic and clear visual style. The success of indie games like Stardew Valley, Celeste, and Undertale showcases the enduring appeal of pixel art.',
+    guidePixelS2Title: '2. Getting Started: Canvas Size & Palette',
+    guidePixelS2Content: 'The first things to decide when starting pixel art are canvas size and color palette.\n\nCanvas Size Guide:\n• 16x16: Perfect for icons, items, and small objects. Great for practice.\n• 32x32: The most common size for game characters and tiles. Offers enough detail while maintaining pixel art charm.\n• 64x64: Used for larger characters or detailed objects.\n• 128x128+: Suitable for backgrounds or large illustrations.\n\nPalette Selection:\nSpritfy Editor includes various preset palettes. We recommend starting with a limited palette of 8-16 colors. Fewer colors make it easier to create harmonious artwork and stay true to the essence of pixel art.',
+    guidePixelS3Title: '3. Core Techniques',
+    guidePixelS3Content: 'Let\'s explore the essential techniques commonly used in pixel art.\n\nOutlines\nOutlines are the most fundamental element for defining shapes in pixel art. Black outlines give a bold, clear look, while colored outlines (sel-out) create a softer, more natural feel. When drawing diagonals, arrange pixels in 2-1-2-1 or 2-2-1-2-2 patterns to minimize the "staircase effect."\n\nAnti-aliasing\nA technique to smooth out jagged edges. Place intermediate-tone pixels at the boundary where two colors meet to create visually smooth curves and diagonals. However, overuse can diminish the crispness that characterizes pixel art, so use it sparingly.\n\nDithering\nA technique for representing intermediate tones or textures with limited colors. By alternating pixels of two colors in a checkerboard pattern, they appear as a blended middle tone from a distance. Effective for gradients, shadows, and texture representation.',
+    guidePixelS4Title: '4. Animation Basics',
+    guidePixelS4Content: 'Let\'s learn the basics of animation to bring your pixel art to life.\n\nFrame Count & FPS:\n• Walk Animation: 4-8 frames is typical. At minimum, contact pose, passing pose, opposite contact, and opposite passing — 4 frames can create a natural walk cycle.\n• Idle Animation: 2-4 frames for subtle movement (breathing, etc.).\n• Attack Animation: The basic structure is wind-up → execution → follow-through.\n\nKey Principles:\n• Key Frames First: Draw the key poses first, then fill in the in-between frames.\n• Use Onion Skin: Spritfy Editor\'s onion skin feature shows previous/next frames as semi-transparent overlays, making it easy to create smooth motion transitions.\n• Exaggeration (Squash & Stretch): Slightly exaggerating movement creates more lively animations. For example, squash the character slightly when landing, stretch when airborne.\n• Check the Loop: Always preview the animation to make sure the loop plays smoothly.',
+    guidePixelS5Title: '5. Spritfy Editor Tips & Shortcuts',
+    guidePixelS5Content: 'Here are tips and keyboard shortcuts to use Spritfy Editor more efficiently.\n\nKeyboard Shortcuts:\n• B: Pencil tool — the default drawing tool.\n• E: Eraser tool — erases pixels to transparent.\n• G: Fill tool — fills connected regions of the same color at once.\n• I: Eyedropper tool — picks a color from the canvas.\n• L: Line tool — draws a straight line from start to end point.\n• U: Rectangle tool — draws rectangles.\n• O: Ellipse tool — draws circles and ellipses.\n• Ctrl+Z: Undo\n• Ctrl+Y: Redo\n\nUsing Layers:\nMultiple layers make work much easier. For example, drawing a character\'s body, head, and equipment on separate layers lets you modify each independently. Adjusting layer opacity is also great for cleanup work over sketches.\n\nSymmetry Drawing:\nEnable horizontal symmetry and only draw one side — the other side completes automatically. This saves significant time when drawing front-facing characters or symmetrical objects.\n\nExporting:\n• Single Frame: Export as PNG to maintain transparent backgrounds.\n• Animation: Export as a sprite sheet for direct use in game engines, or as GIF for sharing on social media and communities.',
+    guidePixelCtaTop: 'Go to Editor',
+    guidePixelCtaBottom: 'Start drawing your first pixel art now!',
+    guidePixelCtaButton: 'Open Editor',
+
+    // Footer
+    footerGuide: 'Guides',
   },
 };

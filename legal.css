@@ -10,6 +10,7 @@
 
 .footer-nav {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 12px;
@@ -304,6 +305,67 @@
   padding: 4px 12px;
   line-height: 1.5;
   opacity: 0.7;
+}
+
+/* ============================================
+   Guide Pages
+   ============================================ */
+.guide-cta-box {
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+.guide-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.9rem;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 10px 20px;
+  border: 2px solid var(--primary);
+  transition: background 0.2s, color 0.2s;
+}
+
+.guide-cta-link:hover {
+  background: var(--primary);
+  color: var(--bg-dark);
+}
+
+.guide-cta-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.guide-bottom-cta {
+  text-align: center;
+  margin: 40px 0 16px;
+  padding: 28px;
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+}
+
+.guide-bottom-cta p {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1rem;
+  color: var(--text-main);
+  margin: 0 0 16px;
+}
+
+.guide-cta-button {
+  display: inline-block;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.9rem;
+  color: var(--bg-dark);
+  background: var(--primary);
+  padding: 10px 28px;
+  border: none;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.guide-cta-button:hover {
+  opacity: 0.85;
 }
 
 /* ============================================

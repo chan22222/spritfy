@@ -12,6 +12,10 @@ export const Footer: React.FC<FooterProps> = ({ lang, t }) => {
     <footer className="site-footer">
       <div className="footer-pixel-row" aria-hidden="true" />
       <nav className="footer-nav" aria-label="Footer navigation">
+        <Link to="/guide/sprite-sheet">{t.footerGuide} - Sprite</Link>
+        <span className="footer-sep" aria-hidden="true">|</span>
+        <Link to="/guide/pixel-art">{t.footerGuide} - Pixel Art</Link>
+        <span className="footer-sep" aria-hidden="true">|</span>
         <Link to="/about">{t.footerAbout}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
         <Link to="/privacy">{t.footerPrivacy}</Link>
