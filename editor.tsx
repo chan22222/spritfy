@@ -285,6 +285,57 @@ const drawRect = (
   }
 };
 
+// ===== Shape outline iterators =====
+const forEachRectOutlinePoint = (
+  x0: number, y0: number, x1: number, y1: number,
+  cb: (x: number, y: number) => void,
+) => {
+  const minX = Math.min(x0, x1), maxX = Math.max(x0, x1);
+  const minY = Math.min(y0, y1), maxY = Math.max(y0, y1);
+  for (let x = minX; x <= maxX; x++) {
+    cb(x, minY);
+    if (minY !== maxY) cb(x, maxY);
+  }
+  for (let y = minY + 1; y < maxY; y++) {
+    cb(minX, y);
+    if (minX !== maxX) cb(maxX, y);
+  }
+};
+
+const forEachEllipseOutlinePoint = (
+  cx: number, cy: number, rx: number, ry: number,
+  cb: (x: number, y: number) => void,
+) => {
+  if (rx <= 0 && ry <= 0) { cb(cx, cy); return; }
+  if (rx === 0) { for (let y = cy - ry; y <= cy + ry; y++) cb(cx, y); return; }
+  if (ry === 0) { for (let x = cx - rx; x <= cx + rx; x++) cb(x, cy); return; }
+
+  let x = 0, y = ry;
+  const rxSq = rx * rx, rySq = ry * ry;
+  let p1 = rySq - rxSq * ry + 0.25 * rxSq;
+
+  const plot = (px: number, py: number) => {
+    cb(cx + px, cy + py);
+    cb(cx - px, cy + py);
+    cb(cx + px, cy - py);
+    cb(cx - px, cy - py);
+  };
+
+  while (2 * rySq * x <= 2 * rxSq * y) {
+    plot(x, y);
+    x++;
+    if (p1 < 0) { p1 += 2 * rySq * x + rySq; }
+    else { y--; p1 += 2 * rySq * x - 2 * rxSq * y + rySq; }
+  }
+  let p2 = rySq * (x + 0.5) * (x + 0.5) + rxSq * (y - 1) * (y - 1) - rxSq * rySq;
+  while (y >= 0) {
+    plot(x, y);
+    y--;
+    if (p2 > 0) { p2 -= 2 * rxSq * y + rxSq; }
+    else { x++; p2 += 2 * rySq * x - 2 * rxSq * y + rxSq; }
+  }
+};
+
 // ===== Layer Compositing =====
 const compositeAllLayers = (layers: Layer[], w: number, h: number): ImageData => {
   const result = new ImageData(w, h);
@@ -402,6 +453,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [showNewCanvasModal, setShowNewCanvasModal] = useState(false);
   const [newW, setNewW] = useState(32);
   const [newH, setNewH] = useState(32);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; frameIndex: number } | null>(null);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
 
   // Drawing refs
   const isDrawingRef = useRef(false);
@@ -410,6 +463,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ mx: 0, my: 0, px: 0, py: 0 });
   const spaceHeldRef = useRef(false);
+  const shiftHeldRef = useRef(false);
+  const drawButtonRef = useRef(0);
 
   // Canvas refs
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -501,7 +556,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       const cellSize = 1;
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-          bgCtx.fillStyle = (x + y) % 2 === 0 ? '#c0c0c0' : '#a0a0a0';
+          bgCtx.fillStyle = (x + y) % 2 === 0 ? '#b0b0b0' : '#a8a8a8';
           bgCtx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
         }
       }
@@ -562,8 +617,55 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         }
       }
 
-      // Live brush preview — shows actual color + shape following cursor
-      if (mouseCoords && mouseCoords.x >= 0 && mouseCoords.x < w && mouseCoords.y >= 0 && mouseCoords.y < h) {
+      const isShapeTool = activeTool === 'line' || activeTool === 'rect' || activeTool === 'ellipse';
+
+      // Shape preview during active drawing
+      if (isDrawingRef.current && drawStartRef.current && lastPixelRef.current && isShapeTool) {
+        const previewData = createEmptyImageData(w, h);
+        const s = drawStartRef.current;
+        const lp = lastPixelRef.current;
+        const col = primaryColor;
+        const shift = shiftHeldRef.current;
+
+        if (activeTool === 'line') {
+          bresenhamLine(s.x, s.y, lp.x, lp.y, (px, py) => {
+            if (px >= 0 && py >= 0 && px < w && py < h)
+              stampBrush(previewData.data, w, h, px, py, brushSize, col, false, false);
+          });
+        } else if (activeTool === 'rect') {
+          if (shift) {
+            drawRect(previewData.data, w, s.x, s.y, lp.x, lp.y, col, true);
+          } else {
+            forEachRectOutlinePoint(s.x, s.y, lp.x, lp.y, (px, py) => {
+              if (px >= 0 && py >= 0 && px < w && py < h)
+                stampBrush(previewData.data, w, h, px, py, brushSize, col, false, false);
+            });
+          }
+        } else if (activeTool === 'ellipse') {
+          const crx = Math.abs(lp.x - s.x);
+          const cry = Math.abs(lp.y - s.y);
+          const ccx = Math.round((s.x + lp.x) / 2);
+          const ccy = Math.round((s.y + lp.y) / 2);
+          if (shift) {
+            drawEllipse(previewData.data, w, h, ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), col, true);
+          } else {
+            forEachEllipseOutlinePoint(ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), (px, py) => {
+              if (px >= 0 && py >= 0 && px < w && py < h)
+                stampBrush(previewData.data, w, h, px, py, brushSize, col, false, false);
+            });
+          }
+        }
+
+        const tmpC = document.createElement('canvas');
+        tmpC.width = w; tmpC.height = h;
+        tmpC.getContext('2d')!.putImageData(previewData, 0, 0);
+        ctx.globalAlpha = 0.6;
+        ctx.drawImage(tmpC, 0, 0);
+        ctx.globalAlpha = 1;
+      }
+      // Brush preview (not for eyedropper or fill, not during shape drawing)
+      else if (mouseCoords && mouseCoords.x >= 0 && mouseCoords.x < w && mouseCoords.y >= 0 && mouseCoords.y < h
+               && activeTool !== 'eyedropper' && activeTool !== 'fill') {
         const bx = mouseCoords.x;
         const by = mouseCoords.y;
         const previewColor = activeTool === 'eraser'
@@ -571,29 +673,13 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           : `rgba(${primaryColor[0]},${primaryColor[1]},${primaryColor[2]},0.55)`;
 
         const offsets = getBrushOffsets(brushSize);
-        const inBrush = new Set<string>();
-
         ctx.fillStyle = previewColor;
         for (const [dx, dy] of offsets) {
           const px = bx + dx, py = by + dy;
           if (px >= 0 && py >= 0 && px < w && py < h) {
             ctx.fillRect(px, py, 1, 1);
-            inBrush.add(`${px},${py}`);
           }
         }
-
-        // Thin outline around brush area
-        ctx.beginPath();
-        for (const key of inBrush) {
-          const [px, py] = key.split(',').map(Number);
-          if (!inBrush.has(`${px - 1},${py}`)) { ctx.moveTo(px, py); ctx.lineTo(px, py + 1); }
-          if (!inBrush.has(`${px + 1},${py}`)) { ctx.moveTo(px + 1, py); ctx.lineTo(px + 1, py + 1); }
-          if (!inBrush.has(`${px},${py - 1}`)) { ctx.moveTo(px, py); ctx.lineTo(px + 1, py); }
-          if (!inBrush.has(`${px},${py + 1}`)) { ctx.moveTo(px, py + 1); ctx.lineTo(px + 1, py + 1); }
-        }
-        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-        ctx.lineWidth = 1.5 / zoom;
-        ctx.stroke();
       }
     }
   }, [activeFrame, activeFrameIndex, canvasWidth, canvasHeight, frames, onionSkinEnabled, onionSkinOpacity, showGrid, zoom, mouseCoords, brushSize, activeTool, primaryColor]);
@@ -704,6 +790,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       return;
     }
 
+    drawButtonRef.current = e.button;
+
     if (activeTool === 'line' || activeTool === 'rect' || activeTool === 'ellipse') {
       pushHistory();
       isDrawingRef.current = true;
@@ -743,52 +831,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
     if (activeTool === 'line' || activeTool === 'rect' || activeTool === 'ellipse') {
       lastPixelRef.current = { x, y };
-      // Render preview on overlay
-      const overlayCanvas = overlayCanvasRef.current;
-      if (overlayCanvas && drawStartRef.current) {
-        const ctx = overlayCanvas.getContext('2d')!;
-        overlayCanvas.width = canvasWidth;
-        overlayCanvas.height = canvasHeight;
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        // Redraw grid
-        if (showGrid && zoom >= 4) {
-          ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-          ctx.lineWidth = 1 / zoom;
-          for (let gx = 0; gx <= canvasWidth; gx++) {
-            ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvasHeight); ctx.stroke();
-          }
-          for (let gy = 0; gy <= canvasHeight; gy++) {
-            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvasWidth, gy); ctx.stroke();
-          }
-        }
-
-        // Preview shape
-        const previewData = createEmptyImageData(canvasWidth, canvasHeight);
-        const s = drawStartRef.current;
-        const col = primaryColor;
-        if (activeTool === 'line') {
-          bresenhamLine(s.x, s.y, x, y, (px, py) => {
-            if (px >= 0 && py >= 0 && px < canvasWidth && py < canvasHeight)
-              setPixel(previewData.data, canvasWidth, px, py, col);
-          });
-        } else if (activeTool === 'rect') {
-          drawRect(previewData.data, canvasWidth, s.x, s.y, x, y, col, e.shiftKey);
-        } else if (activeTool === 'ellipse') {
-          const crx = Math.abs(x - s.x);
-          const cry = Math.abs(y - s.y);
-          const ccx = Math.round((s.x + x) / 2);
-          const ccy = Math.round((s.y + y) / 2);
-          drawEllipse(previewData.data, canvasWidth, canvasHeight, ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), col, e.shiftKey);
-        }
-        const tmpC = document.createElement('canvas');
-        tmpC.width = canvasWidth;
-        tmpC.height = canvasHeight;
-        tmpC.getContext('2d')!.putImageData(previewData, 0, 0);
-        ctx.globalAlpha = 0.6;
-        ctx.drawImage(tmpC, 0, 0);
-        ctx.globalAlpha = 1;
-      }
+      shiftHeldRef.current = e.shiftKey;
       return;
     }
 
@@ -797,7 +840,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     if (!last || (last.x === x && last.y === y)) return;
 
     const isErase = activeTool === 'eraser';
-    const drawColor: RGBA = isErase ? [0, 0, 0, 0] : primaryColor;
+    const activeColor = drawButtonRef.current === 2 ? secondaryColor : primaryColor;
+    const drawColor: RGBA = isErase ? [0, 0, 0, 0] : activeColor;
     setFrames(prev => prev.map((f, fi) => {
       if (fi !== activeFrameIndex) return f;
       const layer = f.layers.find(l => l.id === activeFrame!.activeLayerId);
@@ -811,7 +855,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       return { ...f, layers: f.layers.map(l => l.id === layer.id ? { ...l, data: newData } : l) };
     }));
     lastPixelRef.current = { x, y };
-  }, [activeLayer, activeFrame, activeFrameIndex, activeTool, primaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, showGrid, zoom, symmetryH, symmetryV]);
+  }, [activeLayer, activeFrame, activeFrameIndex, activeTool, primaryColor, secondaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, showGrid, zoom, symmetryH, symmetryV]);
 
   const handlePointerUp = useCallback((e: React.MouseEvent) => {
     if (isPanningRef.current) {
@@ -826,7 +870,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       const { x, y } = getPixelCoord(e);
       const ex = Math.max(0, Math.min(canvasWidth - 1, x));
       const ey = Math.max(0, Math.min(canvasHeight - 1, y));
-      const col = primaryColor;
+      const col = drawButtonRef.current === 2 ? secondaryColor : primaryColor;
 
       setFrames(prev => prev.map((f, fi) => {
         if (fi !== activeFrameIndex) return f;
@@ -841,13 +885,27 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             }
           });
         } else if (activeTool === 'rect') {
-          drawRect(newData.data, canvasWidth, s.x, s.y, ex, ey, col, e.shiftKey);
+          if (e.shiftKey) {
+            drawRect(newData.data, canvasWidth, s.x, s.y, ex, ey, col, true);
+          } else {
+            forEachRectOutlinePoint(s.x, s.y, ex, ey, (px, py) => {
+              if (px >= 0 && py >= 0 && px < canvasWidth && py < canvasHeight)
+                stampBrush(newData.data, canvasWidth, canvasHeight, px, py, brushSize, col, symmetryH, symmetryV);
+            });
+          }
         } else if (activeTool === 'ellipse') {
           const crx = Math.abs(ex - s.x);
           const cry = Math.abs(ey - s.y);
           const ccx = Math.round((s.x + ex) / 2);
           const ccy = Math.round((s.y + ey) / 2);
-          drawEllipse(newData.data, canvasWidth, canvasHeight, ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), col, e.shiftKey);
+          if (e.shiftKey) {
+            drawEllipse(newData.data, canvasWidth, canvasHeight, ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), col, true);
+          } else {
+            forEachEllipseOutlinePoint(ccx, ccy, Math.floor(crx / 2), Math.floor(cry / 2), (px, py) => {
+              if (px >= 0 && py >= 0 && px < canvasWidth && py < canvasHeight)
+                stampBrush(newData.data, canvasWidth, canvasHeight, px, py, brushSize, col, symmetryH, symmetryV);
+            });
+          }
         }
         return { ...f, layers: f.layers.map(l => l.id === layer.id ? { ...l, data: newData } : l) };
       }));
@@ -856,7 +914,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     drawStartRef.current = null;
     lastPixelRef.current = null;
     renderAll();
-  }, [activeTool, activeLayer, activeFrame, activeFrameIndex, primaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, renderAll, symmetryH, symmetryV]);
+  }, [activeTool, activeLayer, activeFrame, activeFrameIndex, primaryColor, secondaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, renderAll, symmetryH, symmetryV]);
 
   // ===== Zoom (Scroll Wheel) =====
   useEffect(() => {
@@ -870,56 +928,6 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     area.addEventListener('wheel', handleWheel, { passive: false });
     return () => area.removeEventListener('wheel', handleWheel);
   }, []);
-
-  // ===== Keyboard Shortcuts =====
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      if (e.code === 'Space' && !e.repeat) {
-        e.preventDefault();
-        spaceHeldRef.current = true;
-        return;
-      }
-
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); performUndo(); return; }
-        if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); performRedo(); return; }
-      }
-
-      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-        switch (e.key.toLowerCase()) {
-          case 'b': setActiveTool('pencil'); break;
-          case 'e': setActiveTool('eraser'); break;
-          case 'g': setActiveTool('fill'); break;
-          case 'i': setActiveTool('eyedropper'); break;
-          case 'l': setActiveTool('line'); break;
-          case 'u': setActiveTool('rect'); break;
-          case 'o': setActiveTool('ellipse'); break;
-          case 'x':
-            setPrimaryColor(prev => {
-              const old = prev;
-              setSecondaryColor(old);
-              return secondaryColor;
-            });
-            break;
-          case '[': setBrushSize(prev => Math.max(1, prev - 1)); break;
-          case ']': setBrushSize(prev => Math.min(16, prev + 1)); break;
-        }
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') spaceHeldRef.current = false;
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [performUndo, performRedo, secondaryColor]);
 
   // ===== Layer Operations =====
   const addLayer = useCallback(() => {
@@ -1012,6 +1020,109 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     setFrames(prev => prev.filter((_, i) => i !== activeFrameIndex));
     setActiveFrameIndex(prev => Math.min(prev, frames.length - 2));
   }, [activeFrameIndex, frames.length]);
+
+  const duplicateFrameAt = useCallback((index: number) => {
+    const frame = frames[index];
+    if (!frame) return;
+    const dup: EditorFrame = {
+      id: genId(),
+      layers: frame.layers.map(l => ({ ...l, id: genId(), data: cloneImageData(l.data) })),
+      activeLayerId: '',
+    };
+    dup.activeLayerId = dup.layers[frame.layers.findIndex(l => l.id === frame.activeLayerId)]?.id ?? dup.layers[0].id;
+    setFrames(prev => {
+      const next = [...prev];
+      next.splice(index + 1, 0, dup);
+      return next;
+    });
+    setActiveFrameIndex(index + 1);
+  }, [frames]);
+
+  const deleteFrameAt = useCallback((index: number) => {
+    if (frames.length <= 1) return;
+    setFrames(prev => prev.filter((_, i) => i !== index));
+    setActiveFrameIndex(prev => Math.min(prev, frames.length - 2));
+  }, [frames.length]);
+
+  const moveFrame = useCallback((index: number, dir: 'left' | 'right') => {
+    const newIdx = dir === 'left' ? index - 1 : index + 1;
+    if (newIdx < 0 || newIdx >= frames.length) return;
+    setFrames(prev => {
+      const next = [...prev];
+      [next[index], next[newIdx]] = [next[newIdx], next[index]];
+      return next;
+    });
+    if (activeFrameIndex === index) setActiveFrameIndex(newIdx);
+    else if (activeFrameIndex === newIdx) setActiveFrameIndex(index);
+  }, [frames.length, activeFrameIndex]);
+
+  // ===== Keyboard Shortcuts =====
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        spaceHeldRef.current = true;
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); performUndo(); return; }
+        if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); performRedo(); return; }
+      }
+
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        switch (e.key.toLowerCase()) {
+          // Tools
+          case 'b': setActiveTool('pencil'); break;
+          case 'e': setActiveTool('eraser'); break;
+          case 'g': setActiveTool('fill'); break;
+          case 'i': setActiveTool('eyedropper'); break;
+          case 'l': setActiveTool('line'); break;
+          case 'u': setActiveTool('rect'); break;
+          case 'o': setActiveTool('ellipse'); break;
+          // Color swap
+          case 'x':
+            setPrimaryColor(prev => {
+              const old = prev;
+              setSecondaryColor(old);
+              return secondaryColor;
+            });
+            break;
+          // Brush size
+          case '[': setBrushSize(prev => Math.max(1, prev - 1)); break;
+          case ']': setBrushSize(prev => Math.min(16, prev + 1)); break;
+          // Frames
+          case 'n': addFrame(); break;
+          case 'd': duplicateFrame(); break;
+          // Frame navigation
+          case ',': case 'arrowleft': setActiveFrameIndex(prev => Math.max(0, prev - 1)); break;
+          case '.': case 'arrowright': setActiveFrameIndex(prev => Math.min(frames.length - 1, prev + 1)); break;
+          // Playback
+          case 'p': setIsPlaying(prev => !prev); break;
+          // Grid
+          case 'h': setShowGrid(prev => !prev); break;
+          // Symmetry
+          case 's': setSymmetryH(prev => !prev); break;
+          case 'v': setSymmetryV(prev => !prev); break;
+          // Delete frame
+          case 'delete': if (frames.length > 1) setDeleteConfirmIndex(activeFrameIndex); break;
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') spaceHeldRef.current = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [performUndo, performRedo, secondaryColor, addFrame, duplicateFrame, frames.length]);
 
   // ===== Export =====
   const exportPng = useCallback(() => {
@@ -1134,14 +1245,14 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           <button
             className={`tool-btn${symmetryH ? ' active' : ''}`}
             onClick={() => setSymmetryH(!symmetryH)}
-            title={t.symmetryH}
+            title={`${t.symmetryH} (S)`}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>flip</span>
           </button>
           <button
             className={`tool-btn${symmetryV ? ' active' : ''}`}
             onClick={() => setSymmetryV(!symmetryV)}
-            title={t.symmetryV}
+            title={`${t.symmetryV} (V)`}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18, transform: 'rotate(90deg)' }}>flip</span>
           </button>
@@ -1277,7 +1388,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
           {/* Brush Size */}
           <div className="editor-panel">
-            <h4>{t.brushSize}</h4>
+            <h4>{t.brushSize} ([ / ])</h4>
             <div className="brush-size-row">
               <input
                 type="range"
@@ -1406,7 +1517,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <h4>{t.canvasSize}</h4>
             <div className="option-row">
               <input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} id="grid-toggle" />
-              <label htmlFor="grid-toggle">{t.gridToggle}</label>
+              <label htmlFor="grid-toggle">{t.gridToggle} (H)</label>
             </div>
             <div style={{ marginTop: 8 }}>
               <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px', width: '100%' }} onClick={() => setShowNewCanvasModal(true)}>
@@ -1454,6 +1565,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
               key={frame.id}
               className={`timeline-frame${i === activeFrameIndex ? ' active-timeline-frame' : ''}`}
               onClick={() => { setActiveFrameIndex(i); setIsPlaying(false); }}
+              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, frameIndex: i }); }}
             >
               <canvas
                 ref={el => {
@@ -1471,18 +1583,18 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
         <div className="timeline-controls">
           <div className="timeline-playback">
-            <button onClick={() => setActiveFrameIndex(prev => Math.max(0, prev - 1))} title="Previous">
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>skip_previous</span>
+            <button onClick={() => setActiveFrameIndex(prev => Math.max(0, prev - 1))} title="Previous (,)">
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>skip_previous</span>
             </button>
             <button
               className={isPlaying ? 'playing' : ''}
               onClick={() => setIsPlaying(!isPlaying)}
-              title={isPlaying ? t.pauseAnimation : t.playAnimation}
+              title={`${isPlaying ? t.pauseAnimation : t.playAnimation} (P)`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{isPlaying ? 'pause' : 'play_arrow'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 24 }}>{isPlaying ? 'pause' : 'play_arrow'}</span>
             </button>
-            <button onClick={() => setActiveFrameIndex(prev => Math.min(frames.length - 1, prev + 1))} title="Next">
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>skip_next</span>
+            <button onClick={() => setActiveFrameIndex(prev => Math.min(frames.length - 1, prev + 1))} title="Next (.)">
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>skip_next</span>
             </button>
           </div>
           <div className="timeline-fps">
@@ -1503,19 +1615,88 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
               id="onion-toggle"
             />
             <label htmlFor="onion-toggle">{t.onionSkinEditor}</label>
+            {onionSkinEnabled && (
+              <>
+                <input
+                  type="range"
+                  min={5}
+                  max={80}
+                  value={onionSkinOpacity}
+                  onChange={e => setOnionSkinOpacity(Number(e.target.value))}
+                  style={{ width: 60 }}
+                />
+                <span>{onionSkinOpacity}%</span>
+              </>
+            )}
           </div>
-          <div className="timeline-playback" style={{ gap: 2 }}>
-            <button onClick={duplicateFrame} title={t.duplicateFrame}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>content_copy</span>
+          <div className="timeline-playback">
+            <button onClick={addFrame} title={`${t.addFrame} (N)`}>
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>add_circle</span>
+            </button>
+            <button onClick={duplicateFrame} title={`${t.duplicateFrame} (D)`}>
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>content_copy</span>
             </button>
             <button onClick={deleteFrame} title={t.deleteFrame} disabled={frames.length <= 1}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>delete</span>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Frame Context Menu */}
+      {contextMenu && (
+        <>
+          <div className="context-menu-overlay" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} />
+          <div className="context-menu" style={{ top: contextMenu.y - 160, left: contextMenu.x }}>
+            <button onClick={() => { duplicateFrameAt(contextMenu.frameIndex); setContextMenu(null); }}>
+              <span className="material-symbols-outlined">content_copy</span>
+              {t.duplicateFrame}
+            </button>
+            <button onClick={() => { deleteFrameAt(contextMenu.frameIndex); setContextMenu(null); }} disabled={frames.length <= 1}>
+              <span className="material-symbols-outlined">delete</span>
+              {t.deleteFrame}
+            </button>
+            <div className="context-menu-divider" />
+            <button onClick={() => { moveFrame(contextMenu.frameIndex, 'left'); setContextMenu(null); }} disabled={contextMenu.frameIndex <= 0}>
+              <span className="material-symbols-outlined">arrow_back</span>
+              {t.moveLeft}
+            </button>
+            <button onClick={() => { moveFrame(contextMenu.frameIndex, 'right'); setContextMenu(null); }} disabled={contextMenu.frameIndex >= frames.length - 1}>
+              <span className="material-symbols-outlined">arrow_forward</span>
+              {t.moveRight}
+            </button>
+          </div>
+        </>
+      )}
+
       {/* New Canvas Modal */}
+      {/* Delete Frame Confirm */}
+      {deleteConfirmIndex !== null && (
+        <div className="editor-modal-overlay" onClick={() => setDeleteConfirmIndex(null)}>
+          <div
+            className="editor-modal"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { deleteFrameAt(deleteConfirmIndex); setDeleteConfirmIndex(null); }
+              if (e.key === 'Escape') setDeleteConfirmIndex(null);
+            }}
+            tabIndex={-1}
+            ref={el => el?.focus()}
+          >
+            <h3>{t.deleteFrame}</h3>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              {t.confirmDeleteFrame?.replace('{n}', String(deleteConfirmIndex + 1))}
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setDeleteConfirmIndex(null)}>{t.cancel}</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={() => { deleteFrameAt(deleteConfirmIndex); setDeleteConfirmIndex(null); }}>
+                {t.deleteFrame}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNewCanvasModal && (
         <div className="editor-modal-overlay" onClick={() => setShowNewCanvasModal(false)}>
           <div className="editor-modal" onClick={e => e.stopPropagation()}>
