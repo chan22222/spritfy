@@ -1,0 +1,5 @@
+{
+  "name": "Sprite Gen",
+  "description": "Video to Sprite Sheet Generator with Chroma Key",
+  "requestFramePermissions": []
+}
