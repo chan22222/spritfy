@@ -592,6 +592,11 @@ const App = () => {
       </div>
 
       <div className="main-workspace">
+        {/* LEFT AD */}
+        <div className="ad-slot ad-slot-left">
+            <span className="ad-placeholder">AD</span>
+        </div>
+
         {/* Hidden Video for processing */}
         <video 
             ref={videoRef} 
@@ -833,6 +838,11 @@ const App = () => {
                     {t.downloadSprite}
                 </button>
             </div>
+        </div>
+
+        {/* RIGHT AD */}
+        <div className="ad-slot ad-slot-right">
+            <span className="ad-placeholder">AD</span>
         </div>
       </div>
     </>
