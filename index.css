@@ -368,14 +368,15 @@ select {
   background: var(--primary);
   color: #000;
   border: none;
-  padding: 10px 16px;
+  padding: 7px 12px;
   border-radius: 6px;
   font-weight: 500;
+  font-size: 0.82rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: opacity 0.2s;
   font-family: inherit;
 }

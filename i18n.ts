@@ -140,7 +140,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     featureEditorBullet2: '프레임 애니메이션 & 어니언 스킨',
     featureEditorBullet3: '좌우/상하 대칭 그리기',
     featureEditorBullet4: 'PNG, 스프라이트 시트, GIF 내보내기',
-    featureSpriteTitle: '스프라이트 시트 생성기',
+    featureSpriteTitle: '스프라이트 시트',
     featureSpriteDesc: '동영상이나 GIF에서 프레임을 추출하고, 크로마키로 배경을 제거한 뒤 스프라이트 시트로 변환하세요. 게임 개발에 필요한 스프라이트를 손쉽게 만들 수 있습니다.',
     featureSpriteBullet1: '동영상/GIF 프레임 추출',
     featureSpriteBullet2: '크로마키 & 배경 제거',

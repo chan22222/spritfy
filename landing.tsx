@@ -76,13 +76,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined">draw</span>
           </div>
           <h2>{t.featureEditorTitle}</h2>
-          <p>{t.featureEditorDesc}</p>
-          <ul className="landing-feature-list">
-            <li><span className="pixel-check" />{t.featureEditorBullet1}</li>
-            <li><span className="pixel-check" />{t.featureEditorBullet2}</li>
-            <li><span className="pixel-check" />{t.featureEditorBullet3}</li>
-            <li><span className="pixel-check" />{t.featureEditorBullet4}</li>
-          </ul>
+          <p>{t.featureEditorBullet1} / {t.featureEditorBullet2} / {t.featureEditorBullet3}</p>
           <Link to="/editor" className="feature-cta-link">
             {t.ctaEditor}
             <span className="material-symbols-outlined">arrow_forward</span>
@@ -96,18 +90,13 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined">movie</span>
           </div>
           <h2>{t.featureSpriteTitle}</h2>
-          <p>{t.featureSpriteDesc}</p>
-          <ul className="landing-feature-list">
-            <li><span className="pixel-check check-secondary" />{t.featureSpriteBullet1}</li>
-            <li><span className="pixel-check check-secondary" />{t.featureSpriteBullet2}</li>
-            <li><span className="pixel-check check-secondary" />{t.featureSpriteBullet3}</li>
-            <li><span className="pixel-check check-secondary" />{t.featureSpriteBullet4}</li>
-          </ul>
+          <p>{t.featureSpriteBullet1} / {t.featureSpriteBullet2} / {t.featureSpriteBullet3}</p>
           <Link to="/sprite" className="feature-cta-link link-secondary">
             {t.ctaSprite}
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
         </div>
+
         <div className="landing-feature-card pixel-border card-tertiary">
           <div className="feature-card-corner tl" /><div className="feature-card-corner tr" />
           <div className="feature-card-corner bl" /><div className="feature-card-corner br" />
@@ -115,13 +104,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined">swap_horiz</span>
           </div>
           <h2>{t.featureConverterTitle}</h2>
-          <p>{t.featureConverterDesc}</p>
-          <ul className="landing-feature-list">
-            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet1}</li>
-            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet2}</li>
-            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet3}</li>
-            <li><span className="pixel-check check-tertiary" />{t.featureConverterBullet4}</li>
-          </ul>
+          <p>{t.featureConverterBullet1} / {t.featureConverterBullet2} / {t.featureConverterBullet3}</p>
           <Link to="/converter" className="feature-cta-link link-tertiary">
             {t.ctaConverter}
             <span className="material-symbols-outlined">arrow_forward</span>
