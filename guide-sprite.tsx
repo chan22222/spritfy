@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 
 interface GuideSpriteProps {
   lang: Lang;
@@ -21,6 +22,7 @@ export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) =>
 
   return (
     <div className="legal-page">
+      <SEO title={t.seoGuideSpriteTitle} description={t.seoGuideSpriteDesc} canonicalPath="/guide/sprite-sheet" />
       <div className="legal-content guide-content">
         <h1>{t.guideSpriteTitle}</h1>
         <p className="legal-intro">{t.guideSpriteIntro}</p>

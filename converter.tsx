@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 import './converter.css';
 
 interface ConverterFile {
@@ -328,6 +329,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
+      <SEO title={t.seoConverterTitle} description={t.seoConverterDesc} canonicalPath="/converter" />
       <div className="converter-content">
         <div className="converter-header">
           <div className="converter-icon-badge">

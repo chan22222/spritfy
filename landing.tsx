@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 
 interface LandingProps {
   lang: Lang;
@@ -11,6 +12,7 @@ interface LandingProps {
 export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
   return (
     <div className="landing-page">
+      <SEO canonicalPath="/" />
       {/* Pixel grid background overlay */}
       <div className="pixel-grid-bg" aria-hidden="true" />
 

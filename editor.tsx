@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
+import SEO from '@/seo.tsx';
 
 // ===== Types =====
 type RGBA = [number, number, number, number];
@@ -1248,6 +1249,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
   return (
     <div className="editor-container">
+      <SEO title={t.seoEditorTitle} description={t.seoEditorDesc} canonicalPath="/editor" />
       <div className="editor-main">
         {/* LEFT AD */}
         <div className="ad-slot ad-slot-left" />

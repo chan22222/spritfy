@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 
 interface GuidePixelProps {
   lang: Lang;
@@ -21,6 +22,7 @@ export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
+      <SEO title={t.seoGuidePixelTitle} description={t.seoGuidePixelDesc} canonicalPath="/guide/pixel-art" />
       <div className="legal-content guide-content">
         <h1>{t.guidePixelTitle}</h1>
         <p className="legal-intro">{t.guidePixelIntro}</p>

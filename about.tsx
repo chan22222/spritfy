@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 
 interface AboutProps {
   lang: Lang;
@@ -19,6 +20,7 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
+      <SEO title={t.seoAboutTitle} description={t.seoAboutDesc} canonicalPath="/about" />
       <div className="legal-content">
         <h1>{t.aboutTitle}</h1>
 

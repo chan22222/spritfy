@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import SEO from '@/seo.tsx';
 
 interface PrivacyProps {
   lang: Lang;
@@ -24,6 +25,7 @@ export const PrivacyPage: React.FC<PrivacyProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
+      <SEO title={t.seoPrivacyTitle} canonicalPath="/privacy" noIndex />
       <div className="legal-content">
         <h1>{t.privacyTitle}</h1>
         <p className="legal-updated">{t.privacyLastUpdated}</p>

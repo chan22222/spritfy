@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Lang } from '@/i18n.ts';
+import SEO from '@/seo.tsx';
 
 
 interface Frame {
@@ -1380,6 +1381,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   return (
     <>
+      <SEO title={t.seoSpriteTitle} description={t.seoSpriteDesc} canonicalPath="/sprite" />
       <div className="main-workspace">
         {/* LEFT AD */}
         <div className="ad-slot ad-slot-left" />
