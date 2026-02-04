@@ -1329,10 +1329,12 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       };
       return { id: genId(), layers: [layer], activeLayerId: layer.id };
     });
-    setFrames(prev => [...prev, ...newFrames]);
-    setActiveFrameIndex(frames.length);
+    setFrames(newFrames);
+    setActiveFrameIndex(0);
+    setUndoStack([]);
+    setRedoStack([]);
     setIsDirty(true);
-  }, [frames.length]);
+  }, []);
 
   // ===== Import Image =====
   const MAX_CANVAS = 256;
@@ -1461,10 +1463,6 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           }
         }
 
-        setFrames([]);
-        setActiveFrameIndex(0);
-        setUndoStack([]);
-        setRedoStack([]);
         addFramesFromImageData(dataList);
       } else {
         const video = document.createElement('video');
@@ -1550,10 +1548,6 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         }
       }
 
-      setFrames([]);
-      setActiveFrameIndex(0);
-      setUndoStack([]);
-      setRedoStack([]);
       addFramesFromImageData(dataList);
       URL.revokeObjectURL(spriteSheetImage.src);
     } catch {
