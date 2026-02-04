@@ -436,7 +436,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px 4px 40px;
+  padding: 4px 6px 4px 12px;
   font-size: 0.7rem;
   color: var(--text-muted);
 }
@@ -446,7 +446,11 @@
   height: 3px;
 }
 
-.layer-opacity-row span {
+.layer-opacity-row span:first-child {
+  white-space: nowrap;
+}
+
+.layer-opacity-row span:last-child {
   width: 28px;
   text-align: right;
   font-family: monospace;

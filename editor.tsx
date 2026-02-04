@@ -460,6 +460,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [resizeW, setResizeW] = useState(32);
   const [resizeH, setResizeH] = useState(32);
   const [resizeMode, setResizeMode] = useState<'scale' | 'crop'>('scale');
+  const [resizeLockRatio, setResizeLockRatio] = useState(false);
+  const resizeAspectRef = useRef(1);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; frameIndex: number } | null>(null);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -1593,6 +1595,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const openResizeModal = useCallback(() => {
     setResizeW(canvasWidth);
     setResizeH(canvasHeight);
+    setResizeLockRatio(true);
+    resizeAspectRef.current = canvasWidth / canvasHeight;
     setShowResizeModal(true);
   }, [canvasWidth, canvasHeight]);
 
@@ -2276,10 +2280,35 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <h3>{t.resizeCanvas}</h3>
             <div className="size-inputs" style={{ marginBottom: 12 }}>
               <label>{t.width}:</label>
-              <input type="number" min={1} max={256} value={resizeW} onChange={e => setResizeW(Number(e.target.value))} onBlur={() => setResizeW(Math.max(1, Math.min(256, resizeW)))} />
-              <span style={{ color: 'var(--text-muted)' }}>x</span>
+              <input type="number" min={1} max={256} value={resizeW} onChange={e => {
+                const v = Number(e.target.value);
+                setResizeW(v);
+                if (resizeLockRatio && v > 0) {
+                  setResizeH(Math.max(1, Math.min(256, Math.round(v / resizeAspectRef.current))));
+                }
+              }} onBlur={() => setResizeW(Math.max(1, Math.min(256, resizeW)))} />
+              <button
+                className={`btn ${resizeLockRatio ? '' : 'btn-secondary'}`}
+                title={t.lockAspectRatio}
+                style={{ padding: '4px 6px', minWidth: 0 }}
+                onClick={() => {
+                  const next = !resizeLockRatio;
+                  setResizeLockRatio(next);
+                  if (next && resizeW > 0 && resizeH > 0) {
+                    resizeAspectRef.current = resizeW / resizeH;
+                  }
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{resizeLockRatio ? 'link' : 'link_off'}</span>
+              </button>
               <label>{t.height}:</label>
-              <input type="number" min={1} max={256} value={resizeH} onChange={e => setResizeH(Number(e.target.value))} onBlur={() => setResizeH(Math.max(1, Math.min(256, resizeH)))} />
+              <input type="number" min={1} max={256} value={resizeH} onChange={e => {
+                const v = Number(e.target.value);
+                setResizeH(v);
+                if (resizeLockRatio && v > 0) {
+                  setResizeW(Math.max(1, Math.min(256, Math.round(v * resizeAspectRef.current))));
+                }
+              }} onBlur={() => setResizeH(Math.max(1, Math.min(256, resizeH)))} />
             </div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
               <button
@@ -2314,7 +2343,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <h3>{isGifFile ? t.gifImportSettings : t.videoImportSettings}</h3>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                {isGifFile ? t.frames : t.maxFrames}:
+                {isGifFile ? t.frameCount : t.maxFrames}:
                 <input
                   type="number"
                   min={1}
