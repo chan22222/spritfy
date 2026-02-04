@@ -471,10 +471,22 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [sheetCols, setSheetCols] = useState(4);
   const [sheetRows, setSheetRows] = useState(4);
+  const [targetCellW, setTargetCellW] = useState(32);
+  const [targetCellH, setTargetCellH] = useState(32);
   const [videoMaxFrames, setVideoMaxFrames] = useState(12);
   const [isImporting, setIsImporting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 열/행 변경 시 셀 크기 자동 계산
+  useEffect(() => {
+    if (!spriteSheetImage) return;
+    const rawW = Math.floor(spriteSheetImage.width / sheetCols);
+    const rawH = Math.floor(spriteSheetImage.height / sheetRows);
+    const scale = Math.min(1, 256 / Math.max(rawW, rawH));
+    setTargetCellW(Math.max(1, Math.round(rawW * scale)));
+    setTargetCellH(Math.max(1, Math.round(rawH * scale)));
+  }, [spriteSheetImage, sheetCols, sheetRows]);
 
   const showToast = useCallback((msg: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -1370,31 +1382,32 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     try {
       const cellW = Math.floor(spriteSheetImage.width / sheetCols);
       const cellH = Math.floor(spriteSheetImage.height / sheetRows);
+
+      setCanvasWidth(targetCellW);
+      setCanvasHeight(targetCellH);
+
       const dataList: ImageData[] = [];
 
       for (let r = 0; r < sheetRows; r++) {
         for (let c = 0; c < sheetCols; c++) {
           const tmpCanvas = document.createElement('canvas');
-          tmpCanvas.width = canvasWidth;
-          tmpCanvas.height = canvasHeight;
+          tmpCanvas.width = targetCellW;
+          tmpCanvas.height = targetCellH;
           const ctx = tmpCanvas.getContext('2d')!;
           ctx.imageSmoothingEnabled = false;
-
-          const scale = Math.min(canvasWidth / cellW, canvasHeight / cellH);
-          const dw = Math.round(cellW * scale);
-          const dh = Math.round(cellH * scale);
-          const dx = Math.floor((canvasWidth - dw) / 2);
-          const dy = Math.floor((canvasHeight - dh) / 2);
-
           ctx.drawImage(
             spriteSheetImage,
             c * cellW, r * cellH, cellW, cellH,
-            dx, dy, dw, dh,
+            0, 0, targetCellW, targetCellH,
           );
-          dataList.push(ctx.getImageData(0, 0, canvasWidth, canvasHeight));
+          dataList.push(ctx.getImageData(0, 0, targetCellW, targetCellH));
         }
       }
 
+      setFrames([]);
+      setActiveFrameIndex(0);
+      setUndoStack([]);
+      setRedoStack([]);
       addFramesFromImageData(dataList);
       URL.revokeObjectURL(spriteSheetImage.src);
     } catch {
@@ -1404,7 +1417,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       setShowSpriteSheetModal(false);
       setSpriteSheetImage(null);
     }
-  }, [spriteSheetImage, sheetCols, sheetRows, canvasWidth, canvasHeight, addFramesFromImageData]);
+  }, [spriteSheetImage, sheetCols, sheetRows, targetCellW, targetCellH, addFramesFromImageData]);
 
   // ===== Unsaved changes guard =====
   useEffect(() => {
@@ -2172,7 +2185,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem', flex: 1 }}>
                 {t.sheetCols}:
                 <input
@@ -2198,9 +2211,50 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
                 />
               </label>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 12px' }}>
-              {sheetCols * sheetRows} {t.maxFrames?.toLowerCase().includes('frame') ? 'frames' : lang === 'ko' ? '프레임' : 'frames'}
-            </p>
+            {(() => {
+              const rawW = Math.floor(spriteSheetImage.width / sheetCols);
+              const rawH = Math.floor(spriteSheetImage.height / sheetRows);
+              const ratio = rawW / rawH;
+              return (
+                <>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{t.cellSize}:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={256}
+                      value={targetCellW}
+                      onChange={e => {
+                        const v = Math.max(1, Math.min(256, Number(e.target.value)));
+                        setTargetCellW(v);
+                        setTargetCellH(Math.max(1, Math.min(256, Math.round(v / ratio))));
+                      }}
+                      style={{ width: 52 }}
+                      disabled={isImporting}
+                    />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>x</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={256}
+                      value={targetCellH}
+                      onChange={e => {
+                        const v = Math.max(1, Math.min(256, Number(e.target.value)));
+                        setTargetCellH(v);
+                        setTargetCellW(Math.max(1, Math.min(256, Math.round(v * ratio))));
+                      }}
+                      style={{ width: 52 }}
+                      disabled={isImporting}
+                    />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>px</span>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 12px' }}>
+                    {sheetCols * sheetRows} {lang === 'ko' ? '프레임' : 'frames'} &middot; {lang === 'ko' ? '캔버스' : 'canvas'} {targetCellW}x{targetCellH}
+                    {(targetCellW < rawW || targetCellH < rawH) && <span style={{ color: 'var(--primary)' }}> ({rawW}x{rawH} → {targetCellW}x{targetCellH})</span>}
+                  </p>
+                </>
+              );
+            })()}
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => { setShowSpriteSheetModal(false); setSpriteSheetImage(null); }} disabled={isImporting}>{t.cancel}</button>
               <button className="btn" onClick={handleSpriteSheetConfirm} disabled={isImporting}>
