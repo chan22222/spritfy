@@ -5,7 +5,7 @@ import SEO from '@/seo.tsx';
 
 // ===== Types =====
 type RGBA = [number, number, number, number];
-type ToolType = 'pencil' | 'eraser' | 'fill' | 'eyedropper' | 'line' | 'rect' | 'ellipse';
+type ToolType = 'pencil' | 'eraser' | 'fill' | 'eyedropper' | 'line' | 'rect' | 'ellipse' | 'move';
 
 interface Layer {
   id: string;
@@ -743,7 +743,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     });
   }, [frames, canvasWidth, canvasHeight]);
 
-  // Center canvas on mount / resize
+  // Center canvas on mount / canvas size change
   useEffect(() => {
     const area = canvasAreaRef.current;
     if (!area) return;
@@ -754,7 +754,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       x: Math.round((rect.width - cw) / 2),
       y: Math.round((rect.height - ch) / 2),
     });
-  }, [canvasWidth, canvasHeight, zoom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasWidth, canvasHeight]);
 
   // ===== Animation Playback =====
   const fpsRef = useRef(fps);
@@ -807,6 +808,14 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     if (x < 0 || y < 0 || x >= canvasWidth || y >= canvasHeight) return;
 
     const color: RGBA = e.button === 2 ? secondaryColor : primaryColor;
+
+    if (activeTool === 'move') {
+      pushHistory();
+      isDrawingRef.current = true;
+      drawStartRef.current = { x, y };
+      lastPixelRef.current = { x, y };
+      return;
+    }
 
     if (activeTool === 'eyedropper') {
       const composited = compositeAllLayers(activeFrame!.layers, canvasWidth, canvasHeight);
@@ -864,6 +873,39 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     }
 
     if (!isDrawingRef.current || !activeLayer || activeLayer.locked) return;
+
+    if (activeTool === 'move') {
+      const last = lastPixelRef.current;
+      if (!last) return;
+      const dx = x - last.x;
+      const dy = y - last.y;
+      if (dx === 0 && dy === 0) return;
+      setFrames(prev => prev.map((f, fi) => {
+        if (fi !== activeFrameIndex) return f;
+        const layer = f.layers.find(l => l.id === activeFrame!.activeLayerId);
+        if (!layer) return f;
+        const src = layer.data;
+        const shifted = new ImageData(canvasWidth, canvasHeight);
+        for (let sy = 0; sy < canvasHeight; sy++) {
+          for (let sx = 0; sx < canvasWidth; sx++) {
+            const nx = sx + dx;
+            const ny = sy + dy;
+            if (nx >= 0 && nx < canvasWidth && ny >= 0 && ny < canvasHeight) {
+              const srcIdx = (sy * canvasWidth + sx) * 4;
+              const dstIdx = (ny * canvasWidth + nx) * 4;
+              shifted.data[dstIdx] = src.data[srcIdx];
+              shifted.data[dstIdx + 1] = src.data[srcIdx + 1];
+              shifted.data[dstIdx + 2] = src.data[srcIdx + 2];
+              shifted.data[dstIdx + 3] = src.data[srcIdx + 3];
+            }
+          }
+        }
+        return { ...f, layers: f.layers.map(l => l.id === layer.id ? { ...l, data: shifted } : l) };
+      }));
+      lastPixelRef.current = { x, y };
+      return;
+    }
+
     if (x < 0 || y < 0 || x >= canvasWidth || y >= canvasHeight) return;
 
     if (activeTool === 'line' || activeTool === 'rect' || activeTool === 'ellipse') {
@@ -953,14 +995,25 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     renderAll();
   }, [activeTool, activeLayer, activeFrame, activeFrameIndex, primaryColor, secondaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, renderAll, symmetryH, symmetryV]);
 
-  // ===== Zoom (Scroll Wheel) =====
+  // ===== Zoom (Scroll Wheel) - zoom toward cursor =====
   useEffect(() => {
     const area = canvasAreaRef.current;
     if (!area) return;
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -1 : 1;
-      setZoom(prev => Math.max(1, Math.min(64, prev + delta)));
+      setZoom(prevZoom => {
+        const newZoom = Math.max(1, Math.min(64, prevZoom + delta));
+        if (newZoom === prevZoom) return prevZoom;
+        const rect = area.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        setPan(prevPan => ({
+          x: mx - (mx - prevPan.x) * (newZoom / prevZoom),
+          y: my - (my - prevPan.y) * (newZoom / prevZoom),
+        }));
+        return newZoom;
+      });
     };
     area.addEventListener('wheel', handleWheel, { passive: false });
     return () => area.removeEventListener('wheel', handleWheel);
@@ -1105,13 +1158,15 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       }
 
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); performUndo(); return; }
-        if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); performRedo(); return; }
+        const k = e.key.toLowerCase();
+        if (k === 'z' && !e.shiftKey) { e.preventDefault(); performUndo(); return; }
+        if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); performRedo(); return; }
       }
 
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         switch (e.key.toLowerCase()) {
           // Tools
+          case 'v': setActiveTool('move'); break;
           case 'b': setActiveTool('pencil'); break;
           case 'e': setActiveTool('eraser'); break;
           case 'g': setActiveTool('fill'); break;
@@ -1142,7 +1197,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           case 'h': setShowGrid(prev => !prev); break;
           // Symmetry
           case 's': setSymmetryH(prev => !prev); break;
-          case 'v': setSymmetryV(prev => !prev); break;
+          case 'a': setSymmetryV(prev => !prev); break;
           // Delete frame
           case 'delete': if (frames.length > 1) setDeleteConfirmIndex(activeFrameIndex); break;
         }
@@ -1498,6 +1553,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
   // ===== Tool definitions for toolbar =====
   const tools: { type: ToolType; icon: string; key: string }[] = [
+    { type: 'move', icon: 'open_with', key: 'V' },
     { type: 'pencil', icon: 'edit', key: 'B' },
     { type: 'eraser', icon: 'ink_eraser', key: 'E' },
     { type: 'fill', icon: 'format_color_fill', key: 'G' },
@@ -1510,8 +1566,9 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   // ===== Canvas cursor =====
   const canvasCursor = useMemo(() => {
     if (spaceHeldRef.current || isPanningRef.current) return 'grab';
+    if (activeTool === 'move') return 'move';
     return 'crosshair';
-  }, []);
+  }, [activeTool]);
 
   return (
     <div className="editor-container">
@@ -1555,7 +1612,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           <button
             className={`tool-btn${symmetryV ? ' active' : ''}`}
             onClick={() => setSymmetryV(!symmetryV)}
-            title={`${t.symmetryV} (V)`}
+            title={`${t.symmetryV} (A)`}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18, transform: 'rotate(90deg)' }}>flip</span>
           </button>

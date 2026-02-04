@@ -82,6 +82,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Editor page
     editorTitle: '픽셀 아트 에디터',
+    toolMove: '이동',
     toolPencil: '연필',
     toolEraser: '지우개',
     toolFill: '채우기',
@@ -419,6 +420,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Editor page
     editorTitle: 'Pixel Art Editor',
+    toolMove: 'Move',
     toolPencil: 'Pencil',
     toolEraser: 'Eraser',
     toolFill: 'Fill',
