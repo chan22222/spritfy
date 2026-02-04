@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import SEO from '@/seo.tsx';
+import { parseGIF, decompressFrames } from 'gifuct-js';
 
 // ===== Types =====
 type RGBA = [number, number, number, number];
@@ -463,6 +464,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [showDeleteLayerConfirm, setShowDeleteLayerConfirm] = useState(false);
+  const [showResetAllConfirm, setShowResetAllConfirm] = useState(false);
 
   // Import state
   const [showSpriteSheetModal, setShowSpriteSheetModal] = useState(false);
@@ -474,6 +476,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [targetCellW, setTargetCellW] = useState(32);
   const [targetCellH, setTargetCellH] = useState(32);
   const [videoMaxFrames, setVideoMaxFrames] = useState(12);
+  const [isGifFile, setIsGifFile] = useState(false);
+  const [gifFrameCount, setGifFrameCount] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1379,11 +1383,23 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   }, [lang, showToast]);
 
   // ===== Import Video/GIF =====
-  const handleImportVideoGifSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportVideoGifSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
+    const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    setIsGifFile(isGif);
     setVideoFile(file);
+    if (isGif) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const gif = parseGIF(buffer);
+        const frames = decompressFrames(gif, true);
+        setGifFrameCount(frames.length);
+      } catch {
+        setGifFrameCount(0);
+      }
+    }
     setShowVideoImportModal(true);
   }, []);
 
@@ -1391,45 +1407,105 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     if (!videoFile) return;
     setIsImporting(true);
     try {
-      const video = document.createElement('video');
-      video.muted = true;
-      video.playsInline = true;
-      const url = URL.createObjectURL(videoFile);
-      video.src = url;
+      if (isGifFile) {
+        const buffer = await videoFile.arrayBuffer();
+        const gif = parseGIF(buffer);
+        const frames = decompressFrames(gif, true);
+        if (frames.length === 0) return;
 
-      await new Promise<void>((resolve, reject) => {
-        video.onloadedmetadata = () => resolve();
-        video.onerror = () => reject(new Error('Video load failed'));
-      });
+        const gifW = frames[0].dims.width;
+        const gifH = frames[0].dims.height;
+        const MAX = 256;
+        let w = gifW;
+        let h = gifH;
+        if (w > MAX || h > MAX) {
+          const scale = Math.min(MAX / w, MAX / h);
+          w = Math.max(1, Math.round(w * scale));
+          h = Math.max(1, Math.round(h * scale));
+        }
 
-      await new Promise<void>(resolve => {
-        video.oncanplaythrough = () => resolve();
-        video.load();
-      });
+        setCanvasWidth(w);
+        setCanvasHeight(h);
 
-      const duration = video.duration;
-      const count = Math.min(videoMaxFrames, Math.max(1, Math.floor(duration * 30)));
-      const interval = duration / count;
-      const dataList: ImageData[] = [];
+        const compositeCanvas = document.createElement('canvas');
+        compositeCanvas.width = gifW;
+        compositeCanvas.height = gifH;
+        const compositeCtx = compositeCanvas.getContext('2d')!;
 
-      for (let i = 0; i < count; i++) {
-        video.currentTime = i * interval;
-        await new Promise<void>(resolve => {
-          video.onseeked = () => resolve();
+        const dataList: ImageData[] = [];
+
+        for (const frame of frames) {
+          const { dims, patch, disposalType } = frame;
+          const frameCanvas = document.createElement('canvas');
+          frameCanvas.width = dims.width;
+          frameCanvas.height = dims.height;
+          const frameCtx = frameCanvas.getContext('2d')!;
+          const frameData = frameCtx.createImageData(dims.width, dims.height);
+          frameData.data.set(patch);
+          frameCtx.putImageData(frameData, 0, 0);
+
+          compositeCtx.drawImage(frameCanvas, dims.left, dims.top);
+
+          const outCanvas = document.createElement('canvas');
+          outCanvas.width = w;
+          outCanvas.height = h;
+          const outCtx = outCanvas.getContext('2d')!;
+          outCtx.imageSmoothingEnabled = false;
+          outCtx.drawImage(compositeCanvas, 0, 0, w, h);
+          dataList.push(outCtx.getImageData(0, 0, w, h));
+
+          if (disposalType === 2) {
+            compositeCtx.clearRect(dims.left, dims.top, dims.width, dims.height);
+          }
+        }
+
+        setFrames([]);
+        setActiveFrameIndex(0);
+        setUndoStack([]);
+        setRedoStack([]);
+        addFramesFromImageData(dataList);
+      } else {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.playsInline = true;
+        const url = URL.createObjectURL(videoFile);
+        video.src = url;
+
+        await new Promise<void>((resolve, reject) => {
+          video.onloadedmetadata = () => resolve();
+          video.onerror = () => reject(new Error('Video load failed'));
         });
-        dataList.push(imageToFrameData(video, canvasWidth, canvasHeight));
-      }
 
-      URL.revokeObjectURL(url);
-      addFramesFromImageData(dataList);
+        await new Promise<void>(resolve => {
+          video.oncanplaythrough = () => resolve();
+          video.load();
+        });
+
+        const duration = video.duration;
+        const count = Math.min(videoMaxFrames, Math.max(1, Math.floor(duration * 30)));
+        const interval = duration / count;
+        const dataList: ImageData[] = [];
+
+        for (let i = 0; i < count; i++) {
+          video.currentTime = i * interval;
+          await new Promise<void>(resolve => {
+            video.onseeked = () => resolve();
+          });
+          dataList.push(imageToFrameData(video, canvasWidth, canvasHeight));
+        }
+
+        URL.revokeObjectURL(url);
+        addFramesFromImageData(dataList);
+      }
     } catch {
-      // video processing error
+      // import processing error
     } finally {
       setIsImporting(false);
       setShowVideoImportModal(false);
       setVideoFile(null);
+      setIsGifFile(false);
     }
-  }, [videoFile, videoMaxFrames, canvasWidth, canvasHeight, imageToFrameData, addFramesFromImageData]);
+  }, [videoFile, isGifFile, videoMaxFrames, canvasWidth, canvasHeight, imageToFrameData, addFramesFromImageData]);
 
   // ===== Import Sprite Sheet =====
   const handleImportSpriteSheetSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2033,6 +2109,9 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <button onClick={deleteFrame} title={t.deleteFrame} disabled={frames.length <= 1}>
               <span className="material-symbols-outlined" style={{ fontSize: 22 }}>delete</span>
             </button>
+            <button onClick={() => setShowResetAllConfirm(true)} title={t.resetAll}>
+              <span className="material-symbols-outlined" style={{ fontSize: 22 }}>restart_alt</span>
+            </button>
           </div>
         </div>
       </div>
@@ -2117,6 +2196,33 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         </div>
       )}
 
+      {/* Reset All Confirm */}
+      {showResetAllConfirm && (
+        <div className="editor-modal-overlay" onMouseDown={() => setShowResetAllConfirm(false)}>
+          <div
+            className="editor-modal"
+            onMouseDown={e => e.stopPropagation()}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { setFrames([createFrame(canvasWidth, canvasHeight)]); setActiveFrameIndex(0); setUndoStack([]); setRedoStack([]); setIsDirty(false); setShowResetAllConfirm(false); }
+              if (e.key === 'Escape') setShowResetAllConfirm(false);
+            }}
+            tabIndex={-1}
+            ref={el => el?.focus()}
+          >
+            <h3>{t.resetAll}</h3>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              {t.confirmResetAll}
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowResetAllConfirm(false)}>{t.cancel}</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={() => { setFrames([createFrame(canvasWidth, canvasHeight)]); setActiveFrameIndex(0); setUndoStack([]); setRedoStack([]); setIsDirty(false); setShowResetAllConfirm(false); }}>
+                {t.resetAll}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Frame Confirm */}
       {deleteConfirmIndex !== null && (
         <div className="editor-modal-overlay" onMouseDown={() => setDeleteConfirmIndex(null)}>
@@ -2150,10 +2256,10 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <h3>{t.newCanvas}</h3>
             <div className="size-inputs" style={{ marginBottom: 16 }}>
               <label>{t.width}:</label>
-              <input type="number" min={1} max={256} value={newW} onChange={e => setNewW(Number(e.target.value))} />
+              <input type="number" min={1} max={256} value={newW} onChange={e => setNewW(Number(e.target.value))} onBlur={() => setNewW(Math.max(1, Math.min(256, newW)))} />
               <span style={{ color: 'var(--text-muted)' }}>x</span>
               <label>{t.height}:</label>
-              <input type="number" min={1} max={256} value={newH} onChange={e => setNewH(Number(e.target.value))} />
+              <input type="number" min={1} max={256} value={newH} onChange={e => setNewH(Number(e.target.value))} onBlur={() => setNewH(Math.max(1, Math.min(256, newH)))} />
             </div>
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowNewCanvasModal(false)}>{t.cancel}</button>
@@ -2170,10 +2276,10 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <h3>{t.resizeCanvas}</h3>
             <div className="size-inputs" style={{ marginBottom: 12 }}>
               <label>{t.width}:</label>
-              <input type="number" min={1} max={256} value={resizeW} onChange={e => setResizeW(Number(e.target.value))} />
+              <input type="number" min={1} max={256} value={resizeW} onChange={e => setResizeW(Number(e.target.value))} onBlur={() => setResizeW(Math.max(1, Math.min(256, resizeW)))} />
               <span style={{ color: 'var(--text-muted)' }}>x</span>
               <label>{t.height}:</label>
-              <input type="number" min={1} max={256} value={resizeH} onChange={e => setResizeH(Number(e.target.value))} />
+              <input type="number" min={1} max={256} value={resizeH} onChange={e => setResizeH(Number(e.target.value))} onBlur={() => setResizeH(Math.max(1, Math.min(256, resizeH)))} />
             </div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
               <button
@@ -2203,34 +2309,34 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
       {/* Video Import Modal */}
       {showVideoImportModal && (
-        <div className="editor-modal-overlay" onMouseDown={() => { if (!isImporting) { setShowVideoImportModal(false); setVideoFile(null); } }}>
+        <div className="editor-modal-overlay" onMouseDown={() => { if (!isImporting) { setShowVideoImportModal(false); setVideoFile(null); setIsGifFile(false); } }}>
           <div className="editor-modal" onMouseDown={e => e.stopPropagation()} style={{ minWidth: 280 }}>
-            <h3>{t.videoImportSettings}</h3>
+            <h3>{isGifFile ? t.gifImportSettings : t.videoImportSettings}</h3>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                {t.maxFrames}:
+                {isGifFile ? t.frames : t.maxFrames}:
                 <input
                   type="number"
                   min={1}
                   max={120}
-                  value={videoMaxFrames}
+                  value={isGifFile ? gifFrameCount : videoMaxFrames}
                   onChange={e => setVideoMaxFrames(Math.max(1, Math.min(120, Number(e.target.value))))}
                   style={{ width: 60 }}
-                  disabled={isImporting}
+                  disabled={isImporting || isGifFile}
                 />
               </label>
               <input
                 type="range"
                 min={1}
                 max={120}
-                value={videoMaxFrames}
+                value={isGifFile ? gifFrameCount : videoMaxFrames}
                 onChange={e => setVideoMaxFrames(Number(e.target.value))}
                 style={{ width: '100%', marginTop: 8 }}
-                disabled={isImporting}
+                disabled={isImporting || isGifFile}
               />
             </div>
             <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => { setShowVideoImportModal(false); setVideoFile(null); }} disabled={isImporting}>{t.cancel}</button>
+              <button className="btn btn-secondary" onClick={() => { setShowVideoImportModal(false); setVideoFile(null); setIsGifFile(false); }} disabled={isImporting}>{t.cancel}</button>
               <button className="btn" onClick={handleVideoImportConfirm} disabled={isImporting}>
                 {isImporting ? t.importing : t.create}
               </button>
