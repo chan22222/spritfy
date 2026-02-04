@@ -453,8 +453,12 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [editLayerName, setEditLayerName] = useState('');
   const [showNewCanvasModal, setShowNewCanvasModal] = useState(false);
+  const [showResizeModal, setShowResizeModal] = useState(false);
   const [newW, setNewW] = useState(32);
   const [newH, setNewH] = useState(32);
+  const [resizeW, setResizeW] = useState(32);
+  const [resizeH, setResizeH] = useState(32);
+  const [resizeMode, setResizeMode] = useState<'scale' | 'crop'>('scale');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; frameIndex: number } | null>(null);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -469,6 +473,14 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [sheetRows, setSheetRows] = useState(4);
   const [videoMaxFrames, setVideoMaxFrames] = useState(12);
   const [isImporting, setIsImporting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 4000);
+  }, []);
 
   // Drawing refs
   const isDrawingRef = useRef(false);
@@ -1237,14 +1249,27 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   }, [frames.length]);
 
   // ===== Import Image =====
+  const MAX_CANVAS = 256;
   const handleImportImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
     const img = new Image();
     img.onload = () => {
-      const w = Math.max(1, Math.min(256, img.width));
-      const h = Math.max(1, Math.min(256, img.height));
+      let w = img.width;
+      let h = img.height;
+      const wasResized = w > MAX_CANVAS || h > MAX_CANVAS;
+
+      if (wasResized) {
+        const scale = Math.min(MAX_CANVAS / w, MAX_CANVAS / h);
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+        const msg = lang === 'ko'
+          ? `${img.width}x${img.height} → ${w}x${h} (최대 ${MAX_CANVAS}px)`
+          : `${img.width}x${img.height} → ${w}x${h} (max ${MAX_CANVAS}px)`;
+        showToast(msg);
+      }
+
       setCanvasWidth(w);
       setCanvasHeight(h);
       const tmpCanvas = document.createElement('canvas');
@@ -1271,7 +1296,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       URL.revokeObjectURL(img.src);
     };
     img.src = URL.createObjectURL(file);
-  }, []);
+  }, [lang, showToast]);
 
   // ===== Import Video/GIF =====
   const handleImportVideoGifSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1407,6 +1432,52 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     setIsDirty(false);
   }, [newW, newH]);
 
+  // ===== Resize Canvas =====
+  const openResizeModal = useCallback(() => {
+    setResizeW(canvasWidth);
+    setResizeH(canvasHeight);
+    setShowResizeModal(true);
+  }, [canvasWidth, canvasHeight]);
+
+  const handleResizeCanvas = useCallback(() => {
+    const nw = Math.max(1, Math.min(256, resizeW));
+    const nh = Math.max(1, Math.min(256, resizeH));
+    if (nw === canvasWidth && nh === canvasHeight) {
+      setShowResizeModal(false);
+      return;
+    }
+
+    pushHistory();
+    setFrames(prev => prev.map(frame => {
+      const newLayers = frame.layers.map(layer => {
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = nw;
+        tmpCanvas.height = nh;
+        const ctx = tmpCanvas.getContext('2d')!;
+
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = canvasWidth;
+        srcCanvas.height = canvasHeight;
+        srcCanvas.getContext('2d')!.putImageData(layer.data, 0, 0);
+
+        if (resizeMode === 'scale') {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(srcCanvas, 0, 0, nw, nh);
+        } else {
+          ctx.drawImage(srcCanvas, 0, 0);
+        }
+
+        return { ...layer, data: ctx.getImageData(0, 0, nw, nh) };
+      });
+      return { ...frame, layers: newLayers };
+    }));
+
+    setCanvasWidth(nw);
+    setCanvasHeight(nh);
+    setShowResizeModal(false);
+    setIsDirty(true);
+  }, [resizeW, resizeH, resizeMode, canvasWidth, canvasHeight, pushHistory]);
+
   // ===== Context Menu Prevention =====
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1524,6 +1595,10 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <div className="canvas-coords">{mouseCoords.x}, {mouseCoords.y}</div>
           )}
           <div className="zoom-indicator">{zoom}x | {canvasWidth}x{canvasHeight}</div>
+
+          {toastMessage && (
+            <div className="editor-toast">{toastMessage}</div>
+          )}
         </div>
 
         {/* Right Panels */}
@@ -1750,11 +1825,18 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
               <input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} id="grid-toggle" />
               <label htmlFor="grid-toggle">{t.gridToggle} (H)</label>
             </div>
-            <div style={{ marginTop: 8 }}>
-              <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px', width: '100%' }} onClick={() => setShowNewCanvasModal(true)}>
+            <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+              <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 8px', flex: 1 }} onClick={() => setShowNewCanvasModal(true)}>
                 <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
-                {t.newCanvas} ({canvasWidth}x{canvasHeight})
+                {t.newCanvas}
               </button>
+              <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 8px', flex: 1 }} onClick={openResizeModal}>
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>aspect_ratio</span>
+                {t.resizeCanvas}
+              </button>
+            </div>
+            <div style={{ marginTop: 4, fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+              {canvasWidth}x{canvasHeight}
             </div>
           </div>
 
@@ -1927,10 +2009,10 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
       {/* Delete Layer Confirm */}
       {showDeleteLayerConfirm && (
-        <div className="editor-modal-overlay" onClick={() => setShowDeleteLayerConfirm(false)}>
+        <div className="editor-modal-overlay" onMouseDown={() => setShowDeleteLayerConfirm(false)}>
           <div
             className="editor-modal"
-            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
             onKeyDown={e => {
               if (e.key === 'Enter') { removeLayer(); setShowDeleteLayerConfirm(false); }
               if (e.key === 'Escape') setShowDeleteLayerConfirm(false);
@@ -1954,10 +2036,10 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
       {/* Delete Frame Confirm */}
       {deleteConfirmIndex !== null && (
-        <div className="editor-modal-overlay" onClick={() => setDeleteConfirmIndex(null)}>
+        <div className="editor-modal-overlay" onMouseDown={() => setDeleteConfirmIndex(null)}>
           <div
             className="editor-modal"
-            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
             onKeyDown={e => {
               if (e.key === 'Enter') { deleteFrameAt(deleteConfirmIndex); setDeleteConfirmIndex(null); }
               if (e.key === 'Escape') setDeleteConfirmIndex(null);
@@ -1980,8 +2062,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       )}
 
       {showNewCanvasModal && (
-        <div className="editor-modal-overlay" onClick={() => setShowNewCanvasModal(false)}>
-          <div className="editor-modal" onClick={e => e.stopPropagation()}>
+        <div className="editor-modal-overlay" onMouseDown={() => setShowNewCanvasModal(false)}>
+          <div className="editor-modal" onMouseDown={e => e.stopPropagation()}>
             <h3>{t.newCanvas}</h3>
             <div className="size-inputs" style={{ marginBottom: 16 }}>
               <label>{t.width}:</label>
@@ -1998,10 +2080,48 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         </div>
       )}
 
+      {/* Resize Canvas Modal */}
+      {showResizeModal && (
+        <div className="editor-modal-overlay" onMouseDown={() => setShowResizeModal(false)}>
+          <div className="editor-modal" onMouseDown={e => e.stopPropagation()}>
+            <h3>{t.resizeCanvas}</h3>
+            <div className="size-inputs" style={{ marginBottom: 12 }}>
+              <label>{t.width}:</label>
+              <input type="number" min={1} max={256} value={resizeW} onChange={e => setResizeW(Number(e.target.value))} />
+              <span style={{ color: 'var(--text-muted)' }}>x</span>
+              <label>{t.height}:</label>
+              <input type="number" min={1} max={256} value={resizeH} onChange={e => setResizeH(Number(e.target.value))} />
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+              <button
+                className={`btn ${resizeMode === 'scale' ? '' : 'btn-secondary'}`}
+                style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                onClick={() => setResizeMode('scale')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>zoom_out_map</span>
+                {t.resizeScale}
+              </button>
+              <button
+                className={`btn ${resizeMode === 'crop' ? '' : 'btn-secondary'}`}
+                style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
+                onClick={() => setResizeMode('crop')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>crop</span>
+                {t.resizeCrop}
+              </button>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowResizeModal(false)}>{t.cancel}</button>
+              <button className="btn" onClick={handleResizeCanvas}>{t.apply}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Video Import Modal */}
       {showVideoImportModal && (
-        <div className="editor-modal-overlay" onClick={() => { if (!isImporting) { setShowVideoImportModal(false); setVideoFile(null); } }}>
-          <div className="editor-modal" onClick={e => e.stopPropagation()} style={{ minWidth: 280 }}>
+        <div className="editor-modal-overlay" onMouseDown={() => { if (!isImporting) { setShowVideoImportModal(false); setVideoFile(null); } }}>
+          <div className="editor-modal" onMouseDown={e => e.stopPropagation()} style={{ minWidth: 280 }}>
             <h3>{t.videoImportSettings}</h3>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -2038,8 +2158,8 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
       {/* Sprite Sheet Import Modal */}
       {showSpriteSheetModal && spriteSheetImage && (
-        <div className="editor-modal-overlay" onClick={() => { if (!isImporting) { setShowSpriteSheetModal(false); setSpriteSheetImage(null); } }}>
-          <div className="editor-modal" onClick={e => e.stopPropagation()} style={{ minWidth: 320 }}>
+        <div className="editor-modal-overlay" onMouseDown={() => { if (!isImporting) { setShowSpriteSheetModal(false); setSpriteSheetImage(null); } }}>
+          <div className="editor-modal" onMouseDown={e => e.stopPropagation()} style={{ minWidth: 320 }}>
             <h3>{t.spriteSheetSettings}</h3>
             <div className="sprite-sheet-preview">
               <div className="sprite-sheet-preview-inner">

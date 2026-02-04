@@ -2013,8 +2013,16 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         }}>
           <div className="split-modal">
             <h3 style={{ margin: '0 0 16px', color: 'var(--text-main)' }}>{t.importSpriteSheet}</h3>
-            <div style={{ marginBottom: 16, textAlign: 'center' }}>
-              <img src={splitImageUrl} alt="Sprite Sheet" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 8, background: 'var(--bg-card)' }} />
+            <div className="sprite-sheet-preview">
+              <div className="sprite-sheet-preview-inner">
+                <img src={splitImageUrl} alt="Sprite Sheet" draggable={false} style={{ maxHeight: 300 }} />
+                <div
+                  className="sprite-sheet-grid-overlay"
+                  style={{
+                    backgroundSize: `${100 / (splitCols || 1)}% ${100 / (splitRows || 1)}%`,
+                  }}
+                />
+              </div>
             </div>
             <div className="row" style={{ gap: 16, marginBottom: 16 }}>
               <div className="control-group" style={{ flex: 1, marginBottom: 0 }}>
