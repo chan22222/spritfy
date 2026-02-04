@@ -552,46 +552,58 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   }, [activeFrame, getMaxHistory]);
 
   const performUndo = useCallback(() => {
-    if (undoStack.length === 0 || !activeFrame) return;
-    const current: HistorySnapshot = {
-      frameId: activeFrame.id,
-      layers: activeFrame.layers.map(l => ({ id: l.id, data: cloneImageData(l.data) })),
-    };
+    if (undoStack.length === 0) return;
     const snapshot = undoStack[undoStack.length - 1];
     setUndoStack(prev => prev.slice(0, -1));
-    setRedoStack(prev => [...prev, current]);
-    setFrames(prev => prev.map(f => {
-      if (f.id !== snapshot.frameId) return f;
-      return {
-        ...f,
-        layers: f.layers.map(l => {
-          const saved = snapshot.layers.find(s => s.id === l.id);
-          return saved ? { ...l, data: cloneImageData(saved.data) } : l;
-        }),
+    setFrames(prev => {
+      const targetFrame = prev.find(f => f.id === snapshot.frameId);
+      if (!targetFrame) return prev;
+      const current: HistorySnapshot = {
+        frameId: snapshot.frameId,
+        layers: targetFrame.layers.map(l => ({ id: l.id, data: cloneImageData(l.data) })),
       };
-    }));
-  }, [undoStack, activeFrame]);
+      setRedoStack(r => [...r, current]);
+      const targetIdx = prev.findIndex(f => f.id === snapshot.frameId);
+      if (targetIdx >= 0) setActiveFrameIndex(targetIdx);
+      return prev.map(f => {
+        if (f.id !== snapshot.frameId) return f;
+        return {
+          ...f,
+          layers: f.layers.map(l => {
+            const saved = snapshot.layers.find(s => s.id === l.id);
+            return saved ? { ...l, data: cloneImageData(saved.data) } : l;
+          }),
+        };
+      });
+    });
+  }, [undoStack]);
 
   const performRedo = useCallback(() => {
-    if (redoStack.length === 0 || !activeFrame) return;
-    const current: HistorySnapshot = {
-      frameId: activeFrame.id,
-      layers: activeFrame.layers.map(l => ({ id: l.id, data: cloneImageData(l.data) })),
-    };
+    if (redoStack.length === 0) return;
     const snapshot = redoStack[redoStack.length - 1];
     setRedoStack(prev => prev.slice(0, -1));
-    setUndoStack(prev => [...prev, current]);
-    setFrames(prev => prev.map(f => {
-      if (f.id !== snapshot.frameId) return f;
-      return {
-        ...f,
-        layers: f.layers.map(l => {
-          const saved = snapshot.layers.find(s => s.id === l.id);
-          return saved ? { ...l, data: cloneImageData(saved.data) } : l;
-        }),
+    setFrames(prev => {
+      const targetFrame = prev.find(f => f.id === snapshot.frameId);
+      if (!targetFrame) return prev;
+      const current: HistorySnapshot = {
+        frameId: snapshot.frameId,
+        layers: targetFrame.layers.map(l => ({ id: l.id, data: cloneImageData(l.data) })),
       };
-    }));
-  }, [redoStack, activeFrame]);
+      setUndoStack(u => [...u, current]);
+      const targetIdx = prev.findIndex(f => f.id === snapshot.frameId);
+      if (targetIdx >= 0) setActiveFrameIndex(targetIdx);
+      return prev.map(f => {
+        if (f.id !== snapshot.frameId) return f;
+        return {
+          ...f,
+          layers: f.layers.map(l => {
+            const saved = snapshot.layers.find(s => s.id === l.id);
+            return saved ? { ...l, data: cloneImageData(saved.data) } : l;
+          }),
+        };
+      });
+    });
+  }, [redoStack]);
 
   // ===== Rendering =====
   const renderAll = useCallback(() => {
