@@ -460,6 +460,16 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const [isDirty, setIsDirty] = useState(false);
   const [showDeleteLayerConfirm, setShowDeleteLayerConfirm] = useState(false);
 
+  // Import state
+  const [showSpriteSheetModal, setShowSpriteSheetModal] = useState(false);
+  const [showVideoImportModal, setShowVideoImportModal] = useState(false);
+  const [spriteSheetImage, setSpriteSheetImage] = useState<HTMLImageElement | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [sheetCols, setSheetCols] = useState(4);
+  const [sheetRows, setSheetRows] = useState(4);
+  const [videoMaxFrames, setVideoMaxFrames] = useState(12);
+  const [isImporting, setIsImporting] = useState(false);
+
   // Drawing refs
   const isDrawingRef = useRef(false);
   const lastPixelRef = useRef<{ x: number; y: number } | null>(null);
@@ -476,6 +486,11 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const timelineCanvasRefs = useRef<Map<string, HTMLCanvasElement>>(new Map());
+
+  // Import refs
+  const importImageRef = useRef<HTMLInputElement>(null);
+  const importVideoGifRef = useRef<HTMLInputElement>(null);
+  const importSpriteSheetRef = useRef<HTMLInputElement>(null);
 
   // Derived
   const activeFrame = frames[activeFrameIndex];
@@ -613,22 +628,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       const ctx = overlayCanvas.getContext('2d')!;
       ctx.clearRect(0, 0, w, h);
 
-      if (showGrid && zoom >= 4) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1 / zoom;
-        for (let x = 0; x <= w; x++) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, h);
-          ctx.stroke();
-        }
-        for (let y = 0; y <= h; y++) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(w, y);
-          ctx.stroke();
-        }
-      }
+      // Grid is now rendered as a CSS overlay for crisp 1px lines
 
       const isShapeTool = activeTool === 'line' || activeTool === 'rect' || activeTool === 'ellipse';
 
@@ -1199,6 +1199,188 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     }
   }, [frames, canvasWidth, canvasHeight, fps]);
 
+  // ===== Import helpers =====
+  const imageToFrameData = useCallback((img: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement, w: number, h: number): ImageData => {
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = w;
+    tmpCanvas.height = h;
+    const ctx = tmpCanvas.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+
+    const srcW = img instanceof HTMLVideoElement ? img.videoWidth : img.width;
+    const srcH = img instanceof HTMLVideoElement ? img.videoHeight : img.height;
+    const scale = Math.min(w / srcW, h / srcH);
+    const dw = Math.round(srcW * scale);
+    const dh = Math.round(srcH * scale);
+    const dx = Math.floor((w - dw) / 2);
+    const dy = Math.floor((h - dh) / 2);
+
+    ctx.drawImage(img, dx, dy, dw, dh);
+    return ctx.getImageData(0, 0, w, h);
+  }, []);
+
+  const addFramesFromImageData = useCallback((dataList: ImageData[]) => {
+    const newFrames: EditorFrame[] = dataList.map(data => {
+      const layer: Layer = {
+        id: genId(),
+        name: 'Layer 1',
+        visible: true,
+        opacity: 100,
+        locked: false,
+        data,
+      };
+      return { id: genId(), layers: [layer], activeLayerId: layer.id };
+    });
+    setFrames(prev => [...prev, ...newFrames]);
+    setActiveFrameIndex(frames.length);
+    setIsDirty(true);
+  }, [frames.length]);
+
+  // ===== Import Image =====
+  const handleImportImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.max(1, Math.min(256, img.width));
+      const h = Math.max(1, Math.min(256, img.height));
+      setCanvasWidth(w);
+      setCanvasHeight(h);
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = w;
+      tmpCanvas.height = h;
+      const ctx = tmpCanvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h);
+      const layer: Layer = {
+        id: genId(),
+        name: 'Layer 1',
+        visible: true,
+        opacity: 100,
+        locked: false,
+        data,
+      };
+      const frame: EditorFrame = { id: genId(), layers: [layer], activeLayerId: layer.id };
+      setFrames([frame]);
+      setActiveFrameIndex(0);
+      setUndoStack([]);
+      setRedoStack([]);
+      setIsDirty(true);
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  }, []);
+
+  // ===== Import Video/GIF =====
+  const handleImportVideoGifSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setVideoFile(file);
+    setShowVideoImportModal(true);
+  }, []);
+
+  const handleVideoImportConfirm = useCallback(async () => {
+    if (!videoFile) return;
+    setIsImporting(true);
+    try {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      const url = URL.createObjectURL(videoFile);
+      video.src = url;
+
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error('Video load failed'));
+      });
+
+      await new Promise<void>(resolve => {
+        video.oncanplaythrough = () => resolve();
+        video.load();
+      });
+
+      const duration = video.duration;
+      const count = Math.min(videoMaxFrames, Math.max(1, Math.floor(duration * 30)));
+      const interval = duration / count;
+      const dataList: ImageData[] = [];
+
+      for (let i = 0; i < count; i++) {
+        video.currentTime = i * interval;
+        await new Promise<void>(resolve => {
+          video.onseeked = () => resolve();
+        });
+        dataList.push(imageToFrameData(video, canvasWidth, canvasHeight));
+      }
+
+      URL.revokeObjectURL(url);
+      addFramesFromImageData(dataList);
+    } catch {
+      // video processing error
+    } finally {
+      setIsImporting(false);
+      setShowVideoImportModal(false);
+      setVideoFile(null);
+    }
+  }, [videoFile, videoMaxFrames, canvasWidth, canvasHeight, imageToFrameData, addFramesFromImageData]);
+
+  // ===== Import Sprite Sheet =====
+  const handleImportSpriteSheetSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const img = new Image();
+    img.onload = () => {
+      setSpriteSheetImage(img);
+      setShowSpriteSheetModal(true);
+    };
+    img.src = URL.createObjectURL(file);
+  }, []);
+
+  const handleSpriteSheetConfirm = useCallback(() => {
+    if (!spriteSheetImage) return;
+    setIsImporting(true);
+    try {
+      const cellW = Math.floor(spriteSheetImage.width / sheetCols);
+      const cellH = Math.floor(spriteSheetImage.height / sheetRows);
+      const dataList: ImageData[] = [];
+
+      for (let r = 0; r < sheetRows; r++) {
+        for (let c = 0; c < sheetCols; c++) {
+          const tmpCanvas = document.createElement('canvas');
+          tmpCanvas.width = canvasWidth;
+          tmpCanvas.height = canvasHeight;
+          const ctx = tmpCanvas.getContext('2d')!;
+          ctx.imageSmoothingEnabled = false;
+
+          const scale = Math.min(canvasWidth / cellW, canvasHeight / cellH);
+          const dw = Math.round(cellW * scale);
+          const dh = Math.round(cellH * scale);
+          const dx = Math.floor((canvasWidth - dw) / 2);
+          const dy = Math.floor((canvasHeight - dh) / 2);
+
+          ctx.drawImage(
+            spriteSheetImage,
+            c * cellW, r * cellH, cellW, cellH,
+            dx, dy, dw, dh,
+          );
+          dataList.push(ctx.getImageData(0, 0, canvasWidth, canvasHeight));
+        }
+      }
+
+      addFramesFromImageData(dataList);
+      URL.revokeObjectURL(spriteSheetImage.src);
+    } catch {
+      // sprite sheet processing error
+    } finally {
+      setIsImporting(false);
+      setShowSpriteSheetModal(false);
+      setSpriteSheetImage(null);
+    }
+  }, [spriteSheetImage, sheetCols, sheetRows, canvasWidth, canvasHeight, addFramesFromImageData]);
+
   // ===== Unsaved changes guard =====
   useEffect(() => {
     if (!isDirty) return;
@@ -1256,6 +1438,18 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
         {/* Left Toolbar */}
         <div className="editor-toolbar">
+          {/* Import buttons */}
+          <button className="tool-btn" onClick={() => importImageRef.current?.click()} title={t.importImage}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>add_photo_alternate</span>
+          </button>
+          <button className="tool-btn" onClick={() => importVideoGifRef.current?.click()} title={t.importVideoGif}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
+          </button>
+          <button className="tool-btn" onClick={() => importSpriteSheetRef.current?.click()} title={t.importSpriteSheet}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>grid_view</span>
+          </button>
+          <div className="tool-divider" />
+          {/* Drawing tools */}
           {tools.map(tool => (
             <button
               key={tool.type}
@@ -1313,6 +1507,18 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             <canvas ref={mainCanvasRef} />
             <canvas ref={overlayCanvasRef} />
           </div>
+
+          {showGrid && zoom >= 4 && (
+            <div
+              className="pixel-grid-overlay"
+              style={{
+                width: canvasWidth * zoom,
+                height: canvasHeight * zoom,
+                transform: `translate(${pan.x}px, ${pan.y}px)`,
+                backgroundSize: `${zoom}px ${zoom}px`,
+              }}
+            />
+          )}
 
           {mouseCoords && (
             <div className="canvas-coords">{mouseCoords.x}, {mouseCoords.y}</div>
@@ -1791,6 +1997,104 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
           </div>
         </div>
       )}
+
+      {/* Video Import Modal */}
+      {showVideoImportModal && (
+        <div className="editor-modal-overlay" onClick={() => { if (!isImporting) { setShowVideoImportModal(false); setVideoFile(null); } }}>
+          <div className="editor-modal" onClick={e => e.stopPropagation()} style={{ minWidth: 280 }}>
+            <h3>{t.videoImportSettings}</h3>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                {t.maxFrames}:
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={videoMaxFrames}
+                  onChange={e => setVideoMaxFrames(Math.max(1, Math.min(120, Number(e.target.value))))}
+                  style={{ width: 60 }}
+                  disabled={isImporting}
+                />
+              </label>
+              <input
+                type="range"
+                min={1}
+                max={120}
+                value={videoMaxFrames}
+                onChange={e => setVideoMaxFrames(Number(e.target.value))}
+                style={{ width: '100%', marginTop: 8 }}
+                disabled={isImporting}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => { setShowVideoImportModal(false); setVideoFile(null); }} disabled={isImporting}>{t.cancel}</button>
+              <button className="btn" onClick={handleVideoImportConfirm} disabled={isImporting}>
+                {isImporting ? t.importing : t.create}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sprite Sheet Import Modal */}
+      {showSpriteSheetModal && spriteSheetImage && (
+        <div className="editor-modal-overlay" onClick={() => { if (!isImporting) { setShowSpriteSheetModal(false); setSpriteSheetImage(null); } }}>
+          <div className="editor-modal" onClick={e => e.stopPropagation()} style={{ minWidth: 320 }}>
+            <h3>{t.spriteSheetSettings}</h3>
+            <div className="sprite-sheet-preview">
+              <div className="sprite-sheet-preview-inner">
+                <img src={spriteSheetImage.src} alt="sprite sheet" draggable={false} />
+                <div
+                  className="sprite-sheet-grid-overlay"
+                  style={{
+                    backgroundSize: `${100 / sheetCols}% ${100 / sheetRows}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem', flex: 1 }}>
+                {t.sheetCols}:
+                <input
+                  type="number"
+                  min={1}
+                  max={64}
+                  value={sheetCols}
+                  onChange={e => setSheetCols(Math.max(1, Math.min(64, Number(e.target.value))))}
+                  style={{ width: 52 }}
+                  disabled={isImporting}
+                />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem', flex: 1 }}>
+                {t.sheetRows}:
+                <input
+                  type="number"
+                  min={1}
+                  max={64}
+                  value={sheetRows}
+                  onChange={e => setSheetRows(Math.max(1, Math.min(64, Number(e.target.value))))}
+                  style={{ width: 52 }}
+                  disabled={isImporting}
+                />
+              </label>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 12px' }}>
+              {sheetCols * sheetRows} {t.maxFrames?.toLowerCase().includes('frame') ? 'frames' : lang === 'ko' ? '프레임' : 'frames'}
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => { setShowSpriteSheetModal(false); setSpriteSheetImage(null); }} disabled={isImporting}>{t.cancel}</button>
+              <button className="btn" onClick={handleSpriteSheetConfirm} disabled={isImporting}>
+                {isImporting ? t.importing : t.create}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file inputs for import */}
+      <input ref={importImageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportImage} />
+      <input ref={importVideoGifRef} type="file" accept="video/*,.gif" style={{ display: 'none' }} onChange={handleImportVideoGifSelect} />
+      <input ref={importSpriteSheetRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportSpriteSheetSelect} />
     </div>
   );
 };
