@@ -503,6 +503,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   const spaceHeldRef = useRef(false);
   const shiftHeldRef = useRef(false);
   const drawButtonRef = useRef(0);
+  const moveOriginalDataRef = useRef<ImageData | null>(null);
 
   // Canvas refs
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -823,6 +824,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
     if (activeTool === 'move') {
       pushHistory();
+      moveOriginalDataRef.current = activeLayer ? cloneImageData(activeLayer.data) : null;
       isDrawingRef.current = true;
       drawStartRef.current = { x, y };
       lastPixelRef.current = { x, y };
@@ -887,34 +889,32 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     if (!isDrawingRef.current || !activeLayer || activeLayer.locked) return;
 
     if (activeTool === 'move') {
-      const last = lastPixelRef.current;
-      if (!last) return;
-      const dx = x - last.x;
-      const dy = y - last.y;
-      if (dx === 0 && dy === 0) return;
+      const start = drawStartRef.current;
+      const original = moveOriginalDataRef.current;
+      if (!start || !original) return;
+      const dx = x - start.x;
+      const dy = y - start.y;
+      const shifted = new ImageData(canvasWidth, canvasHeight);
+      for (let sy = 0; sy < canvasHeight; sy++) {
+        for (let sx = 0; sx < canvasWidth; sx++) {
+          const nx = sx + dx;
+          const ny = sy + dy;
+          if (nx >= 0 && nx < canvasWidth && ny >= 0 && ny < canvasHeight) {
+            const srcIdx = (sy * canvasWidth + sx) * 4;
+            const dstIdx = (ny * canvasWidth + nx) * 4;
+            shifted.data[dstIdx] = original.data[srcIdx];
+            shifted.data[dstIdx + 1] = original.data[srcIdx + 1];
+            shifted.data[dstIdx + 2] = original.data[srcIdx + 2];
+            shifted.data[dstIdx + 3] = original.data[srcIdx + 3];
+          }
+        }
+      }
       setFrames(prev => prev.map((f, fi) => {
         if (fi !== activeFrameIndex) return f;
         const layer = f.layers.find(l => l.id === activeFrame!.activeLayerId);
         if (!layer) return f;
-        const src = layer.data;
-        const shifted = new ImageData(canvasWidth, canvasHeight);
-        for (let sy = 0; sy < canvasHeight; sy++) {
-          for (let sx = 0; sx < canvasWidth; sx++) {
-            const nx = sx + dx;
-            const ny = sy + dy;
-            if (nx >= 0 && nx < canvasWidth && ny >= 0 && ny < canvasHeight) {
-              const srcIdx = (sy * canvasWidth + sx) * 4;
-              const dstIdx = (ny * canvasWidth + nx) * 4;
-              shifted.data[dstIdx] = src.data[srcIdx];
-              shifted.data[dstIdx + 1] = src.data[srcIdx + 1];
-              shifted.data[dstIdx + 2] = src.data[srcIdx + 2];
-              shifted.data[dstIdx + 3] = src.data[srcIdx + 3];
-            }
-          }
-        }
         return { ...f, layers: f.layers.map(l => l.id === layer.id ? { ...l, data: shifted } : l) };
       }));
-      lastPixelRef.current = { x, y };
       return;
     }
 
@@ -1004,6 +1004,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
     drawStartRef.current = null;
     lastPixelRef.current = null;
+    moveOriginalDataRef.current = null;
     renderAll();
   }, [activeTool, activeLayer, activeFrame, activeFrameIndex, primaryColor, secondaryColor, brushSize, canvasWidth, canvasHeight, getPixelCoord, renderAll, symmetryH, symmetryV]);
 
