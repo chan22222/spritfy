@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
 import '@/landing.css';
+import '@/legal.css';
 
 interface LandingProps {
   lang: Lang;
