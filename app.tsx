@@ -1,36 +1,43 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, Suspense, lazy } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Header } from '@/header.tsx';
-import { PixelEditor } from '@/editor.tsx';
 import { LandingPage } from '@/landing.tsx';
-import { PrivacyPage } from '@/privacy.tsx';
-import { TermsPage } from '@/terms.tsx';
-import { AboutPage } from '@/about.tsx';
-import { GuideSpriteSheetPage } from '@/guide-sprite.tsx';
-import { GuidePixelArtPage } from '@/guide-pixel-art.tsx';
 import { LangContext } from '@/lang-context.ts';
-import { SpritePage } from '@/sprite-page.tsx';
-import { ConverterPage } from '@/converter.tsx';
+
+const PixelEditor = lazy(() => import('@/editor.tsx').then(m => ({ default: m.PixelEditor })));
+const SpritePage = lazy(() => import('@/sprite-page.tsx').then(m => ({ default: m.SpritePage })));
+const ConverterPage = lazy(() => import('@/converter.tsx').then(m => ({ default: m.ConverterPage })));
+const PrivacyPage = lazy(() => import('@/privacy.tsx').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('@/terms.tsx').then(m => ({ default: m.TermsPage })));
+const AboutPage = lazy(() => import('@/about.tsx').then(m => ({ default: m.AboutPage })));
+const GuideSpriteSheetPage = lazy(() => import('@/guide-sprite.tsx').then(m => ({ default: m.GuideSpriteSheetPage })));
+const GuidePixelArtPage = lazy(() => import('@/guide-pixel-art.tsx').then(m => ({ default: m.GuidePixelArtPage })));
 
 const RootLayout = () => {
   const { lang, setLang } = useContext(LangContext);
   return (
     <>
       <Header lang={lang} setLang={setLang} />
-      <Outlet />
+      <main>
+        <Outlet />
+      </main>
     </>
   );
 };
 
+const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={null}>{children}</Suspense>
+);
+
 const SpriteWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <SpritePage lang={lang} t={t} />;
+  return <LazyWrapper><SpritePage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const EditorWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <PixelEditor lang={lang} t={t} />;
+  return <LazyWrapper><PixelEditor lang={lang} t={t} /></LazyWrapper>;
 };
 
 const LandingWrapper = () => {
@@ -40,32 +47,32 @@ const LandingWrapper = () => {
 
 const PrivacyWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <PrivacyPage lang={lang} t={t} />;
+  return <LazyWrapper><PrivacyPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const TermsWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <TermsPage lang={lang} t={t} />;
+  return <LazyWrapper><TermsPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const AboutWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <AboutPage lang={lang} t={t} />;
+  return <LazyWrapper><AboutPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const GuideSpriteWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <GuideSpriteSheetPage lang={lang} t={t} />;
+  return <LazyWrapper><GuideSpriteSheetPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const GuidePixelArtWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <GuidePixelArtPage lang={lang} t={t} />;
+  return <LazyWrapper><GuidePixelArtPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const ConverterWrapper = () => {
   const { lang, t } = useContext(LangContext);
-  return <ConverterPage lang={lang} t={t} />;
+  return <LazyWrapper><ConverterPage lang={lang} t={t} /></LazyWrapper>;
 };
 
 const router = createBrowserRouter([
