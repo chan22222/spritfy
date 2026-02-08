@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
-import SEO from '@/seo.tsx';
 
 interface TermsProps {
   lang: Lang;
@@ -25,7 +25,14 @@ export const TermsPage: React.FC<TermsProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <SEO title={t.seoTermsTitle} canonicalPath="/terms" noIndex />
+      <Helmet>
+        <title>이용약관 - 스프릿파이 | Spritfy</title>
+        <meta name="description" content="스프릿파이(Spritfy) 서비스 이용약관." />
+        <link rel="canonical" href="https://spritfy.xyz/terms" />
+        <meta property="og:title" content="이용약관 - 스프릿파이 | Spritfy" />
+        <meta property="og:description" content="스프릿파이(Spritfy) 서비스 이용약관." />
+        <meta property="og:url" content="https://spritfy.xyz/terms" />
+      </Helmet>
       <div className="legal-content">
         <h1>{t.termsTitle}</h1>
         <p className="legal-updated">{t.termsLastUpdated}</p>

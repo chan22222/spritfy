@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
-import SEO from '@/seo.tsx';
 
 interface PrivacyProps {
   lang: Lang;
@@ -25,7 +25,14 @@ export const PrivacyPage: React.FC<PrivacyProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <SEO title={t.seoPrivacyTitle} canonicalPath="/privacy" noIndex />
+      <Helmet>
+        <title>개인정보처리방침 - 스프릿파이 | Spritfy</title>
+        <meta name="description" content="스프릿파이(Spritfy) 개인정보처리방침." />
+        <link rel="canonical" href="https://spritfy.xyz/privacy" />
+        <meta property="og:title" content="개인정보처리방침 - 스프릿파이 | Spritfy" />
+        <meta property="og:description" content="스프릿파이(Spritfy) 개인정보처리방침." />
+        <meta property="og:url" content="https://spritfy.xyz/privacy" />
+      </Helmet>
       <div className="legal-content">
         <h1>{t.privacyTitle}</h1>
         <p className="legal-updated">{t.privacyLastUpdated}</p>

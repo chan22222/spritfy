@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
-import SEO from '@/seo.tsx';
 
 interface GuideSpriteProps {
   lang: Lang;
@@ -22,7 +22,14 @@ export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) =>
 
   return (
     <div className="legal-page">
-      <SEO title={t.seoGuideSpriteTitle} description={t.seoGuideSpriteDesc} canonicalPath="/guide/sprite-sheet" />
+      <Helmet>
+        <title>스프라이트 시트 가이드 - 스프릿파이 | 스프라이트 시트 만드는 법</title>
+        <meta name="description" content="스프라이트 시트란 무엇인지, 어떻게 만드는지 알아보세요. 게임 개발과 애니메이션을 위한 스프라이트 시트 제작 가이드." />
+        <link rel="canonical" href="https://spritfy.xyz/guide/sprite-sheet" />
+        <meta property="og:title" content="스프라이트 시트 가이드 - 스프릿파이 | 스프라이트 시트 만드는 법" />
+        <meta property="og:description" content="스프라이트 시트란 무엇인지, 어떻게 만드는지 알아보세요. 게임 개발과 애니메이션을 위한 스프라이트 시트 제작 가이드." />
+        <meta property="og:url" content="https://spritfy.xyz/guide/sprite-sheet" />
+      </Helmet>
       <div className="legal-content guide-content">
         <h1>{t.guideSpriteTitle}</h1>
         <p className="legal-intro">{t.guideSpriteIntro}</p>

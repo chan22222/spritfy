@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
-import SEO from '@/seo.tsx';
 import './converter.css';
 
 interface ConverterFile {
@@ -329,7 +329,14 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <SEO title={t.seoConverterTitle} description={t.seoConverterDesc} canonicalPath="/converter" />
+      <Helmet>
+        <title>이미지 포맷 변환기 - 스프릿파이 | PNG, JPG, WebP, ICO 변환</title>
+        <meta name="description" content="PNG, JPG, WebP, GIF, BMP, ICO 등 다양한 이미지 포맷을 무료로 변환하세요. 브라우저에서 바로 변환, 설치 불필요." />
+        <link rel="canonical" href="https://spritfy.xyz/converter" />
+        <meta property="og:title" content="이미지 포맷 변환기 - 스프릿파이 | PNG, JPG, WebP, ICO 변환" />
+        <meta property="og:description" content="PNG, JPG, WebP, GIF, BMP, ICO 등 다양한 이미지 포맷을 무료로 변환하세요. 브라우저에서 바로 변환, 설치 불필요." />
+        <meta property="og:url" content="https://spritfy.xyz/converter" />
+      </Helmet>
       <div className="converter-content">
         <div className="converter-header">
           <div className="converter-icon-badge">
