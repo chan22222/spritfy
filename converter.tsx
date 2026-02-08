@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import '@/legal.css';
 import './converter.css';
 
 interface ConverterFile {
