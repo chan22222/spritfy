@@ -147,6 +147,7 @@
 
 .landing-hero-logo {
   height: 140px;
+  width: auto;
   margin-bottom: 24px;
   filter: drop-shadow(0 0 32px rgba(187, 134, 252, 0.3));
   image-rendering: auto;

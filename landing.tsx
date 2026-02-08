@@ -35,7 +35,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
       {/* Hero */}
       <section className="landing-hero">
         <div className="hero-badge">PIXEL ART TOOL</div>
-        <img src="/logo.png" alt="Spritfy" width={392} height={140} className="landing-hero-logo" fetchPriority="high" />
+        <img src="/logo.png" alt="Spritfy" width={700} height={250} className="landing-hero-logo" fetchPriority="high" />
         <h1 className="landing-hero-title">{t.heroTitle}</h1>
         <p className="landing-hero-subtitle">
           {t.heroSubtitle.split('\n').map((line, i, arr) => (

@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   return (
     <div className="app-header">
       <Link to="/" className="brand">
-        <img src="/logo.png" alt="Spritfy" width={146} height={52} style={{ height: 52 }} />
+        <img src="/logo.png" alt="Spritfy" width={700} height={250} style={{ height: 52, width: 'auto' }} />
       </Link>
       <nav className="header-nav">
         <NavLink to="/editor" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>

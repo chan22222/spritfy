@@ -55,6 +55,13 @@ body {
   flex-direction: column;
 }
 
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* App Header */
 .app-header {
   height: 60px;
