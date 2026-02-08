@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import '@/legal.css';
 
 interface GuidePixelProps {
   lang: Lang;

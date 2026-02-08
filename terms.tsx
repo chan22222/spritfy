@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import '@/legal.css';
 
 interface TermsProps {
   lang: Lang;

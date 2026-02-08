@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { parseGIF, decompressFrames } from 'gifuct-js';
+import '@/editor.css';
 
 // ===== Types =====
 type RGBA = [number, number, number, number];

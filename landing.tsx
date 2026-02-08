@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import '@/landing.css';
 
 interface LandingProps {
   lang: Lang;
