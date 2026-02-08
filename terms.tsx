@@ -26,11 +26,11 @@ export const TermsPage: React.FC<TermsProps> = ({ lang, t }) => {
   return (
     <div className="legal-page">
       <Helmet>
-        <title>이용약관 - 스프릿파이 | Spritfy</title>
-        <meta name="description" content="스프릿파이(Spritfy) 서비스 이용약관." />
+        <title>{t.seoTermsTitle}</title>
+        <meta name="description" content={t.seoTermsDesc} />
         <link rel="canonical" href="https://spritfy.xyz/terms" />
-        <meta property="og:title" content="이용약관 - 스프릿파이 | Spritfy" />
-        <meta property="og:description" content="스프릿파이(Spritfy) 서비스 이용약관." />
+        <meta property="og:title" content={t.seoTermsTitle} />
+        <meta property="og:description" content={t.seoTermsDesc} />
         <meta property="og:url" content="https://spritfy.xyz/terms" />
       </Helmet>
       <div className="legal-content">

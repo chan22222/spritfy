@@ -13,11 +13,11 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
   return (
     <div className="landing-page">
       <Helmet>
-        <title>스프릿파이(Spritfy) - 무료 픽셀 아트 에디터 &amp; 스프라이트 시트 &amp; 이미지 변환 | 도트 그림 툴</title>
-        <meta name="description" content="스프릿파이 - 무료 온라인 픽셀 아트 에디터, 스프라이트 시트 생성기, 동영상/GIF 스프라이트 시트 변환기. 브라우저에서 바로 도트 그림을 그리고, 동영상을 스프라이트 시트로 변환하세요." />
+        <title>{t.seoLandingTitle}</title>
+        <meta name="description" content={t.seoLandingDesc} />
         <link rel="canonical" href="https://spritfy.xyz/" />
-        <meta property="og:title" content="스프릿파이(Spritfy) - 무료 픽셀 아트 에디터 &amp; 스프라이트 시트 &amp; 이미지 변환 | 도트 그림 툴" />
-        <meta property="og:description" content="스프릿파이 - 무료 온라인 픽셀 아트 에디터, 스프라이트 시트 생성기, 동영상/GIF 스프라이트 시트 변환기. 브라우저에서 바로 도트 그림을 그리고, 동영상을 스프라이트 시트로 변환하세요." />
+        <meta property="og:title" content={t.seoLandingTitle} />
+        <meta property="og:description" content={t.seoLandingDesc} />
         <meta property="og:url" content="https://spritfy.xyz/" />
       </Helmet>
       {/* Pixel grid background overlay */}

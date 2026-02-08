@@ -23,11 +23,11 @@ export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
   return (
     <div className="legal-page">
       <Helmet>
-        <title>픽셀 아트 가이드 - 스프릿파이 | 도트 그림 그리는 법</title>
-        <meta name="description" content="픽셀 아트(도트 그림)의 기초부터 알아보세요. 초보자를 위한 픽셀 아트 제작 가이드와 팁." />
+        <title>{t.seoGuidePixelTitle}</title>
+        <meta name="description" content={t.seoGuidePixelDesc} />
         <link rel="canonical" href="https://spritfy.xyz/guide/pixel-art" />
-        <meta property="og:title" content="픽셀 아트 가이드 - 스프릿파이 | 도트 그림 그리는 법" />
-        <meta property="og:description" content="픽셀 아트(도트 그림)의 기초부터 알아보세요. 초보자를 위한 픽셀 아트 제작 가이드와 팁." />
+        <meta property="og:title" content={t.seoGuidePixelTitle} />
+        <meta property="og:description" content={t.seoGuidePixelDesc} />
         <meta property="og:url" content="https://spritfy.xyz/guide/pixel-art" />
       </Helmet>
       <div className="legal-content guide-content">

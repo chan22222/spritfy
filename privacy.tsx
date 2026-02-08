@@ -26,11 +26,11 @@ export const PrivacyPage: React.FC<PrivacyProps> = ({ lang, t }) => {
   return (
     <div className="legal-page">
       <Helmet>
-        <title>개인정보처리방침 - 스프릿파이 | Spritfy</title>
-        <meta name="description" content="스프릿파이(Spritfy) 개인정보처리방침." />
+        <title>{t.seoPrivacyTitle}</title>
+        <meta name="description" content={t.seoPrivacyDesc} />
         <link rel="canonical" href="https://spritfy.xyz/privacy" />
-        <meta property="og:title" content="개인정보처리방침 - 스프릿파이 | Spritfy" />
-        <meta property="og:description" content="스프릿파이(Spritfy) 개인정보처리방침." />
+        <meta property="og:title" content={t.seoPrivacyTitle} />
+        <meta property="og:description" content={t.seoPrivacyDesc} />
         <meta property="og:url" content="https://spritfy.xyz/privacy" />
       </Helmet>
       <div className="legal-content">

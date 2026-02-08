@@ -21,11 +21,11 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
   return (
     <div className="legal-page">
       <Helmet>
-        <title>소개 - 스프릿파이 | Spritfy</title>
-        <meta name="description" content="스프릿파이(Spritfy) 소개 페이지. 무료 온라인 픽셀 아트 에디터 및 스프라이트 시트 생성기." />
+        <title>{t.seoAboutTitle}</title>
+        <meta name="description" content={t.seoAboutDesc} />
         <link rel="canonical" href="https://spritfy.xyz/about" />
-        <meta property="og:title" content="소개 - 스프릿파이 | Spritfy" />
-        <meta property="og:description" content="스프릿파이(Spritfy) 소개 페이지. 무료 온라인 픽셀 아트 에디터 및 스프라이트 시트 생성기." />
+        <meta property="og:title" content={t.seoAboutTitle} />
+        <meta property="og:description" content={t.seoAboutDesc} />
         <meta property="og:url" content="https://spritfy.xyz/about" />
       </Helmet>
       <div className="legal-content">

@@ -1382,11 +1382,11 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   return (
     <>
       <Helmet>
-        <title>스프라이트 시트 생성기 - 스프릿파이 | 동영상/GIF를 시트로 변환</title>
-        <meta name="description" content="동영상과 GIF를 스프라이트 시트로 변환하세요. 프레임 추출, 시트 레이아웃 설정, PNG 내보내기를 지원하는 무료 온라인 스프라이트 생성기." />
+        <title>{t.seoSpriteTitle}</title>
+        <meta name="description" content={t.seoSpriteDesc} />
         <link rel="canonical" href="https://spritfy.xyz/sprite" />
-        <meta property="og:title" content="스프라이트 시트 생성기 - 스프릿파이 | 동영상/GIF를 시트로 변환" />
-        <meta property="og:description" content="동영상과 GIF를 스프라이트 시트로 변환하세요. 프레임 추출, 시트 레이아웃 설정, PNG 내보내기를 지원하는 무료 온라인 스프라이트 생성기." />
+        <meta property="og:title" content={t.seoSpriteTitle} />
+        <meta property="og:description" content={t.seoSpriteDesc} />
         <meta property="og:url" content="https://spritfy.xyz/sprite" />
       </Helmet>
       <div className="main-workspace">

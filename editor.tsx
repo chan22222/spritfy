@@ -1660,11 +1660,11 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   return (
     <div className="editor-container">
       <Helmet>
-        <title>픽셀 아트 에디터 - 스프릿파이 | 무료 온라인 도트 그림 툴</title>
-        <meta name="description" content="브라우저에서 바로 픽셀 아트를 그리세요. 레이어, 애니메이션, 팔레트 프리셋, GIF 내보내기를 지원하는 무료 온라인 도트 에디터." />
+        <title>{t.seoEditorTitle}</title>
+        <meta name="description" content={t.seoEditorDesc} />
         <link rel="canonical" href="https://spritfy.xyz/editor" />
-        <meta property="og:title" content="픽셀 아트 에디터 - 스프릿파이 | 무료 온라인 도트 그림 툴" />
-        <meta property="og:description" content="브라우저에서 바로 픽셀 아트를 그리세요. 레이어, 애니메이션, 팔레트 프리셋, GIF 내보내기를 지원하는 무료 온라인 도트 에디터." />
+        <meta property="og:title" content={t.seoEditorTitle} />
+        <meta property="og:description" content={t.seoEditorDesc} />
         <meta property="og:url" content="https://spritfy.xyz/editor" />
       </Helmet>
       <div className="editor-main">
