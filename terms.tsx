@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
@@ -26,14 +26,7 @@ export const TermsPage: React.FC<TermsProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoTermsTitle}</title>
-        <meta name="description" content={t.seoTermsDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/terms" />
-        <meta property="og:title" content={t.seoTermsTitle} />
-        <meta property="og:description" content={t.seoTermsDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/terms" />
-      </Helmet>
+      <SEO title={t.seoTermsTitle} description={t.seoTermsDesc} path="/terms" lang={lang} />
       <div className="legal-content">
         <h1>{t.termsTitle}</h1>
         <p className="legal-updated">{t.termsLastUpdated}</p>

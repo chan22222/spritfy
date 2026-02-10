@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
@@ -26,14 +26,7 @@ export const PrivacyPage: React.FC<PrivacyProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoPrivacyTitle}</title>
-        <meta name="description" content={t.seoPrivacyDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/privacy" />
-        <meta property="og:title" content={t.seoPrivacyTitle} />
-        <meta property="og:description" content={t.seoPrivacyDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/privacy" />
-      </Helmet>
+      <SEO title={t.seoPrivacyTitle} description={t.seoPrivacyDesc} path="/privacy" lang={lang} />
       <div className="legal-content">
         <h1>{t.privacyTitle}</h1>
         <p className="legal-updated">{t.privacyLastUpdated}</p>

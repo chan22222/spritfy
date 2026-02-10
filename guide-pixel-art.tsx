@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
+import { useLangPath } from '@/lang-context.ts';
+import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
 
@@ -12,6 +13,7 @@ interface GuidePixelProps {
 
 export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  const lp = useLangPath();
 
   const sections = [
     { title: t.guidePixelS1Title, content: t.guidePixelS1Content },
@@ -23,20 +25,13 @@ export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoGuidePixelTitle}</title>
-        <meta name="description" content={t.seoGuidePixelDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/guide/pixel-art" />
-        <meta property="og:title" content={t.seoGuidePixelTitle} />
-        <meta property="og:description" content={t.seoGuidePixelDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/guide/pixel-art" />
-      </Helmet>
+      <SEO title={t.seoGuidePixelTitle} description={t.seoGuidePixelDesc} path="/guide/pixel-art" lang={lang} />
       <div className="legal-content guide-content">
         <h1>{t.guidePixelTitle}</h1>
         <p className="legal-intro">{t.guidePixelIntro}</p>
 
         <div className="guide-cta-box">
-          <Link to="/editor" className="guide-cta-link">
+          <Link to={lp('/editor')} className="guide-cta-link">
             <span className="material-symbols-outlined">draw</span>
             {t.guidePixelCtaTop}
           </Link>
@@ -51,7 +46,7 @@ export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
 
         <div className="guide-bottom-cta">
           <p>{t.guidePixelCtaBottom}</p>
-          <Link to="/editor" className="guide-cta-button">
+          <Link to={lp('/editor')} className="guide-cta-button">
             {t.guidePixelCtaButton}
           </Link>
         </div>

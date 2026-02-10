@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
+import { useLangPath } from '@/lang-context.ts';
 
 interface HeaderProps {
   lang: Lang;
@@ -9,22 +10,23 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   const t = i18n[lang];
+  const lp = useLangPath();
 
   return (
     <div className="app-header">
-      <Link to="/" className="brand">
+      <Link to={lp('/')} className="brand">
         <img src="/logo.png" alt="Spritfy" width={700} height={250} style={{ height: 52, width: 'auto' }} />
       </Link>
       <nav className="header-nav">
-        <NavLink to="/editor" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+        <NavLink to={lp('/editor')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>draw</span>
           <span className="nav-label">{t.navEditor}</span>
         </NavLink>
-        <NavLink to="/sprite" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+        <NavLink to={lp('/sprite')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>movie</span>
           <span className="nav-label">{t.navSprite}</span>
         </NavLink>
-        <NavLink to="/converter" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+        <NavLink to={lp('/converter')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>swap_horiz</span>
           <span className="nav-label">{t.navConverter}</span>
         </NavLink>

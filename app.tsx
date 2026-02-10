@@ -1,5 +1,5 @@
-import React, { useState, useContext, Suspense, lazy } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import React, { useCallback, useEffect, Suspense, lazy } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { Header } from '@/header.tsx';
 import { LandingPage } from '@/landing.tsx';
@@ -14,15 +14,44 @@ const AboutPage = lazy(() => import('@/about.tsx').then(m => ({ default: m.About
 const GuideSpriteSheetPage = lazy(() => import('@/guide-sprite.tsx').then(m => ({ default: m.GuideSpriteSheetPage })));
 const GuidePixelArtPage = lazy(() => import('@/guide-pixel-art.tsx').then(m => ({ default: m.GuidePixelArtPage })));
 
-const RootLayout = () => {
-  const { lang, setLang } = useContext(LangContext);
+const detectLang = (): Lang => {
+  const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
+  return nav.startsWith('ko') ? 'ko' : 'en';
+};
+
+const LangRedirect = () => {
+  const lang = detectLang();
+  return <Navigate to={`/${lang}/`} replace />;
+};
+
+const LangLayout = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const validLang: Lang = urlLang === 'ko' || urlLang === 'en' ? urlLang : 'ko';
+  const t = i18n[validLang];
+
+  const setLang = useCallback((newLang: Lang) => {
+    const pathWithoutLang = location.pathname.replace(/^\/(ko|en)/, '');
+    navigate(`/${newLang}${pathWithoutLang || '/'}`, { replace: true });
+  }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    document.documentElement.lang = validLang;
+  }, [validLang]);
+
+  if (urlLang !== 'ko' && urlLang !== 'en') {
+    return <Navigate to={`/${detectLang()}/`} replace />;
+  }
+
   return (
-    <>
-      <Header lang={lang} setLang={setLang} />
+    <LangContext.Provider value={{ lang: validLang, t, setLang }}>
+      <Header lang={validLang} setLang={setLang} />
       <main>
         <Outlet />
       </main>
-    </>
+    </LangContext.Provider>
   );
 };
 
@@ -31,80 +60,88 @@ const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 const SpriteWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><SpritePage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><SpritePage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const EditorWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><PixelEditor lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><PixelEditor lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const LandingWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LandingPage lang={lang} t={t} />;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LandingPage lang={validLang} t={t} />;
 };
 
 const PrivacyWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><PrivacyPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><PrivacyPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const TermsWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><TermsPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><TermsPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const AboutWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><AboutPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><AboutPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const GuideSpriteWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><GuideSpriteSheetPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><GuideSpriteSheetPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const GuidePixelArtWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><GuidePixelArtPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><GuidePixelArtPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const ConverterWrapper = () => {
-  const { lang, t } = useContext(LangContext);
-  return <LazyWrapper><ConverterPage lang={lang} t={t} /></LazyWrapper>;
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = urlLang === 'ko' ? 'ko' : 'en';
+  const t = i18n[validLang];
+  return <LazyWrapper><ConverterPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
 const router = createBrowserRouter([
+  { index: true, element: <LangRedirect /> },
   {
-    element: <RootLayout />,
+    path: '/:lang',
+    element: <LangLayout />,
     children: [
       { index: true, element: <LandingWrapper /> },
-      { path: '/sprite', element: <SpriteWrapper /> },
-      { path: '/editor', element: <EditorWrapper /> },
-      { path: '/converter', element: <ConverterWrapper /> },
-      { path: '/privacy', element: <PrivacyWrapper /> },
-      { path: '/terms', element: <TermsWrapper /> },
-      { path: '/about', element: <AboutWrapper /> },
-      { path: '/guide/sprite-sheet', element: <GuideSpriteWrapper /> },
-      { path: '/guide/pixel-art', element: <GuidePixelArtWrapper /> },
-      { path: '*', element: <Navigate to="/" replace /> },
+      { path: 'sprite', element: <SpriteWrapper /> },
+      { path: 'editor', element: <EditorWrapper /> },
+      { path: 'converter', element: <ConverterWrapper /> },
+      { path: 'privacy', element: <PrivacyWrapper /> },
+      { path: 'terms', element: <TermsWrapper /> },
+      { path: 'about', element: <AboutWrapper /> },
+      { path: 'guide/sprite-sheet', element: <GuideSpriteWrapper /> },
+      { path: 'guide/pixel-art', element: <GuidePixelArtWrapper /> },
     ],
   },
+  { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
-const detectLang = (): Lang => {
-  const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
-  return nav.startsWith('ko') ? 'ko' : 'en';
-};
-
 export const App = () => {
-  const [lang, setLang] = useState<Lang>(detectLang);
-  const t = i18n[lang];
-
-  return (
-    <LangContext.Provider value={{ lang, t, setLang }}>
-      <RouterProvider router={router} />
-    </LangContext.Provider>
-  );
+  return <RouterProvider router={router} />;
 };

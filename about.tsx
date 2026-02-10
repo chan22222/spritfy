@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
@@ -21,14 +21,7 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoAboutTitle}</title>
-        <meta name="description" content={t.seoAboutDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/about" />
-        <meta property="og:title" content={t.seoAboutTitle} />
-        <meta property="og:description" content={t.seoAboutDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/about" />
-      </Helmet>
+      <SEO title={t.seoAboutTitle} description={t.seoAboutDesc} path="/about" lang={lang} />
       <div className="legal-content">
         <h1>{t.aboutTitle}</h1>
 

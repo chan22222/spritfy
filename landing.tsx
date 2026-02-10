@@ -1,7 +1,8 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
+import { useLangPath } from '@/lang-context.ts';
+import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
 import '@/landing.css';
 import '@/legal.css';
@@ -12,16 +13,11 @@ interface LandingProps {
 }
 
 export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
+  const lp = useLangPath();
+
   return (
     <div className="landing-page">
-      <Helmet>
-        <title>{t.seoLandingTitle}</title>
-        <meta name="description" content={t.seoLandingDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/" />
-        <meta property="og:title" content={t.seoLandingTitle} />
-        <meta property="og:description" content={t.seoLandingDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/" />
-      </Helmet>
+      <SEO title={t.seoLandingTitle} description={t.seoLandingDesc} path="/" lang={lang} />
       {/* Pixel grid background overlay */}
       <div className="pixel-grid-bg" aria-hidden="true" />
 
@@ -57,11 +53,11 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
         </p>
 
         <div className="landing-hero-cta">
-          <Link to="/editor" className="pixel-btn pixel-btn-primary">
+          <Link to={lp('/editor')} className="pixel-btn pixel-btn-primary">
             <span className="material-symbols-outlined">draw</span>
             {t.ctaEditor}
           </Link>
-          <Link to="/sprite" className="pixel-btn pixel-btn-ghost">
+          <Link to={lp('/sprite')} className="pixel-btn pixel-btn-ghost">
             <span className="material-symbols-outlined">movie</span>
             {t.ctaSprite}
           </Link>
@@ -88,7 +84,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
           </div>
           <h2>{t.featureEditorTitle}</h2>
           <p>{t.featureEditorBullet1} / {t.featureEditorBullet2} / {t.featureEditorBullet3}</p>
-          <Link to="/editor" className="feature-cta-link">
+          <Link to={lp('/editor')} className="feature-cta-link">
             {t.ctaEditor}
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
@@ -102,7 +98,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
           </div>
           <h2>{t.featureSpriteTitle}</h2>
           <p>{t.featureSpriteBullet1} / {t.featureSpriteBullet2} / {t.featureSpriteBullet3}</p>
-          <Link to="/sprite" className="feature-cta-link link-secondary">
+          <Link to={lp('/sprite')} className="feature-cta-link link-secondary">
             {t.ctaSprite}
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
@@ -116,7 +112,7 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
           </div>
           <h2>{t.featureConverterTitle}</h2>
           <p>{t.featureConverterBullet1} / {t.featureConverterBullet2} / {t.featureConverterBullet3}</p>
-          <Link to="/converter" className="feature-cta-link link-tertiary">
+          <Link to={lp('/converter')} className="feature-cta-link link-tertiary">
             {t.ctaConverter}
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>

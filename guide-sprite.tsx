@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Lang } from '@/i18n.ts';
+import { useLangPath } from '@/lang-context.ts';
+import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
 
@@ -12,6 +13,7 @@ interface GuideSpriteProps {
 
 export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  const lp = useLangPath();
 
   const sections = [
     { title: t.guideSpriteS1Title, content: t.guideSpriteS1Content },
@@ -23,20 +25,13 @@ export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) =>
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoGuideSpriteTitle}</title>
-        <meta name="description" content={t.seoGuideSpriteDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/guide/sprite-sheet" />
-        <meta property="og:title" content={t.seoGuideSpriteTitle} />
-        <meta property="og:description" content={t.seoGuideSpriteDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/guide/sprite-sheet" />
-      </Helmet>
+      <SEO title={t.seoGuideSpriteTitle} description={t.seoGuideSpriteDesc} path="/guide/sprite-sheet" lang={lang} />
       <div className="legal-content guide-content">
         <h1>{t.guideSpriteTitle}</h1>
         <p className="legal-intro">{t.guideSpriteIntro}</p>
 
         <div className="guide-cta-box">
-          <Link to="/sprite" className="guide-cta-link">
+          <Link to={lp('/sprite')} className="guide-cta-link">
             <span className="material-symbols-outlined">movie</span>
             {t.guideSpriteCtaTop}
           </Link>
@@ -51,7 +46,7 @@ export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) =>
 
         <div className="guide-bottom-cta">
           <p>{t.guideSpriteCtaBottom}</p>
-          <Link to="/sprite" className="guide-cta-button">
+          <Link to={lp('/sprite')} className="guide-cta-button">
             {t.guideSpriteCtaButton}
           </Link>
         </div>

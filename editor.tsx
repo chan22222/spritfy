@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { parseGIF, decompressFrames } from 'gifuct-js';
@@ -1660,14 +1660,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
   return (
     <div className="editor-container">
-      <Helmet>
-        <title>{t.seoEditorTitle}</title>
-        <meta name="description" content={t.seoEditorDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/editor" />
-        <meta property="og:title" content={t.seoEditorTitle} />
-        <meta property="og:description" content={t.seoEditorDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/editor" />
-      </Helmet>
+      <SEO title={t.seoEditorTitle} description={t.seoEditorDesc} path="/editor" lang={lang} />
       <div className="editor-main">
         {/* LEFT AD */}
         <div className="ad-slot ad-slot-left" />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
 import '@/legal.css';
@@ -330,14 +330,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <Helmet>
-        <title>{t.seoConverterTitle}</title>
-        <meta name="description" content={t.seoConverterDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/converter" />
-        <meta property="og:title" content={t.seoConverterTitle} />
-        <meta property="og:description" content={t.seoConverterDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/converter" />
-      </Helmet>
+      <SEO title={t.seoConverterTitle} description={t.seoConverterDesc} path="/converter" lang={lang} />
       <div className="converter-content">
         <div className="converter-header">
           <div className="converter-icon-badge">

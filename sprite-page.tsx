@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 
 
@@ -1381,14 +1381,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   return (
     <>
-      <Helmet>
-        <title>{t.seoSpriteTitle}</title>
-        <meta name="description" content={t.seoSpriteDesc} />
-        <link rel="canonical" href="https://spritfy.xyz/sprite" />
-        <meta property="og:title" content={t.seoSpriteTitle} />
-        <meta property="og:description" content={t.seoSpriteDesc} />
-        <meta property="og:url" content="https://spritfy.xyz/sprite" />
-      </Helmet>
+      <SEO title={t.seoSpriteTitle} description={t.seoSpriteDesc} path="/sprite" lang={lang} />
       <div className="main-workspace">
         {/* LEFT AD */}
         <div className="ad-slot ad-slot-left" />
