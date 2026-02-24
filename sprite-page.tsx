@@ -1324,24 +1324,39 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     try {
       const startId = frames.length > 0 ? Math.max(...frames.map(f => f.id)) + 1 : 0;
       const newFrames: Frame[] = [];
-      const total = files.length;
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+      const total = imageFiles.length;
+      if (total === 0) { setIsLoading(false); return; }
 
+      // 1) 모든 이미지 로드
+      const images: HTMLImageElement[] = [];
       for (let i = 0; i < total; i++) {
-        const file = files[i];
-        if (!file.type.startsWith('image/')) continue;
-
         const img = await new Promise<HTMLImageElement>((resolve, reject) => {
           const image = new Image();
           image.onload = () => resolve(image);
           image.onerror = () => reject(new Error('Failed to load image'));
-          image.src = URL.createObjectURL(file);
+          image.src = URL.createObjectURL(imageFiles[i]);
         });
+        images.push(img);
+        setProgress(Math.round(((i + 1) / total) * 50));
+      }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0);
+      // 2) 최대 크기 계산
+      const maxW = Math.max(...images.map(img => img.naturalWidth));
+      const maxH = Math.max(...images.map(img => img.naturalHeight));
+
+      // 3) 최대 크기 캔버스에 중앙 배치
+      const canvas = document.createElement('canvas');
+      canvas.width = maxW;
+      canvas.height = maxH;
+      const ctx = canvas.getContext('2d')!;
+
+      for (let i = 0; i < total; i++) {
+        const img = images[i];
+        ctx.clearRect(0, 0, maxW, maxH);
+        const offsetX = Math.floor((maxW - img.naturalWidth) / 2);
+        const offsetY = Math.floor((maxH - img.naturalHeight) / 2);
+        ctx.drawImage(img, offsetX, offsetY);
         URL.revokeObjectURL(img.src);
 
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -1353,7 +1368,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
             timestamp: 0,
           });
         }
-        setProgress(Math.round(((i + 1) / total) * 100));
+        setProgress(50 + Math.round(((i + 1) / total) * 50));
       }
 
       if (newFrames.length > 0) {
