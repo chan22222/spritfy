@@ -25,6 +25,14 @@ dist-ssr
 
 # Secrets
 client_secret_*.json
+.env
+.env.local
+.env.production
+
+# Infrastructure (sensitive)
+Caddyfile
+Dockerfile
+cloudflare-worker/wrangler.toml
 
 # Misc
 nul
