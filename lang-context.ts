@@ -13,6 +13,8 @@ export const LangContext = createContext<LangContextType>({
   setLang: () => {},
 });
 
+export const useLang = () => useContext(LangContext);
+
 export const useLangPath = () => {
   const { lang } = useContext(LangContext);
   return useCallback((path: string) => `/${lang}${path}`, [lang]);

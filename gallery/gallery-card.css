@@ -1,0 +1,117 @@
+/* ============================================
+   GALLERY CARD — Pixel Art Card Component
+   ============================================ */
+
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.gallery-card:hover {
+  transform: translateY(-2px) translate(-2px, -2px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
+  border-color: var(--primary);
+}
+
+.gallery-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Thumbnail */
+.gallery-card-thumb {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  background-image:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* Card Info */
+.gallery-card-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.gallery-card-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.95rem;
+  font-weight: normal;
+  margin: 0;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.gallery-card-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gallery-card-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.gallery-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.gallery-card-stat .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* ============================================
+   Light Mode Overrides
+   ============================================ */
+[data-theme="light"] .gallery-card {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .gallery-card:hover {
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] .gallery-card-thumb {
+  background-color: #e0e0e0;
+  background-image:
+    linear-gradient(45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(-45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d0d0d0 75%),
+    linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+}

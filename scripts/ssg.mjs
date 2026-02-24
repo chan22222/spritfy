@@ -15,6 +15,7 @@ const ROUTES = [
   '/editor',
   '/sprite',
   '/converter',
+  '/gallery',
   '/guide/sprite-sheet',
   '/guide/pixel-art',
   '/about',

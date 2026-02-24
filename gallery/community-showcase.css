@@ -1,0 +1,190 @@
+/* ============================================
+   COMMUNITY SHOWCASE — Landing Page Section
+   ============================================ */
+
+.community-showcase {
+  padding: 40px 24px 48px;
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.showcase-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.5rem;
+  font-weight: normal;
+  text-align: center;
+  margin: 0 0 12px;
+  color: var(--text-main);
+  text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.15);
+}
+
+.showcase-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+/* ---- Grid ---- */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* ---- Empty State ---- */
+.showcase-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+
+.showcase-empty-icon {
+  font-size: 48px;
+  opacity: 0.25;
+  margin-bottom: 12px;
+}
+
+.showcase-empty p {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ---- View All ---- */
+.showcase-view-all-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.showcase-view-all {
+  font-size: 0.95rem;
+  padding: 10px 28px;
+}
+
+.showcase-view-all .material-symbols-outlined {
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+
+.showcase-view-all:hover .material-symbols-outlined {
+  transform: translateX(4px);
+}
+
+/* ---- Skeleton Loading ---- */
+.showcase-skeleton {
+  background: var(--bg-card);
+  border: 3px solid var(--border);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.showcase-skeleton-thumb {
+  aspect-ratio: 1;
+  background: linear-gradient(
+    110deg,
+    var(--bg-card) 30%,
+    rgba(187, 134, 252, 0.06) 50%,
+    var(--bg-card) 70%
+  );
+  background-size: 200% 100%;
+  animation: showcaseShimmer 1.5s ease-in-out infinite;
+}
+
+.showcase-skeleton-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.showcase-skeleton-line {
+  height: 10px;
+  background: linear-gradient(
+    110deg,
+    var(--border) 30%,
+    rgba(187, 134, 252, 0.08) 50%,
+    var(--border) 70%
+  );
+  background-size: 200% 100%;
+  animation: showcaseShimmer 1.5s ease-in-out infinite;
+}
+
+.showcase-skeleton-line.wide {
+  width: 80%;
+}
+
+.showcase-skeleton-line.narrow {
+  width: 50%;
+}
+
+@keyframes showcaseShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   Light Mode Overrides
+   ============================================ */
+[data-theme="light"] .showcase-title {
+  text-shadow: 3px 3px 0 rgba(124, 77, 255, 0.1);
+}
+
+[data-theme="light"] .showcase-skeleton {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .showcase-skeleton-thumb {
+  background: linear-gradient(
+    110deg,
+    var(--bg-card) 30%,
+    rgba(124, 77, 255, 0.06) 50%,
+    var(--bg-card) 70%
+  );
+  background-size: 200% 100%;
+  animation: showcaseShimmer 1.5s ease-in-out infinite;
+}
+
+[data-theme="light"] .showcase-skeleton-line {
+  background: linear-gradient(
+    110deg,
+    var(--border) 30%,
+    rgba(124, 77, 255, 0.08) 50%,
+    var(--border) 70%
+  );
+  background-size: 200% 100%;
+  animation: showcaseShimmer 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .showcase-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .showcase-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .community-showcase {
+    padding: 32px 16px 40px;
+  }
+
+  .showcase-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

@@ -23,5 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Secrets
+client_secret_*.json
+
+# Misc
+nul
+
 # Claude
 .claude/

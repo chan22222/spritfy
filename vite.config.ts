@@ -17,13 +17,14 @@ interface RouteMeta {
   hreflangAlternates: Array<{ lang: string; url: string }>;
 }
 
-const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms'];
+const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms'];
 
 const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> = {
   '/': { priority: '1.0', changefreq: 'weekly' },
   '/editor': { priority: '1.0', changefreq: 'weekly' },
   '/sprite': { priority: '0.8', changefreq: 'weekly' },
   '/converter': { priority: '0.8', changefreq: 'weekly' },
+  '/gallery': { priority: '0.7', changefreq: 'daily' },
   '/guide/sprite-sheet': { priority: '0.7', changefreq: 'monthly' },
   '/guide/pixel-art': { priority: '0.7', changefreq: 'monthly' },
   '/about': { priority: '0.5', changefreq: 'monthly' },
@@ -48,6 +49,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/converter': {
       title: '이미지 포맷 변환기 - 스프릿파이 | PNG, JPG, WebP, ICO 변환',
       description: 'PNG, JPG, WebP, GIF, BMP, ICO 등 다양한 이미지 포맷을 무료로 변환하세요. 브라우저에서 바로 변환, 설치 불필요.',
+    },
+    '/gallery': {
+      title: '커뮤니티 갤러리 - 스프릿파이 | 픽셀 아트 공유',
+      description: '크리에이터들이 만든 픽셀 아트, 스프라이트 시트를 감상하고 공유하세요. 무료 온라인 픽셀 아트 갤러리.',
     },
     '/guide/sprite-sheet': {
       title: '스프라이트 시트 가이드 - 스프릿파이 | 스프라이트 시트 만드는 법',
@@ -87,6 +92,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: 'Image Format Converter - Spritfy | PNG, JPG, WebP, ICO',
       description: 'Convert images between PNG, JPG, WebP, GIF, BMP, ICO formats for free. Convert directly in your browser, no installation needed.',
     },
+    '/gallery': {
+      title: 'Community Gallery - Spritfy | Pixel Art Showcase',
+      description: 'Browse and share pixel art and sprite sheets created by the community. Free online pixel art gallery.',
+    },
     '/guide/sprite-sheet': {
       title: 'Sprite Sheet Guide - Spritfy | How to Make Sprite Sheets',
       description: 'Learn what sprite sheets are and how to create them. A guide to sprite sheet creation for game development and animation.',
@@ -124,6 +133,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/converter': {
       title: '画像フォーマット変換ツール - Spritfy | PNG、JPG、WebP、ICO 変換',
       description: 'PNG、JPG、WebP、GIF、BMP、ICOなどの画像フォーマットを無料で変換。ブラウザ上で直接変換、インストール不要。',
+    },
+    '/gallery': {
+      title: 'コミュニティギャラリー - Spritfy | ピクセルアート共有',
+      description: 'クリエイターが作ったピクセルアート、スプライトシートを鑑賞・共有しましょう。無料オンラインピクセルアートギャラリー。',
     },
     '/guide/sprite-sheet': {
       title: 'スプライトシートガイド - Spritfy | スプライトシートの作り方',

@@ -3,6 +3,7 @@ export type Lang = 'ko' | 'en' | 'ja';
 export const i18n: Record<Lang, Record<string, string>> = {
   ko: {
     // Navigation
+    navHome: '홈',
     navSprite: '스프라이트',
     navEditor: '에디터',
 
@@ -354,9 +355,76 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Footer
     footerGuide: '가이드',
+
+    // Navigation - Gallery
+    navGallery: '갤러리',
+
+    // Gallery page
+    galleryTitle: '커뮤니티 갤러리',
+    gallerySubtitle: '크리에이터들의 픽셀 아트를 감상하고 공유하세요',
+    gallerySearch: '작품 검색...',
+    galleryFilterAll: '전체',
+    galleryFilterEditor: '에디터',
+    galleryFilterSprite: '스프라이트',
+    galleryFilterConverter: '변환기',
+    galleryFilterExternal: '외부',
+    gallerySortRecent: '최신순',
+    gallerySortPopular: '인기순',
+    galleryUpload: '작품 올리기',
+    galleryEmpty: '아직 작품이 없습니다',
+    galleryLoadMore: '더 보기',
+
+    // Upload form
+    uploadTitle: '작품 올리기',
+    uploadTitleLabel: '제목',
+    uploadDescLabel: '설명 (선택)',
+    uploadTagsLabel: '태그',
+    uploadTagsHint: '쉼표로 구분',
+    uploadToolLabel: '사용 도구',
+    uploadFileLabel: '이미지',
+    uploadFileDrop: '이미지를 여기에 드래그하거나 클릭하세요',
+    uploadFileLimit: '최대 5MB · PNG, GIF, WebP',
+    uploadSubmit: '올리기',
+    uploadSubmitting: '업로드 중...',
+    uploadSuccess: '작품이 업로드되었습니다!',
+    uploadError: '업로드에 실패했습니다',
+
+    // Post detail
+    postBy: '작성자',
+    postLike: '좋아요',
+    postLiked: '좋아요 취소',
+    postComments: '댓글',
+    postCommentPlaceholder: '댓글을 입력하세요...',
+    postCommentSubmit: '작성',
+    postDelete: '삭제',
+    postDeleteConfirm: '정말 삭제하시겠습니까?',
+    postNoComments: '아직 댓글이 없습니다',
+    postBack: '갤러리로 돌아가기',
+
+    // Auth
+    authLogin: '로그인',
+    authSignup: '회원가입',
+    authLogout: '로그아웃',
+    authEmail: '이메일',
+    authPassword: '비밀번호',
+    authContinueGoogle: 'Google로 계속',
+    authContinueGithub: 'GitHub로 계속',
+    authOr: '또는',
+    authLoginRequired: '로그인이 필요합니다',
+    authMyPosts: '내 작품',
+
+    // Community showcase (landing)
+    communitySectionTitle: '커뮤니티 쇼케이스',
+    communitySectionSubtitle: '크리에이터들의 최신 인기 작품',
+    communityViewAll: '전체 보기',
+
+    // SEO - Gallery
+    seoGalleryTitle: '커뮤니티 갤러리 - 스프릿파이 | 픽셀 아트 공유',
+    seoGalleryDesc: '크리에이터들이 만든 픽셀 아트, 스프라이트 시트를 감상하고 공유하세요.',
   },
   en: {
     // Navigation
+    navHome: 'Home',
     navSprite: 'Sprite',
     navEditor: 'Editor',
 
@@ -708,9 +776,76 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Footer
     footerGuide: 'Guides',
+
+    // Navigation - Gallery
+    navGallery: 'Gallery',
+
+    // Gallery page
+    galleryTitle: 'Community Gallery',
+    gallerySubtitle: 'Browse and share pixel art from creators',
+    gallerySearch: 'Search artworks...',
+    galleryFilterAll: 'All',
+    galleryFilterEditor: 'Editor',
+    galleryFilterSprite: 'Sprite',
+    galleryFilterConverter: 'Converter',
+    galleryFilterExternal: 'External',
+    gallerySortRecent: 'Recent',
+    gallerySortPopular: 'Popular',
+    galleryUpload: 'Upload',
+    galleryEmpty: 'No artworks yet',
+    galleryLoadMore: 'Load More',
+
+    // Upload form
+    uploadTitle: 'Upload Artwork',
+    uploadTitleLabel: 'Title',
+    uploadDescLabel: 'Description (optional)',
+    uploadTagsLabel: 'Tags',
+    uploadTagsHint: 'Comma separated',
+    uploadToolLabel: 'Tool Used',
+    uploadFileLabel: 'Image',
+    uploadFileDrop: 'Drag an image here or click to browse',
+    uploadFileLimit: 'Max 5MB · PNG, GIF, WebP',
+    uploadSubmit: 'Upload',
+    uploadSubmitting: 'Uploading...',
+    uploadSuccess: 'Artwork uploaded!',
+    uploadError: 'Upload failed',
+
+    // Post detail
+    postBy: 'by',
+    postLike: 'Like',
+    postLiked: 'Unlike',
+    postComments: 'Comments',
+    postCommentPlaceholder: 'Write a comment...',
+    postCommentSubmit: 'Post',
+    postDelete: 'Delete',
+    postDeleteConfirm: 'Are you sure you want to delete?',
+    postNoComments: 'No comments yet',
+    postBack: 'Back to Gallery',
+
+    // Auth
+    authLogin: 'Log In',
+    authSignup: 'Sign Up',
+    authLogout: 'Log Out',
+    authEmail: 'Email',
+    authPassword: 'Password',
+    authContinueGoogle: 'Continue with Google',
+    authContinueGithub: 'Continue with GitHub',
+    authOr: 'or',
+    authLoginRequired: 'Login required',
+    authMyPosts: 'My Posts',
+
+    // Community showcase (landing)
+    communitySectionTitle: 'Community Showcase',
+    communitySectionSubtitle: 'Latest popular works from creators',
+    communityViewAll: 'View All',
+
+    // SEO - Gallery
+    seoGalleryTitle: 'Community Gallery - Spritfy | Pixel Art Showcase',
+    seoGalleryDesc: 'Browse and share pixel art and sprite sheets created by the community.',
   },
   ja: {
     // Navigation
+    navHome: 'ホーム',
     navSprite: 'スプライト',
     navEditor: 'エディター',
 
@@ -1062,5 +1197,71 @@ export const i18n: Record<Lang, Record<string, string>> = {
 
     // Footer
     footerGuide: 'ガイド',
+
+    // Navigation - Gallery
+    navGallery: 'ギャラリー',
+
+    // Gallery page
+    galleryTitle: 'コミュニティギャラリー',
+    gallerySubtitle: 'クリエイターのピクセルアートを鑑賞・共有しましょう',
+    gallerySearch: '作品を検索...',
+    galleryFilterAll: 'すべて',
+    galleryFilterEditor: 'エディター',
+    galleryFilterSprite: 'スプライト',
+    galleryFilterConverter: '変換ツール',
+    galleryFilterExternal: '外部',
+    gallerySortRecent: '新着順',
+    gallerySortPopular: '人気順',
+    galleryUpload: '投稿する',
+    galleryEmpty: 'まだ作品がありません',
+    galleryLoadMore: 'もっと見る',
+
+    // Upload form
+    uploadTitle: '作品を投稿',
+    uploadTitleLabel: 'タイトル',
+    uploadDescLabel: '説明（任意）',
+    uploadTagsLabel: 'タグ',
+    uploadTagsHint: 'カンマ区切り',
+    uploadToolLabel: '使用ツール',
+    uploadFileLabel: '画像',
+    uploadFileDrop: '画像をドラッグまたはクリックして選択',
+    uploadFileLimit: '最大5MB · PNG, GIF, WebP',
+    uploadSubmit: '投稿する',
+    uploadSubmitting: 'アップロード中...',
+    uploadSuccess: '作品が投稿されました！',
+    uploadError: 'アップロードに失敗しました',
+
+    // Post detail
+    postBy: '投稿者',
+    postLike: 'いいね',
+    postLiked: 'いいね取消',
+    postComments: 'コメント',
+    postCommentPlaceholder: 'コメントを入力...',
+    postCommentSubmit: '投稿',
+    postDelete: '削除',
+    postDeleteConfirm: '本当に削除しますか？',
+    postNoComments: 'まだコメントがありません',
+    postBack: 'ギャラリーに戻る',
+
+    // Auth
+    authLogin: 'ログイン',
+    authSignup: '新規登録',
+    authLogout: 'ログアウト',
+    authEmail: 'メール',
+    authPassword: 'パスワード',
+    authContinueGoogle: 'Googleで続ける',
+    authContinueGithub: 'GitHubで続ける',
+    authOr: 'または',
+    authLoginRequired: 'ログインが必要です',
+    authMyPosts: '自分の作品',
+
+    // Community showcase (landing)
+    communitySectionTitle: 'コミュニティショーケース',
+    communitySectionSubtitle: '最新の人気作品',
+    communityViewAll: 'すべて見る',
+
+    // SEO - Gallery
+    seoGalleryTitle: 'コミュニティギャラリー - Spritfy | ピクセルアート共有',
+    seoGalleryDesc: 'クリエイターが作ったピクセルアート、スプライトシートを鑑賞・共有しましょう。',
   },
 };

@@ -4,6 +4,7 @@ import { Lang, i18n } from '@/i18n.ts';
 import { useLangPath } from '@/lang-context.ts';
 import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
+import { CommunityShowcase } from '@/gallery/community-showcase.tsx';
 import '@/landing.css';
 import '@/legal.css';
 
@@ -68,6 +69,16 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
       </section>
 
       {/* Divider */}
+      <div className="pixel-divider" aria-hidden="true">
+        <div className="pixel-divider-line" />
+        <div className="pixel-divider-diamond" />
+        <div className="pixel-divider-line" />
+      </div>
+
+      {/* Community Showcase */}
+      <CommunityShowcase lang={lang} t={t} />
+
+      {/* Pixel Divider */}
       <div className="pixel-divider" aria-hidden="true">
         <div className="pixel-divider-line" />
         <div className="pixel-divider-diamond" />

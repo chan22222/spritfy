@@ -9,6 +9,8 @@
   --text-muted: #b0b0b0;
   --border: #333333;
   --danger: #cf6679;
+  --like-color: #ff6b6b;
+  --like-active: #ff4757;
 }
 
 [data-theme="light"] {
@@ -22,6 +24,8 @@
   --text-muted: #666666;
   --border: #d0d0d0;
   --danger: #d32f2f;
+  --like-color: #e74c3c;
+  --like-active: #c0392b;
 }
 
 [data-theme="light"] ::-webkit-scrollbar-track {

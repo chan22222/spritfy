@@ -21,6 +21,8 @@ export const Footer: React.FC<FooterProps> = ({ lang, t }) => {
         <span className="footer-sep" aria-hidden="true">|</span>
         <Link to={lp('/converter')}>{t.footerConverter}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
+        <Link to={lp('/gallery')}>{t.navGallery}</Link>
+        <span className="footer-sep" aria-hidden="true">|</span>
         <Link to={lp('/about')}>{t.footerAbout}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
         <Link to={lp('/privacy')}>{t.footerPrivacy}</Link>

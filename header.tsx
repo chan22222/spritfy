@@ -3,6 +3,8 @@ import { NavLink, Link } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { useLangPath } from '@/lang-context.ts';
 import { useTheme } from '@/theme-context.ts';
+import { UserMenu } from '@/auth/user-menu.tsx';
+import { useAuth } from '@/auth/auth-context.tsx';
 
 const LANG_OPTIONS: { value: Lang; label: string; flag: string }[] = [
   { value: 'ko', label: '한국어', flag: '🇰🇷' },
@@ -19,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   const t = i18n[lang];
   const lp = useLangPath();
   const { theme, toggleTheme } = useTheme();
+  const { user, setShowAuthModal } = useAuth();
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +43,10 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
         <img src="/logo.png" alt="Spritfy" width={700} height={250} style={{ height: 52, width: 'auto' }} />
       </Link>
       <nav className="header-nav" aria-label="Main navigation">
+        <NavLink to={lp('/')} end className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navHome}>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>home</span>
+          <span className="nav-label">{t.navHome}</span>
+        </NavLink>
         <NavLink to={lp('/editor')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navEditor}>
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>draw</span>
           <span className="nav-label">{t.navEditor}</span>
@@ -52,8 +59,20 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>swap_horiz</span>
           <span className="nav-label">{t.navConverter}</span>
         </NavLink>
+        <NavLink to={lp('/gallery')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navGallery}>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>photo_library</span>
+          <span className="nav-label">{t.navGallery}</span>
+        </NavLink>
       </nav>
       <div className="header-actions">
+        {user ? (
+          <UserMenu />
+        ) : (
+          <button className="header-action-btn" onClick={() => setShowAuthModal(true)} aria-label={t.authLogin}>
+            <span className="material-symbols-outlined" aria-hidden="true">person</span>
+            <span className="nav-label">{t.authLogin}</span>
+          </button>
+        )}
         <div className="lang-dropdown" ref={langRef}>
           <button
             className="header-action-btn"

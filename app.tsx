@@ -8,6 +8,8 @@ import { ThemeContext, Theme } from '@/theme-context.ts';
 import { LoadingSpinner } from '@/loading.tsx';
 import { NotFoundPage } from '@/not-found.tsx';
 import { ErrorBoundary } from '@/error-boundary.tsx';
+import { AuthProvider } from '@/auth/auth-context.tsx';
+import { AuthModal } from '@/auth/auth-modal.tsx';
 
 const PixelEditor = lazy(() => import('@/editor.tsx').then(m => ({ default: m.PixelEditor })));
 const SpritePage = lazy(() => import('@/sprite-page.tsx').then(m => ({ default: m.SpritePage })));
@@ -17,6 +19,8 @@ const TermsPage = lazy(() => import('@/terms.tsx').then(m => ({ default: m.Terms
 const AboutPage = lazy(() => import('@/about.tsx').then(m => ({ default: m.AboutPage })));
 const GuideSpriteSheetPage = lazy(() => import('@/guide-sprite.tsx').then(m => ({ default: m.GuideSpriteSheetPage })));
 const GuidePixelArtPage = lazy(() => import('@/guide-pixel-art.tsx').then(m => ({ default: m.GuidePixelArtPage })));
+const GalleryPage = lazy(() => import('@/gallery/gallery-page.tsx').then(m => ({ default: m.GalleryPage })));
+const PostDetailPage = lazy(() => import('@/gallery/post-detail.tsx').then(m => ({ default: m.PostDetailPage })));
 
 const detectLang = (): Lang => {
   const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
@@ -132,6 +136,20 @@ const ConverterWrapper = () => {
   return <LazyWrapper t={t}><ConverterPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
+const GalleryWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><GalleryPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const PostDetailWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><PostDetailPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
 const NotFoundWrapper = () => {
   const { lang: urlLang } = useParams<{ lang: string }>();
   const validLang: Lang = toValidLang(urlLang);
@@ -167,6 +185,8 @@ const router = createBrowserRouter([
       { path: 'about', element: <AboutWrapper /> },
       { path: 'guide/sprite-sheet', element: <GuideSpriteWrapper /> },
       { path: 'guide/pixel-art', element: <GuidePixelArtWrapper /> },
+      { path: 'gallery', element: <GalleryWrapper /> },
+      { path: 'gallery/:postId', element: <PostDetailWrapper /> },
       { path: '*', element: <NotFoundWrapper /> },
     ],
   },
@@ -189,7 +209,10 @@ export const App = () => {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <AuthModal />
+      </AuthProvider>
     </ThemeContext.Provider>
   );
 };
