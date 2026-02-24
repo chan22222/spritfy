@@ -39,7 +39,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagsInput, setTagsInput] = useState('');
-  const [toolType, setToolType] = useState<ToolType>('character_human');
+  const [toolType, setToolType] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -136,7 +136,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
         file_size: file.size,
         format: formatMap[file.type] || 'png',
         tags,
-        tool_type: toolType,
+        tool_type: toolType as ToolType,
       });
 
       if (insertError) throw insertError;
@@ -288,8 +288,12 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
             <select
               className="upload-select"
               value={toolType}
-              onChange={e => setToolType(e.target.value as ToolType)}
+              onChange={e => setToolType(e.target.value)}
+              required
             >
+              <option value="" disabled>
+                {t.uploadToolPlaceholder || '-- Select --'}
+              </option>
               {TOOL_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>
                   {t[opt.i18nKey] || opt.value}
@@ -310,7 +314,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
           <button
             type="submit"
             className="upload-submit-btn pixel-btn pixel-btn-primary"
-            disabled={!file || !title.trim() || submitting}
+            disabled={!file || !title.trim() || !toolType || submitting}
           >
             {submitting ? (
               <>

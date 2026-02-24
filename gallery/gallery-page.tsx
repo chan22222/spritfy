@@ -138,6 +138,13 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
             >
               {t.gallerySortPopular || 'Popular'}
             </button>
+            <button
+              className={`gallery-sort-btn${sort === 'comments' ? ' active' : ''}`}
+              onClick={() => setSort('comments')}
+              aria-pressed={sort === 'comments'}
+            >
+              {t.gallerySortComments || 'Comments'}
+            </button>
           </div>
 
           <button className="gallery-upload-btn pixel-btn pixel-btn-primary" onClick={handleUploadClick}>

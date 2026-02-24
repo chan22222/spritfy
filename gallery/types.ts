@@ -34,5 +34,5 @@ export interface Comment {
   profiles: { username: string; display_name: string | null; avatar_url: string | null };
 }
 
-export type SortOption = 'recent' | 'popular';
+export type SortOption = 'recent' | 'popular' | 'comments';
 export type ToolFilter = 'all' | Post['tool_type'];
