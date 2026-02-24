@@ -37,7 +37,7 @@
 /* ---- Toolbar ---- */
 .gallery-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   padding: 16px 24px;
