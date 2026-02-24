@@ -37,5 +37,4 @@ cloudflare-worker/wrangler.toml
 # Misc
 nul
 
-# Claude
 .claude/
