@@ -24,45 +24,51 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
+async function tryVerifyWithKeyBytes(parts: string[], payload: { sub: string; exp?: number }, keyBytes: Uint8Array): Promise<boolean> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify']
+  );
+
+  const encoder = new TextEncoder();
+  const signatureInput = encoder.encode(parts[0] + '.' + parts[1]);
+
+  const signature = Uint8Array.from(
+    atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
+    c => c.charCodeAt(0)
+  );
+
+  return crypto.subtle.verify('HMAC', key, signature, signatureInput);
+}
+
 async function verifyJWT(token: string, secret: string): Promise<{ sub: string } | null> {
   try {
-    // Decode JWT parts
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
     const header = JSON.parse(atob(parts[0]));
     const payload = JSON.parse(atob(parts[1]));
 
-    // Verify it's HS256
     if (header.alg !== 'HS256') return null;
-
-    // Check expiry
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
 
-    // Decode the base64-encoded JWT secret to raw bytes
-    const secretBytes = base64ToUint8Array(secret);
-
-    const key = await crypto.subtle.importKey(
-      'raw',
-      secretBytes,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['verify']
-    );
-
+    const trimmed = secret.trim();
     const encoder = new TextEncoder();
-    const signatureInput = encoder.encode(parts[0] + '.' + parts[1]);
 
-    // Convert base64url to ArrayBuffer
-    const signature = Uint8Array.from(
-      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-      c => c.charCodeAt(0)
-    );
+    // Try 1: UTF-8 raw bytes (standard Supabase GoTrue behavior)
+    const utf8Valid = await tryVerifyWithKeyBytes(parts, payload, encoder.encode(trimmed));
+    if (utf8Valid) return { sub: payload.sub };
 
-    const valid = await crypto.subtle.verify('HMAC', key, signature, signatureInput);
-    if (!valid) return null;
+    // Try 2: base64-decoded bytes (some Supabase configs)
+    try {
+      const b64Valid = await tryVerifyWithKeyBytes(parts, payload, base64ToUint8Array(trimmed));
+      if (b64Valid) return { sub: payload.sub };
+    } catch { /* not valid base64, skip */ }
 
-    return { sub: payload.sub };
+    return null;
   } catch {
     return null;
   }
