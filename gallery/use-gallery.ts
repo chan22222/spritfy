@@ -7,6 +7,7 @@ interface UseGalleryOptions {
   toolFilter: ToolFilter;
   search: string;
   limit: number;
+  minLikes?: number;
 }
 
 interface UseGalleryReturn {
@@ -19,7 +20,7 @@ interface UseGalleryReturn {
 }
 
 export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
-  const { sort, toolFilter, search, limit } = options;
+  const { sort, toolFilter, search, limit, minLikes } = options;
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +52,10 @@ export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
 
       if (toolFilter !== 'all') {
         query = query.eq('tool_type', toolFilter);
+      }
+
+      if (minLikes !== undefined && minLikes > 0) {
+        query = query.gte('likes_count', minLikes);
       }
 
       if (search.trim()) {
@@ -91,7 +96,7 @@ export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
         setLoading(false);
       }
     }
-  }, [sort, toolFilter, search, limit]);
+  }, [sort, toolFilter, search, limit, minLikes]);
 
   useEffect(() => {
     setPage(0);
