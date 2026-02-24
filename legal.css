@@ -370,6 +370,25 @@
 }
 
 /* ============================================
+   Light Mode Overrides
+   ============================================ */
+[data-theme="light"] .legal-content h1 {
+  text-shadow: 3px 3px 0 rgba(124, 77, 255, 0.1);
+}
+
+[data-theme="light"] .about-contact-card {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .about-feature-card .feature-icon {
+  background: rgba(124, 77, 255, 0.06);
+}
+
+[data-theme="light"] .guide-cta-link:hover {
+  color: #fff;
+}
+
+/* ============================================
    Responsive
    ============================================ */
 @media (max-width: 768px) {

@@ -804,3 +804,81 @@
   border-bottom: 1px solid rgba(187, 134, 252, 0.5);
   pointer-events: none;
 }
+
+/* ===== Light Mode Overrides ===== */
+[data-theme="light"] .editor-canvas-area {
+  background: #cccccc;
+}
+
+[data-theme="light"] .tool-btn:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .tool-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+[data-theme="light"] .panel-icon-btn:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .pixel-grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
+}
+
+[data-theme="light"] .editor-toast {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+[data-theme="light"] .palette-cell {
+  border-color: rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .layer-item:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .layer-item.active-layer {
+  background: rgba(124, 77, 255, 0.1);
+}
+
+[data-theme="light"] .layer-thumbnail {
+  background-image: linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(-45deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d0d0d0 75%), linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+}
+
+[data-theme="light"] .timeline-frame {
+  background-image: linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(-45deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d0d0d0 75%), linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+}
+
+[data-theme="light"] .timeline-playback button {
+  background: rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .timeline-playback button:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .timeline-playback button.playing {
+  background: rgba(124, 77, 255, 0.1);
+}
+
+[data-theme="light"] .context-menu {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+[data-theme="light"] .context-menu button:hover:not(:disabled) {
+  background: rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .editor-modal-overlay {
+  background: rgba(0,0,0,0.4);
+}
+
+[data-theme="light"] .sprite-sheet-preview {
+  background: #e0e0e0;
+}

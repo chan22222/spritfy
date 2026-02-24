@@ -11,6 +11,96 @@
   --danger: #cf6679;
 }
 
+[data-theme="light"] {
+  --bg-dark: #f5f5f5;
+  --bg-panel: #ffffff;
+  --bg-card: #e8e8e8;
+  --primary: #7c4dff;
+  --primary-variant: #651fff;
+  --secondary: #00bfa5;
+  --text-main: #1a1a1a;
+  --text-muted: #666666;
+  --border: #d0d0d0;
+  --danger: #d32f2f;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #b0b0b0;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+[data-theme="light"] .nav-link:hover {
+  background: rgba(0,0,0,0.05);
+}
+[data-theme="light"] .nav-link.active {
+  background: rgba(124, 77, 255, 0.12);
+}
+[data-theme="light"] .btn-secondary:hover,
+[data-theme="light"] .header-action-btn:hover {
+  background: rgba(0,0,0,0.05);
+}
+[data-theme="light"] input[type="number"],
+[data-theme="light"] input[type="color"],
+[data-theme="light"] select {
+  color-scheme: light;
+}
+
+[data-theme="light"] .frame-card img {
+  background-image: linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(-45deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d0d0d0 75%), linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+}
+
+[data-theme="light"] .frame-card.selected {
+  box-shadow: 0 0 0 2px rgba(124, 77, 255, 0.3);
+}
+
+[data-theme="light"] .frame-index {
+  background: rgba(0,0,0,0.5);
+}
+
+[data-theme="light"] .frame-delete-btn {
+  background: rgba(0,0,0,0.5);
+}
+
+[data-theme="light"] .frame-edit-btn {
+  background: rgba(0,0,0,0.5);
+}
+
+[data-theme="light"] .preview-container {
+  background: #e0e0e0;
+  background-image: linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(-45deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d0d0d0 75%), linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+[data-theme="light"] .edit-modal-preview {
+  background-color: #e0e0e0;
+  background-image: linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(-45deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d0d0d0 75%), linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+}
+
+[data-theme="light"] .loading-overlay {
+  background: rgba(255,255,255,0.85);
+}
+
+[data-theme="light"] .brand:hover {
+  filter: drop-shadow(0 0 6px rgba(124, 77, 255, 0.3));
+}
+
+[data-theme="light"] .file-drop-overlay {
+  background: rgba(245, 245, 245, 0.9);
+}
+
+[data-theme="light"] .frame-card.drag-over {
+  box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.3);
+}
+
+[data-theme="light"] * {
+  scrollbar-color: #b0b0b0 #f0f0f0;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -47,6 +137,46 @@ body {
   color: var(--text-main);
   height: 100vh;
   overflow: hidden;
+}
+
+/* Skip Navigation */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  background: var(--primary);
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 0 0 6px 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  z-index: 9999;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+
+.skip-nav:focus {
+  top: 0;
+}
+
+/* Focus Visible - 키보드 포커스만 표시 */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 버튼/링크의 focus ring */
+.btn:focus-visible,
+.nav-link:focus-visible,
+.header-action-btn:focus-visible,
+.toolbar-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 #root {
@@ -117,9 +247,110 @@ main {
   color: var(--primary);
 }
 
-.lang-toggle {
-  padding: 6px 12px;
+/* Header Action Buttons (lang, theme) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
   font-size: 0.85rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.header-action-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+}
+
+.header-action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Language Dropdown */
+.lang-dropdown {
+  position: relative;
+}
+
+.lang-current {
+  font-size: 0.85rem;
+}
+
+.lang-chevron {
+  margin-left: -2px;
+  transition: transform 0.2s;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  min-width: 150px;
+  animation: dropdown-in 0.15s ease-out;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lang-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+
+.lang-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+.lang-menu-item.active {
+  color: var(--primary);
+}
+
+.lang-flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.lang-check {
+  font-size: 16px;
+  margin-left: auto;
+  color: var(--primary);
+}
+
+[data-theme="light"] .lang-menu {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .lang-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Mobile Header */
@@ -142,12 +373,25 @@ main {
     display: none;
   }
 
-  .lang-toggle {
-    padding: 6px 8px;
+  .header-actions {
+    gap: 4px;
   }
 
-  .lang-toggle .nav-label {
+  .header-action-btn {
+    padding: 4px 6px;
+  }
+
+  .lang-current {
     display: none;
+  }
+
+  .lang-chevron {
+    display: none;
+  }
+
+  .lang-menu {
+    right: 0;
+    min-width: 130px;
   }
 }
 

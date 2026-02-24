@@ -9,7 +9,7 @@ const DIST_DIR = path.resolve(__dirname, '..', 'dist');
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}`;
 
-const LANGS = ['ko', 'en'];
+const LANGS = ['ko', 'en', 'ja'];
 const ROUTES = [
   '/',
   '/editor',
@@ -53,7 +53,7 @@ function startStaticServer(distDir, port) {
       }
 
       if (!fs.existsSync(filePath)) {
-        const langMatch = urlPath.match(/^\/(ko|en)(\/|$)/);
+        const langMatch = urlPath.match(/^\/(ko|en|ja)(\/|$)/);
         if (langMatch) {
           filePath = path.join(distDir, langMatch[1], 'index.html');
         } else {

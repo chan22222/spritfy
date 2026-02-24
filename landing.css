@@ -533,6 +533,63 @@
 }
 
 /* ============================================
+   Light Mode Overrides
+   ============================================ */
+[data-theme="light"] .pixel-grid-bg {
+  background-image:
+    linear-gradient(rgba(124, 77, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 77, 255, 0.04) 1px, transparent 1px);
+}
+
+[data-theme="light"] .pixel-character {
+  filter: drop-shadow(0 4px 12px rgba(124, 77, 255, 0.25));
+}
+
+[data-theme="light"] .landing-hero {
+  background: radial-gradient(ellipse at 50% 20%, rgba(124, 77, 255, 0.06) 0%, transparent 50%);
+}
+
+[data-theme="light"] .landing-hero-title {
+  text-shadow: 3px 3px 0 rgba(124, 77, 255, 0.12);
+}
+
+[data-theme="light"] .landing-hero-logo {
+  filter: drop-shadow(0 0 32px rgba(124, 77, 255, 0.2));
+}
+
+[data-theme="light"] .landing-highlights-title {
+  text-shadow: 3px 3px 0 rgba(124, 77, 255, 0.1);
+}
+
+[data-theme="light"] .pixel-btn-ghost {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .pixel-btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .pixel-border {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .pixel-border:hover {
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] .landing-feature-icon {
+  background: rgba(124, 77, 255, 0.08);
+}
+
+[data-theme="light"] .icon-secondary {
+  background: rgba(0, 191, 165, 0.06);
+}
+
+[data-theme="light"] .pixel-btn-primary:hover {
+  background: #9a7aff;
+}
+
+/* ============================================
    Responsive
    ============================================ */
 @media (max-width: 768px) {

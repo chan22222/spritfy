@@ -14,3 +14,9 @@ if (rootElement.innerHTML.trim().length > 0) {
 } else {
   createRoot(rootElement).render(app);
 }
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}

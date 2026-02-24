@@ -467,6 +467,29 @@
 }
 
 /* ============================================
+   Light Mode Overrides
+   ============================================ */
+[data-theme="light"] .converter-dropzone:hover {
+  background: rgba(124, 77, 255, 0.03);
+}
+
+[data-theme="light"] .converter-dropzone.drag-over {
+  background: rgba(124, 77, 255, 0.06);
+}
+
+[data-theme="light"] .converter-file-card:hover {
+  border-color: #aaa;
+}
+
+[data-theme="light"] .file-action-btn:hover {
+  border-color: #aaa;
+}
+
+[data-theme="light"] .converter-header h1 {
+  text-shadow: 3px 3px 0 rgba(124, 77, 255, 0.1);
+}
+
+/* ============================================
    Responsive
    ============================================ */
 @media (max-width: 768px) {

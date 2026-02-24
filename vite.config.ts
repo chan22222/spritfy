@@ -3,7 +3,7 @@ import fs from 'fs';
 import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const LANGS = ['ko', 'en'] as const;
+const LANGS = ['ko', 'en', 'ja'] as const;
 const BASE_URL = 'https://spritfy.xyz';
 
 interface RouteMeta {
@@ -108,14 +108,50 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       description: 'Spritfy Terms of Service.',
     },
   },
+  ja: {
+    '/': {
+      title: 'Spritfy - 無料ドット絵エディター＆スプライトシート＆画像変換ツール | ピクセルアート',
+      description: '無料オンラインドット絵エディター、スプライトシート生成ツール、動画/GIFスプライトシート変換ツール。ブラウザですぐにドット絵を描いたり、動画をスプライトシートに変換できます。',
+    },
+    '/editor': {
+      title: 'ドット絵エディター - Spritfy | 無料オンラインピクセルアートツール',
+      description: 'ブラウザですぐにドット絵が描けます。レイヤー、アニメーション、パレットプリセット、GIFエクスポート対応の無料オンラインドット絵エディター。',
+    },
+    '/sprite': {
+      title: 'スプライトシート生成ツール - Spritfy | 動画/GIFをシートに変換',
+      description: '動画やGIFをスプライトシートに変換。フレーム抽出、シートレイアウト設定、PNGエクスポート対応の無料オンラインスプライト生成ツール。',
+    },
+    '/converter': {
+      title: '画像フォーマット変換ツール - Spritfy | PNG、JPG、WebP、ICO 変換',
+      description: 'PNG、JPG、WebP、GIF、BMP、ICOなどの画像フォーマットを無料で変換。ブラウザ上で直接変換、インストール不要。',
+    },
+    '/guide/sprite-sheet': {
+      title: 'スプライトシートガイド - Spritfy | スプライトシートの作り方',
+      description: 'スプライトシートとは何か、どう作るかを学びましょう。ゲーム開発とアニメーションのためのスプライトシート制作ガイド。',
+    },
+    '/guide/pixel-art': {
+      title: 'ドット絵ガイド - Spritfy | ピクセルアートの描き方',
+      description: 'ドット絵（ピクセルアート）の基礎から学びましょう。初心者向けドット絵制作ガイドとヒント。',
+    },
+    '/about': {
+      title: '概要 - Spritfy',
+      description: 'Spritfyについて。無料オンラインドット絵エディター、スプライトシート生成ツール、画像フォーマット変換ツール。',
+    },
+    '/privacy': {
+      title: 'プライバシーポリシー - Spritfy',
+      description: 'Spritfy プライバシーポリシー。',
+    },
+    '/terms': {
+      title: '利用規約 - Spritfy',
+      description: 'Spritfy 利用規約。',
+    },
+  },
 };
 
 function buildRouteMeta(lang: string, route: string): RouteMeta {
   const seo = SEO_META[lang][route];
   const langPath = route === '/' ? '/' : route;
   const canonical = `${BASE_URL}/${lang}${langPath}`;
-  const altLang = lang === 'ko' ? 'en' : 'ko';
-  const altUrl = `${BASE_URL}/${altLang}${langPath}`;
 
   return {
     title: seo.title,
@@ -126,8 +162,7 @@ function buildRouteMeta(lang: string, route: string): RouteMeta {
     ogUrl: canonical,
     lang,
     hreflangAlternates: [
-      { lang, url: canonical },
-      { lang: altLang, url: altUrl },
+      ...LANGS.map(l => ({ lang: l, url: `${BASE_URL}/${l}${langPath}` })),
       { lang: 'x-default', url: `${BASE_URL}/en${langPath}` },
     ],
   };
@@ -191,7 +226,7 @@ function injectMetaTags(html: string, meta: RouteMeta): string {
   );
   result = result.replace(
     /<meta\s+property="og:locale"\s+content="[^"]*"\s*\/?>/,
-    `<meta property="og:locale" content="${meta.lang === 'ko' ? 'ko_KR' : 'en_US'}" />`
+    `<meta property="og:locale" content="${meta.lang === 'ko' ? 'ko_KR' : meta.lang === 'ja' ? 'ja_JP' : 'en_US'}" />`
   );
 
   // Twitter 태그 교체
@@ -205,6 +240,249 @@ function injectMetaTags(html: string, meta: RouteMeta): string {
   );
 
   return result;
+}
+
+function buildStructuredData(lang: string, route: string): string {
+  const seo = SEO_META[lang][route];
+  const langPath = route === '/' ? '/' : route;
+  const canonical = `${BASE_URL}/${lang}${langPath}`;
+  const inLanguage = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : 'en-US';
+
+  const publisher = {
+    '@type': 'Organization',
+    name: 'Spritfy',
+    url: BASE_URL,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${BASE_URL}/spritfy-logo.svg`,
+    },
+  };
+
+  const schemas: object[] = [];
+
+  // 가이드 페이지: Article + FAQPage
+  if (route === '/guide/sprite-sheet' || route === '/guide/pixel-art') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: seo.title,
+      description: seo.description,
+      author: { '@type': 'Organization', name: 'Spritfy' },
+      publisher,
+      datePublished: '2025-01-01',
+      dateModified: '2026-02-24',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+      inLanguage,
+    });
+
+    const faqEntries =
+      route === '/guide/sprite-sheet'
+        ? lang === 'ko'
+          ? [
+              {
+                q: '스프라이트 시트란 무엇인가요?',
+                a: '스프라이트 시트는 여러 개의 이미지(프레임)를 하나의 큰 이미지 파일에 격자 형태로 배열한 것입니다. 게임 개발이나 웹 애니메이션에서 효율적으로 사용됩니다.',
+              },
+              {
+                q: '스프라이트 시트를 어떻게 만드나요?',
+                a: '스프릿파이의 스프라이트 시트 생성기를 사용하면 동영상이나 GIF를 업로드하여 자동으로 프레임을 추출하고 스프라이트 시트로 변환할 수 있습니다.',
+              },
+              {
+                q: '스프라이트 시트의 장점은 무엇인가요?',
+                a: 'HTTP 요청 횟수를 줄이고, 메모리 사용을 최적화하며, 애니메이션 재생 성능을 향상시킵니다.',
+              },
+            ]
+          : lang === 'ja'
+          ? [
+              {
+                q: 'スプライトシートとは何ですか？',
+                a: 'スプライトシートとは、複数の画像（フレーム）を一枚の大きな画像ファイルにグリッド状に配列したものです。ゲーム開発やWebアニメーションで効率的に使用されます。',
+              },
+              {
+                q: 'スプライトシートはどうやって作りますか？',
+                a: 'Spritfyのスプライトシート生成ツールを使えば、動画やGIFをアップロードして自動的にフレームを抽出し、スプライトシートに変換できます。',
+              },
+              {
+                q: 'スプライトシートのメリットは何ですか？',
+                a: 'HTTPリクエスト数を削減し、メモリ使用量を最適化し、アニメーション再生のパフォーマンスを向上させます。',
+              },
+            ]
+          : [
+              {
+                q: 'What is a sprite sheet?',
+                a: 'A sprite sheet is a single image file that contains multiple smaller images (frames) arranged in a grid. It is commonly used in game development and web animations for efficient rendering.',
+              },
+              {
+                q: 'How do I create a sprite sheet?',
+                a: 'You can use Spritfy\'s sprite sheet generator to upload a video or GIF, automatically extract frames, and convert them into a sprite sheet.',
+              },
+              {
+                q: 'What are the benefits of using sprite sheets?',
+                a: 'Sprite sheets reduce HTTP requests, optimize memory usage, and improve animation playback performance.',
+              },
+            ]
+        : lang === 'ko'
+          ? [
+              {
+                q: '픽셀 아트란 무엇인가요?',
+                a: '픽셀 아트는 개별 픽셀 단위로 그리는 디지털 아트 형식입니다. 레트로 게임 스타일의 그래픽을 만드는 데 널리 사용됩니다.',
+              },
+              {
+                q: '픽셀 아트를 어떻게 시작하나요?',
+                a: '스프릿파이의 픽셀 아트 에디터에서 캔버스 크기를 설정하고 픽셀 단위로 그림을 그릴 수 있습니다. 레이어와 팔레트 기능을 활용하면 더 효율적으로 작업할 수 있습니다.',
+              },
+              {
+                q: '픽셀 아트에 적합한 캔버스 크기는?',
+                a: '초보자에게는 16x16 또는 32x32 크기를 추천합니다. 캐릭터 스프라이트는 32x32 또는 64x64가 일반적입니다.',
+              },
+            ]
+          : lang === 'ja'
+          ? [
+              {
+                q: 'ドット絵とは何ですか？',
+                a: 'ドット絵（ピクセルアート）とは、ピクセル単位で描くデジタルアートの形式です。レトロゲームスタイルのグラフィック制作に広く使われています。',
+              },
+              {
+                q: 'ドット絵はどうやって始めますか？',
+                a: 'Spritfyのドット絵エディターでキャンバスサイズを設定し、ピクセル単位で描くことができます。レイヤーやパレット機能を活用すると、より効率的に作業できます。',
+              },
+              {
+                q: 'ドット絵に適したキャンバスサイズは？',
+                a: '初心者には16x16または32x32がおすすめです。キャラクタースプライトは32x32または64x64が一般的です。',
+              },
+            ]
+          : [
+              {
+                q: 'What is pixel art?',
+                a: 'Pixel art is a form of digital art where images are created and edited at the pixel level. It is widely used for retro-style game graphics.',
+              },
+              {
+                q: 'How do I start making pixel art?',
+                a: 'You can use Spritfy\'s pixel art editor to set a canvas size and draw pixel by pixel. Use layers and palette features for more efficient workflow.',
+              },
+              {
+                q: 'What canvas size is best for pixel art?',
+                a: 'For beginners, 16x16 or 32x32 is recommended. Character sprites are commonly 32x32 or 64x64.',
+              },
+            ];
+
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqEntries.map((entry) => ({
+        '@type': 'Question',
+        name: entry.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: entry.a,
+        },
+      })),
+    });
+  }
+
+  // 도구 페이지: SoftwareApplication
+  if (route === '/editor' || route === '/sprite' || route === '/converter') {
+    const toolData: Record<string, Record<string, { name: string; category: string }>> = {
+      ko: {
+        '/editor': { name: '스프릿파이 픽셀 아트 에디터', category: 'DesignApplication' },
+        '/sprite': { name: '스프릿파이 스프라이트 시트 생성기', category: 'MultimediaApplication' },
+        '/converter': { name: '스프릿파이 이미지 포맷 변환기', category: 'MultimediaApplication' },
+      },
+      en: {
+        '/editor': { name: 'Spritfy Pixel Art Editor', category: 'DesignApplication' },
+        '/sprite': { name: 'Spritfy Sprite Sheet Generator', category: 'MultimediaApplication' },
+        '/converter': { name: 'Spritfy Image Format Converter', category: 'MultimediaApplication' },
+      },
+      ja: {
+        '/editor': { name: 'Spritfy ドット絵エディター', category: 'DesignApplication' },
+        '/sprite': { name: 'Spritfy スプライトシート生成ツール', category: 'MultimediaApplication' },
+        '/converter': { name: 'Spritfy 画像フォーマット変換ツール', category: 'MultimediaApplication' },
+      },
+    };
+
+    const tool = toolData[lang][route];
+
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: tool.name,
+      description: seo.description,
+      url: canonical,
+      applicationCategory: tool.category,
+      operatingSystem: 'All',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      inLanguage,
+    });
+  }
+
+  // 랜딩 페이지: BreadcrumbList
+  if (route === '/') {
+    const itemListElement = [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: lang === 'ko' ? '홈' : lang === 'ja' ? 'ホーム' : 'Home',
+        item: `${BASE_URL}/${lang}/`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: lang === 'ko' ? '픽셀 아트 에디터' : lang === 'ja' ? 'ドット絵エディター' : 'Pixel Art Editor',
+        item: `${BASE_URL}/${lang}/editor`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: lang === 'ko' ? '스프라이트 시트 생성기' : lang === 'ja' ? 'スプライトシート生成ツール' : 'Sprite Sheet Generator',
+        item: `${BASE_URL}/${lang}/sprite`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: lang === 'ko' ? '이미지 변환기' : lang === 'ja' ? '画像変換ツール' : 'Image Converter',
+        item: `${BASE_URL}/${lang}/converter`,
+      },
+    ];
+
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement,
+    });
+  }
+
+  // About 페이지: Organization
+  if (route === '/about') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Spritfy',
+      url: BASE_URL,
+      logo: `${BASE_URL}/spritfy-logo.svg`,
+      description:
+        lang === 'ko'
+          ? '무료 온라인 픽셀 아트 에디터, 스프라이트 시트 생성기, 이미지 포맷 변환기를 제공하는 웹 서비스입니다.'
+          : lang === 'ja'
+          ? '無料オンラインドット絵エディター、スプライトシート生成ツール、画像フォーマット変換ツールを提供するWebサービスです。'
+          : 'A free online pixel art editor, sprite sheet generator, and image format converter.',
+      sameAs: [],
+    });
+  }
+
+  if (schemas.length === 0) {
+    return '';
+  }
+
+  return schemas
+    .map(
+      (schema) =>
+        `<script type="application/ld+json">${JSON.stringify(schema)}</script>`
+    )
+    .join('\n    ');
 }
 
 function generateSitemap(): string {
@@ -262,7 +540,14 @@ function prerenderPlugin(): Plugin {
           const langRoute = route === '/' ? lang : `${lang}${route}`;
           const routeDir = path.join(distDir, langRoute);
           fs.mkdirSync(routeDir, { recursive: true });
-          const routeHtml = injectMetaTags(baseHtml, meta);
+          let routeHtml = injectMetaTags(baseHtml, meta);
+          const structuredData = buildStructuredData(lang, route);
+          if (structuredData) {
+            routeHtml = routeHtml.replace(
+              '</head>',
+              `    ${structuredData}\n</head>`
+            );
+          }
           fs.writeFileSync(path.join(routeDir, 'index.html'), routeHtml, 'utf-8');
         }
       }
@@ -275,7 +560,8 @@ function prerenderPlugin(): Plugin {
   <meta name="robots" content="noindex" />
   <title>Spritfy</title>
   <script>
-    var lang = (navigator.language || '').startsWith('ko') ? 'ko' : 'en';
+    var nav = navigator.language || '';
+    var lang = nav.startsWith('ko') ? 'ko' : nav.startsWith('ja') ? 'ja' : 'en';
     window.location.replace('/' + lang + '/');
   </script>
 </head>
