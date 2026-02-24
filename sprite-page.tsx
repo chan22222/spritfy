@@ -1313,8 +1313,9 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   // --- Merge Images ---
   const handleMergeImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
     e.target.value = '';
 
     setIsLoading(true);
