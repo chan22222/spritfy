@@ -394,6 +394,13 @@ export const i18n: Record<Lang, Record<string, string>> = {
     uploadSubmitting: '업로드 중...',
     uploadSuccess: '작품이 업로드되었습니다!',
     uploadError: '업로드에 실패했습니다',
+    uploadErrAuth: '로그인이 만료되었습니다. 다시 로그인해주세요.',
+    uploadErrTooLarge: '파일 크기가 5MB를 초과합니다.',
+    uploadErrFileType: '지원하지 않는 파일 형식입니다. (PNG, GIF, WebP)',
+    uploadErrServer: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+    uploadErrThumbnail: '썸네일 생성에 실패했습니다. 이미지가 너무 클 수 있습니다.',
+    uploadErrLoadImage: '이미지를 불러올 수 없습니다. 파일이 손상되었을 수 있습니다.',
+    uploadErrNetwork: '네트워크 오류가 발생했습니다. 연결을 확인하고 다시 시도해주세요.',
 
     // Post detail
     postBy: '작성자',
@@ -837,6 +844,13 @@ export const i18n: Record<Lang, Record<string, string>> = {
     uploadSubmitting: 'Uploading...',
     uploadSuccess: 'Artwork uploaded!',
     uploadError: 'Upload failed',
+    uploadErrAuth: 'Login expired. Please log in again.',
+    uploadErrTooLarge: 'File is too large (max 5MB).',
+    uploadErrFileType: 'Unsupported file type. (PNG, GIF, WebP)',
+    uploadErrServer: 'Server error. Please try again later.',
+    uploadErrThumbnail: 'Failed to generate thumbnail. The image may be too large.',
+    uploadErrLoadImage: 'Failed to load image. The file may be corrupted.',
+    uploadErrNetwork: 'Network error. Check your connection and try again.',
 
     // Post detail
     postBy: 'by',
@@ -1280,6 +1294,13 @@ export const i18n: Record<Lang, Record<string, string>> = {
     uploadSubmitting: 'アップロード中...',
     uploadSuccess: '作品が投稿されました！',
     uploadError: 'アップロードに失敗しました',
+    uploadErrAuth: 'ログインの有効期限が切れました。再ログインしてください。',
+    uploadErrTooLarge: 'ファイルサイズが5MBを超えています。',
+    uploadErrFileType: '対応していないファイル形式です。(PNG, GIF, WebP)',
+    uploadErrServer: 'サーバーエラーが発生しました。しばらくしてから再試行してください。',
+    uploadErrThumbnail: 'サムネイルの生成に失敗しました。画像が大きすぎる可能性があります。',
+    uploadErrLoadImage: '画像を読み込めません。ファイルが破損している可能性があります。',
+    uploadErrNetwork: 'ネットワークエラーが発生しました。接続を確認して再試行してください。',
 
     // Post detail
     postBy: '投稿者',

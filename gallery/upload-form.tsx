@@ -2,8 +2,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import type { Lang } from '@/i18n.ts';
 import { useAuth } from '@/auth/auth-context.tsx';
 import { supabase } from '@/lib/supabase.ts';
-import { validateImage, generateThumbnail, getImageDimensions } from '@/lib/image-utils.ts';
-import { uploadToR2 } from '@/lib/r2-upload.ts';
+import { generateThumbnail, getImageDimensions } from '@/lib/image-utils.ts';
+import { uploadToR2, UploadError } from '@/lib/r2-upload.ts';
 import type { Post } from '@/gallery/types.ts';
 import '@/gallery/upload-form.css';
 
@@ -39,15 +39,22 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagsInput, setTagsInput] = useState('');
-  const [toolType, setToolType] = useState<ToolType>('editor');
+  const [toolType, setToolType] = useState<ToolType>('character_human');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFile = useCallback((selectedFile: File) => {
-    const validation = validateImage(selectedFile);
-    if (!validation.valid) {
-      setErrorMsg(validation.error ?? 'Invalid file');
+    const allowedTypes = ['image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setErrorMsg(t.uploadErrFileType || 'Unsupported file type. (PNG, GIF, WebP)');
+      return;
+    }
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      const sizeMB = (selectedFile.size / (1024 * 1024)).toFixed(1);
+      setErrorMsg(
+        (t.uploadErrTooLarge || 'File is too large (max 5MB).') + ` (${sizeMB}MB)`
+      );
       return;
     }
     setFile(selectedFile);
@@ -55,7 +62,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
 
     const url = URL.createObjectURL(selectedFile);
     setPreview(url);
-  }, []);
+  }, [t]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -136,7 +143,33 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
 
       onSuccess();
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Upload failed');
+      if (err instanceof UploadError) {
+        switch (err.status) {
+          case 401:
+            setErrorMsg(t.uploadErrAuth || 'Login expired. Please log in again.');
+            break;
+          case 413:
+            setErrorMsg(t.uploadErrTooLarge || 'File is too large (max 5MB).');
+            break;
+          case 415:
+            setErrorMsg(t.uploadErrFileType || 'Unsupported file type. (PNG, GIF, WebP)');
+            break;
+          default:
+            setErrorMsg(t.uploadErrServer || 'Server error. Please try again later.');
+        }
+      } else if (err instanceof Error) {
+        if (err.message.includes('Thumbnail') || err.message.includes('thumbnail')) {
+          setErrorMsg(t.uploadErrThumbnail || 'Failed to generate thumbnail. The image may be too large.');
+        } else if (err.message.includes('load image')) {
+          setErrorMsg(t.uploadErrLoadImage || 'Failed to load image. The file may be corrupted.');
+        } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setErrorMsg(t.uploadErrNetwork || 'Network error. Check your connection and try again.');
+        } else {
+          setErrorMsg(err.message);
+        }
+      } else {
+        setErrorMsg(t.uploadError || 'Upload failed');
+      }
     } finally {
       setSubmitting(false);
     }

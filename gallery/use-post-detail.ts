@@ -66,7 +66,7 @@ export function usePostDetail(postId: string, userId?: string): UsePostDetailRet
     try {
       const { data, error } = await supabase
         .from('likes')
-        .select('id')
+        .select('user_id')
         .eq('post_id', postId)
         .eq('user_id', userId)
         .maybeSingle();

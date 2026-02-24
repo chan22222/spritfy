@@ -1,6 +1,14 @@
 const R2_WORKER_URL = import.meta.env.VITE_R2_WORKER_URL as string;
 const R2_PUBLIC_URL = ((import.meta.env.VITE_R2_PUBLIC_URL as string) || '').replace(/\/$/, '');
 
+export class UploadError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 export async function uploadToR2(
   original: File,
   thumbnail: Blob,
@@ -18,7 +26,7 @@ export async function uploadToR2(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || 'Upload failed');
+    throw new UploadError(text || 'Upload failed', res.status);
   }
 
   const data: { imageUrl: string; thumbnailUrl: string } = await res.json();
@@ -45,7 +53,7 @@ export async function uploadAvatarToR2(
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || 'Avatar upload failed');
+    throw new UploadError(text || 'Avatar upload failed', res.status);
   }
 
   const data: { avatarUrl: string } = await res.json();
