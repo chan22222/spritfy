@@ -1311,6 +1311,69 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     setProgress(0);
   };
 
+  // --- Merge Images ---
+  const handleMergeImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    e.target.value = '';
+
+    setIsLoading(true);
+    setProgress(0);
+
+    try {
+      const startId = frames.length > 0 ? Math.max(...frames.map(f => f.id)) + 1 : 0;
+      const newFrames: Frame[] = [];
+      const total = files.length;
+
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('Failed to load image'));
+          image.src = URL.createObjectURL(file);
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(img.src);
+
+        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+          newFrames.push({
+            id: startId + i,
+            blob,
+            url: URL.createObjectURL(blob),
+            timestamp: 0,
+          });
+        }
+        setProgress(Math.round(((i + 1) / total) * 100));
+      }
+
+      if (newFrames.length > 0) {
+        setFrames(prev => [...prev, ...newFrames]);
+        setSelectedFrameIds(prev => {
+          const newSet = new Set(prev);
+          newFrames.forEach(f => newSet.add(f.id));
+          return newSet;
+        });
+        if (exportColumns === 0) {
+          setExportColumns(Math.ceil(Math.sqrt(frames.length + newFrames.length)));
+        }
+      }
+    } catch {
+      // Merge failed silently
+    }
+
+    setIsLoading(false);
+    setProgress(0);
+  };
+
   // --- Sprite Sheet Import & Split ---
   const handleSpriteSheetImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1418,6 +1481,11 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                        {t.importSpriteSheet}
                        <input type="file" className="hidden-input" accept="image/*" onChange={handleSpriteSheetImport} />
                     </label>
+                    <label className="btn btn-secondary">
+                       <span className="material-symbols-outlined">collections</span>
+                       {t.mergeImages}
+                       <input type="file" className="hidden-input" accept="image/*" multiple onChange={handleMergeImages} />
+                    </label>
                     <div className="row" style={{ marginLeft: 20, gap: 20 }}>
                         <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
                             <label>{t.extractInterval} ({extractionInterval})</label>
@@ -1453,6 +1521,11 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                             <span className="material-symbols-outlined">grid_on</span>
                             {t.importSpriteSheet}
                             <input type="file" className="hidden-input" accept="image/*" onChange={handleSpriteSheetImport} />
+                        </label>
+                        <label className="btn btn-secondary">
+                            <span className="material-symbols-outlined">collections</span>
+                            {t.mergeImages}
+                            <input type="file" className="hidden-input" accept="image/*" multiple onChange={handleMergeImages} />
                         </label>
                         <div style={{ marginLeft: 8 }}>
                            <span className="badge">{t.totalFrames}: {frames.length}</span>
