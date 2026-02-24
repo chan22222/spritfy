@@ -1,7 +1,21 @@
 interface Env {
   R2_BUCKET: R2Bucket;
-  SUPABASE_JWT_SECRET: string;
+  SUPABASE_URL: string;
   ALLOWED_ORIGINS: string;
+}
+
+interface JWK {
+  kty: string;
+  crv?: string;
+  x?: string;
+  y?: string;
+  kid?: string;
+  alg?: string;
+  use?: string;
+}
+
+interface JWKS {
+  keys: JWK[];
 }
 
 function corsHeaders(env: Env, origin: string): Record<string, string> {
@@ -15,8 +29,10 @@ function corsHeaders(env: Env, origin: string): Record<string, string> {
   };
 }
 
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
+function base64urlDecode(str: string): Uint8Array {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const binary = atob(str);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
@@ -24,49 +40,71 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
-async function tryVerifyWithKeyBytes(parts: string[], payload: { sub: string; exp?: number }, keyBytes: Uint8Array): Promise<boolean> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['verify']
-  );
+// Cache JWKS keys in memory (Worker instance lifetime)
+let cachedKeys: Map<string, CryptoKey> = new Map();
+let jwksFetchedAt = 0;
+const JWKS_CACHE_TTL = 3600_000; // 1 hour
 
-  const encoder = new TextEncoder();
-  const signatureInput = encoder.encode(parts[0] + '.' + parts[1]);
+async function getPublicKey(kid: string, supabaseUrl: string): Promise<CryptoKey | null> {
+  // Return cached key if fresh
+  if (cachedKeys.has(kid) && Date.now() - jwksFetchedAt < JWKS_CACHE_TTL) {
+    return cachedKeys.get(kid)!;
+  }
 
-  const signature = Uint8Array.from(
-    atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-    c => c.charCodeAt(0)
-  );
+  // Fetch JWKS from Supabase
+  const jwksUrl = `${supabaseUrl}/auth/v1/.well-known/jwks.json`;
+  const res = await fetch(jwksUrl);
+  if (!res.ok) return null;
 
-  return crypto.subtle.verify('HMAC', key, signature, signatureInput);
+  const jwks: JWKS = await res.json();
+  cachedKeys = new Map();
+  jwksFetchedAt = Date.now();
+
+  for (const jwk of jwks.keys) {
+    if (jwk.kty === 'EC' && jwk.crv === 'P-256' && jwk.kid) {
+      const key = await crypto.subtle.importKey(
+        'jwk',
+        { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, ext: true },
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['verify']
+      );
+      cachedKeys.set(jwk.kid, key);
+    }
+  }
+
+  return cachedKeys.get(kid) || null;
 }
 
-async function verifyJWT(token: string, secret: string): Promise<{ sub: string } | null> {
+async function verifyJWT(token: string, supabaseUrl: string): Promise<{ sub: string } | null> {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
-    const header = JSON.parse(atob(parts[0]));
-    const payload = JSON.parse(atob(parts[1]));
+    const header = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0])));
+    const payload = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));
 
-    if (header.alg !== 'HS256') return null;
+    // Check expiry
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
 
-    const trimmed = secret.trim();
-    const encoder = new TextEncoder();
+    if (header.alg === 'ES256' && header.kid) {
+      // ECDSA P-256 verification with JWKS public key
+      const publicKey = await getPublicKey(header.kid, supabaseUrl);
+      if (!publicKey) return null;
 
-    // Try 1: UTF-8 raw bytes (standard Supabase GoTrue behavior)
-    const utf8Valid = await tryVerifyWithKeyBytes(parts, payload, encoder.encode(trimmed));
-    if (utf8Valid) return { sub: payload.sub };
+      const encoder = new TextEncoder();
+      const signatureInput = encoder.encode(parts[0] + '.' + parts[1]);
+      const signature = base64urlDecode(parts[2]);
 
-    // Try 2: base64-decoded bytes (some Supabase configs)
-    try {
-      const b64Valid = await tryVerifyWithKeyBytes(parts, payload, base64ToUint8Array(trimmed));
-      if (b64Valid) return { sub: payload.sub };
-    } catch { /* not valid base64, skip */ }
+      const valid = await crypto.subtle.verify(
+        { name: 'ECDSA', hash: 'SHA-256' },
+        publicKey,
+        signature,
+        signatureInput
+      );
+
+      return valid ? { sub: payload.sub } : null;
+    }
 
     return null;
   } catch {
@@ -88,18 +126,16 @@ export default {
 
     // POST /upload
     if (request.method === 'POST' && url.pathname === '/upload') {
-      // Verify auth
       const authHeader = request.headers.get('Authorization');
       if (!authHeader?.startsWith('Bearer ')) {
         return new Response('Unauthorized', { status: 401, headers });
       }
 
-      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_JWT_SECRET);
+      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_URL);
       if (!payload) {
         return new Response('Invalid token', { status: 401, headers });
       }
 
-      // Parse form data
       const formData = await request.formData();
       const original = formData.get('original') as File | null;
       const thumbnail = formData.get('thumbnail') as File | null;
@@ -108,7 +144,6 @@ export default {
         return new Response('Missing files', { status: 400, headers });
       }
 
-      // Validate
       if (original.size > 5 * 1024 * 1024) {
         return new Response('File too large (max 5MB)', { status: 413, headers });
       }
@@ -118,23 +153,17 @@ export default {
         return new Response('Invalid file type', { status: 415, headers });
       }
 
-      // Generate UUID path
       const uuid = crypto.randomUUID();
       const ext = original.name.split('.').pop()?.toLowerCase() || 'png';
       const originalKey = `gallery/${uuid}/original.${ext}`;
       const thumbnailKey = `gallery/${uuid}/thumb.webp`;
 
-      // Upload to R2
       await env.R2_BUCKET.put(originalKey, original.stream(), {
         httpMetadata: { contentType: original.type },
       });
       await env.R2_BUCKET.put(thumbnailKey, thumbnail.stream(), {
         httpMetadata: { contentType: 'image/webp' },
       });
-
-      // Return URLs (R2 public access via custom domain)
-      // The public URL base should be configured; for now use the bucket's public URL pattern
-      const publicBase = url.origin.replace('spritfy-r2-upload', 'r2-spritfy');
 
       return new Response(
         JSON.stringify({
@@ -155,7 +184,7 @@ export default {
         return new Response('Unauthorized', { status: 401, headers });
       }
 
-      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_JWT_SECRET);
+      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_URL);
       if (!payload) {
         return new Response('Invalid token', { status: 401, headers });
       }
@@ -200,7 +229,7 @@ export default {
         return new Response('Unauthorized', { status: 401, headers });
       }
 
-      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_JWT_SECRET);
+      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_URL);
       if (!payload) {
         return new Response('Invalid token', { status: 401, headers });
       }
