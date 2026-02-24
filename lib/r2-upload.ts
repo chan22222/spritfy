@@ -1,5 +1,5 @@
 const R2_WORKER_URL = import.meta.env.VITE_R2_WORKER_URL as string;
-const R2_PUBLIC_URL = (import.meta.env.VITE_R2_PUBLIC_URL as string).replace(/\/$/, '');
+const R2_PUBLIC_URL = ((import.meta.env.VITE_R2_PUBLIC_URL as string) || '').replace(/\/$/, '');
 
 export async function uploadToR2(
   original: File,
