@@ -63,9 +63,9 @@ export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
       }
 
       if (sort === 'popular') {
-        query = query.order('likes_count', { ascending: false });
+        query = query.order('likes_count', { ascending: false }).order('created_at', { ascending: false });
       } else if (sort === 'comments') {
-        query = query.order('comments_count', { ascending: false });
+        query = query.order('comments_count', { ascending: false }).order('created_at', { ascending: false });
       } else {
         query = query.order('created_at', { ascending: false });
       }

@@ -12,7 +12,7 @@ interface CommunityShowcaseProps {
 
 export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({ lang, t }) => {
   const { posts, loading } = useGallery({
-    sort: 'recent',
+    sort: 'popular',
     toolFilter: 'all',
     search: '',
     limit: 8,
