@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spritfy-v2';
+const CACHE_NAME = 'spritfy-v3';
 
 const APP_SHELL = [
   '/',
@@ -64,14 +64,17 @@ self.addEventListener('fetch', (event) => {
 
   if (isAsset) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
-        });
-      })
+        })
+        .catch(() =>
+          caches.match(request).then((cached) =>
+            cached || new Response('', { status: 503 })
+          )
+        )
     );
     return;
   }
