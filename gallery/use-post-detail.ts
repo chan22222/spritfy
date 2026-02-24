@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase.ts';
 import type { Post, Comment } from '@/gallery/types.ts';
 
+interface UpdatePostFields {
+  title: string;
+  description: string | null;
+  tags: string[];
+  tool_type: Post['tool_type'];
+}
+
 interface UsePostDetailReturn {
   post: Post | null;
   comments: Comment[];
@@ -11,6 +18,7 @@ interface UsePostDetailReturn {
   addComment: (content: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
   deletePost: () => Promise<void>;
+  updatePost: (fields: UpdatePostFields) => Promise<void>;
 }
 
 export function usePostDetail(postId: string, userId?: string): UsePostDetailReturn {
@@ -164,5 +172,24 @@ export function usePostDetail(postId: string, userId?: string): UsePostDetailRet
     }
   }, [userId, post, postId]);
 
-  return { post, comments, isLiked, loading, toggleLike, addComment, deleteComment, deletePost };
+  const updatePost = useCallback(async (fields: UpdatePostFields) => {
+    if (!userId || !post) return;
+
+    const { error } = await supabase
+      .from('posts')
+      .update({
+        title: fields.title,
+        description: fields.description,
+        tags: fields.tags,
+        tool_type: fields.tool_type,
+      })
+      .eq('id', postId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    setPost(prev => prev ? { ...prev, ...fields } : prev);
+  }, [userId, post, postId]);
+
+  return { post, comments, isLiked, loading, toggleLike, addComment, deleteComment, deletePost, updatePost };
 }

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { Lang } from '@/i18n.ts';
 import { useAuth } from '@/auth/auth-context.tsx';
 import { usePostDetail } from '@/gallery/use-post-detail.ts';
+import { EditPostModal } from '@/gallery/edit-post-modal.tsx';
 import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
 import '@/gallery/post-detail.css';
@@ -59,11 +60,13 @@ export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {
     addComment,
     deleteComment,
     deletePost,
+    updatePost,
   } = usePostDetail(postId ?? '', user?.id);
 
   const [commentText, setCommentText] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [showEdit, setShowEdit] = useState(false);
 
   const handleLike = useCallback(async () => {
     if (!user) {
@@ -181,6 +184,13 @@ export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {
         <h1 className="post-detail-title">{post.title}</h1>
 
         <div className="post-meta">
+          {post.profiles?.avatar_url ? (
+            <img className="post-meta-avatar" src={post.profiles.avatar_url} alt="" />
+          ) : (
+            <span className="post-meta-avatar-fallback">
+              <span className="material-symbols-outlined" aria-hidden="true">person</span>
+            </span>
+          )}
           <span className="post-meta-author">@{displayName}</span>
           <span className="post-meta-sep" aria-hidden="true">·</span>
           <span>{timeAgo(post.created_at, lang)}</span>
@@ -228,10 +238,16 @@ export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {
           </span>
 
           {isAuthor && (
-            <button className="post-delete-btn" onClick={handleDeletePost}>
-              <span className="material-symbols-outlined" aria-hidden="true">delete</span>
-              {t.postDelete || 'Delete'}
-            </button>
+            <>
+              <button className="post-edit-btn" onClick={() => setShowEdit(true)}>
+                <span className="material-symbols-outlined" aria-hidden="true">edit</span>
+                {t.postEdit || 'Edit'}
+              </button>
+              <button className="post-delete-btn" onClick={handleDeletePost}>
+                <span className="material-symbols-outlined" aria-hidden="true">delete</span>
+                {t.postDelete || 'Delete'}
+              </button>
+            </>
           )}
         </div>
 
@@ -250,6 +266,13 @@ export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {
                 return (
                   <li key={comment.id} className="post-comment">
                     <div className="post-comment-header">
+                      {comment.profiles?.avatar_url ? (
+                        <img className="post-comment-avatar" src={comment.profiles.avatar_url} alt="" />
+                      ) : (
+                        <span className="post-comment-avatar-fallback">
+                          <span className="material-symbols-outlined" aria-hidden="true">person</span>
+                        </span>
+                      )}
                       <span className="post-comment-author">@{commentAuthor}</span>
                       <span className="post-comment-date">{timeAgo(comment.created_at, lang)}</span>
                       {isCommentAuthor && (
@@ -306,6 +329,20 @@ export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {
 
       {/* Footer */}
       <Footer lang={lang} t={t} />
+
+      {/* Edit Modal */}
+      {showEdit && post && (
+        <EditPostModal
+          post={post}
+          lang={lang}
+          t={t}
+          onClose={() => setShowEdit(false)}
+          onSave={async (fields) => {
+            await updatePost(fields);
+            setShowEdit(false);
+          }}
+        />
+      )}
     </div>
   );
 };

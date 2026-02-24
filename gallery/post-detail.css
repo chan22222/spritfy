@@ -121,6 +121,29 @@
   margin-bottom: 16px;
 }
 
+.post-meta-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.post-meta-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.post-meta-avatar-fallback .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .post-meta-author {
   color: var(--primary);
 }
@@ -215,6 +238,30 @@
   font-size: 18px;
 }
 
+.post-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.post-edit-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.post-edit-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
 .post-delete-btn {
   display: flex;
   align-items: center;
@@ -227,7 +274,7 @@
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s;
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .post-delete-btn:hover {
@@ -272,6 +319,29 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.post-comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.post-comment-avatar-fallback {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.post-comment-avatar-fallback .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .post-comment-author {
