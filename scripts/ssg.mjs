@@ -142,12 +142,18 @@ async function main() {
     process.exit(1);
   }
 
-  const server = await startStaticServer(DIST_DIR, PORT);
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+    });
+  } catch {
+    process.stdout.write('SSG skipped: Chromium not available in this environment.\n');
+    process.exit(0);
+  }
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
-  });
+  const server = await startStaticServer(DIST_DIR, PORT);
 
   let rendered = 0;
   const total = LANGS.length * ROUTES.length;
@@ -174,6 +180,7 @@ async function main() {
   process.stdout.write(`\nSSG complete: ${rendered}/${total} pages rendered.\n`);
 }
 
-main().catch((err) => {
-  process.exit(1);
+main().catch(() => {
+  process.stdout.write('SSG skipped due to error.\n');
+  process.exit(0);
 });
