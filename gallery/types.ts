@@ -18,7 +18,7 @@ export interface Post {
   file_size: number | null;
   format: 'png' | 'gif' | 'webp';
   tags: string[];
-  tool_type: 'editor' | 'sprite' | 'converter' | 'external';
+  tool_type: 'character_human' | 'character_monster' | 'character_animal' | 'effect' | 'ui' | 'tile_map' | 'item' | 'icon' | 'background' | 'other';
   likes_count: number;
   comments_count: number;
   created_at: string;
@@ -35,4 +35,4 @@ export interface Comment {
 }
 
 export type SortOption = 'recent' | 'popular';
-export type ToolFilter = 'all' | 'editor' | 'sprite' | 'converter' | 'external';
+export type ToolFilter = 'all' | Post['tool_type'];

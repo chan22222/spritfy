@@ -16,10 +16,16 @@ interface GalleryPageProps {
 
 const TOOL_FILTERS: { key: ToolFilter; i18nKey: string }[] = [
   { key: 'all', i18nKey: 'galleryFilterAll' },
-  { key: 'editor', i18nKey: 'galleryFilterEditor' },
-  { key: 'sprite', i18nKey: 'galleryFilterSprite' },
-  { key: 'converter', i18nKey: 'galleryFilterConverter' },
-  { key: 'external', i18nKey: 'galleryFilterExternal' },
+  { key: 'character_human', i18nKey: 'catCharHuman' },
+  { key: 'character_monster', i18nKey: 'catCharMonster' },
+  { key: 'character_animal', i18nKey: 'catCharAnimal' },
+  { key: 'effect', i18nKey: 'catEffect' },
+  { key: 'ui', i18nKey: 'catUI' },
+  { key: 'tile_map', i18nKey: 'catTileMap' },
+  { key: 'item', i18nKey: 'catItem' },
+  { key: 'icon', i18nKey: 'catIcon' },
+  { key: 'background', i18nKey: 'catBackground' },
+  { key: 'other', i18nKey: 'catOther' },
 ];
 
 export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {

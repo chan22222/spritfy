@@ -41,9 +41,9 @@ function timeAgo(dateStr: string, lang: string): string {
 }
 
 const TOOL_LABELS: Record<string, Record<string, string>> = {
-  ko: { editor: '\uC5D0\uB514\uD130', sprite: '\uC2A4\uD504\uB77C\uC774\uD2B8', converter: '\uBCC0\uD658\uAE30', external: '\uC678\uBD80' },
-  en: { editor: 'Editor', sprite: 'Sprite', converter: 'Converter', external: 'External' },
-  ja: { editor: '\u30A8\u30C7\u30A3\u30BF\u30FC', sprite: '\u30B9\u30D7\u30E9\u30A4\u30C8', converter: '\u30B3\u30F3\u30D0\u30FC\u30BF\u30FC', external: '\u5916\u90E8' },
+  ko: { character_human: '캐릭터(인간)', character_monster: '캐릭터(몬스터)', character_animal: '캐릭터(동물)', effect: '이펙트', ui: 'UI', tile_map: '타일/맵', item: '아이템', icon: '아이콘', background: '배경', other: '기타' },
+  en: { character_human: 'Character (Human)', character_monster: 'Character (Monster)', character_animal: 'Character (Animal)', effect: 'Effect', ui: 'UI', tile_map: 'Tile/Map', item: 'Item', icon: 'Icon', background: 'Background', other: 'Other' },
+  ja: { character_human: 'キャラ(人間)', character_monster: 'キャラ(モンスター)', character_animal: 'キャラ(動物)', effect: 'エフェクト', ui: 'UI', tile_map: 'タイル/マップ', item: 'アイテム', icon: 'アイコン', background: '背景', other: 'その他' },
 };
 
 export const PostDetailPage: React.FC<PostDetailProps> = ({ lang, t }) => {

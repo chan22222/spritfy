@@ -14,10 +14,16 @@ interface EditPostModalProps {
 type ToolType = Post['tool_type'];
 
 const TOOL_OPTIONS: { value: ToolType; i18nKey: string }[] = [
-  { value: 'editor', i18nKey: 'galleryFilterEditor' },
-  { value: 'sprite', i18nKey: 'galleryFilterSprite' },
-  { value: 'converter', i18nKey: 'galleryFilterConverter' },
-  { value: 'external', i18nKey: 'galleryFilterExternal' },
+  { value: 'character_human', i18nKey: 'catCharHuman' },
+  { value: 'character_monster', i18nKey: 'catCharMonster' },
+  { value: 'character_animal', i18nKey: 'catCharAnimal' },
+  { value: 'effect', i18nKey: 'catEffect' },
+  { value: 'ui', i18nKey: 'catUI' },
+  { value: 'tile_map', i18nKey: 'catTileMap' },
+  { value: 'item', i18nKey: 'catItem' },
+  { value: 'icon', i18nKey: 'catIcon' },
+  { value: 'background', i18nKey: 'catBackground' },
+  { value: 'other', i18nKey: 'catOther' },
 ];
 
 export const EditPostModal: React.FC<EditPostModalProps> = ({ post, lang, t, onClose, onSave }) => {
