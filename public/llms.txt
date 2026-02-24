@@ -1,0 +1,46 @@
+# Spritfy
+
+> Free online pixel art editor, sprite sheet generator, and image format converter for game developers and pixel art enthusiasts.
+
+## About
+
+Spritfy is a browser-based tool suite. No installation or registration required. All processing happens locally in the browser.
+
+Available in Korean and English.
+
+## Tools
+
+### Pixel Art Editor
+Draw pixel art with layers, animation timeline, symmetry tools, palette presets, and GIF/PNG export. Supports onion skinning, grid overlay, and custom canvas sizes.
+- URL: https://spritfy.xyz/en/editor
+
+### Sprite Sheet Generator
+Convert video and GIF files to sprite sheets. Features include frame extraction, background removal (chroma key), custom grid layout, and PNG export.
+- URL: https://spritfy.xyz/en/sprite
+
+### Image Format Converter
+Convert images between PNG, JPG, WebP, GIF, BMP, and ICO formats. Batch conversion supported. All processing done client-side.
+- URL: https://spritfy.xyz/en/converter
+
+## Guides
+
+### Sprite Sheet Guide
+Learn what sprite sheets are, why they are used in game development, and how to create them step by step.
+- URL: https://spritfy.xyz/en/guide/sprite-sheet
+
+### Pixel Art Guide
+A beginner-friendly guide covering pixel art fundamentals, techniques, and tips for creating game-ready artwork.
+- URL: https://spritfy.xyz/en/guide/pixel-art
+
+## Technical Details
+
+- Built with React, runs entirely in the browser
+- No server-side processing - all image/video operations happen client-side
+- Supports modern browsers (Chrome, Firefox, Safari, Edge)
+- Free to use with no usage limits
+
+## Links
+
+- Website: https://spritfy.xyz
+- Korean version: https://spritfy.xyz/ko/
+- English version: https://spritfy.xyz/en/
