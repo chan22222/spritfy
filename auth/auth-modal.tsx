@@ -17,6 +17,7 @@ export const AuthModal: React.FC = () => {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusRef = useRef<HTMLButtonElement>(null);
+  const mouseDownTarget = useRef<EventTarget | null>(null);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -74,8 +75,12 @@ export const AuthModal: React.FC = () => {
 
   if (!showAuthModal) return null;
 
+  const handleOverlayMouseDown = (e: React.MouseEvent) => {
+    mouseDownTarget.current = e.target;
+  };
+
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && mouseDownTarget.current === e.currentTarget) {
       setShowAuthModal(false);
     }
   };
@@ -115,7 +120,7 @@ export const AuthModal: React.FC = () => {
   };
 
   return (
-    <div className="auth-overlay" onClick={handleOverlayClick} role="dialog" aria-modal="true" aria-label={t.authLogin}>
+    <div className="auth-overlay" onMouseDown={handleOverlayMouseDown} onClick={handleOverlayClick} role="dialog" aria-modal="true" aria-label={t.authLogin}>
       <div className="auth-modal" ref={modalRef}>
         <button
           className="auth-close"

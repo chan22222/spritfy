@@ -15,6 +15,15 @@ function corsHeaders(env: Env, origin: string): Record<string, string> {
   };
 }
 
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
 async function verifyJWT(token: string, secret: string): Promise<{ sub: string } | null> {
   try {
     // Decode JWT parts
@@ -30,16 +39,18 @@ async function verifyJWT(token: string, secret: string): Promise<{ sub: string }
     // Check expiry
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
 
-    // Verify signature using Web Crypto API
-    const encoder = new TextEncoder();
+    // Decode the base64-encoded JWT secret to raw bytes
+    const secretBytes = base64ToUint8Array(secret);
+
     const key = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(secret),
+      secretBytes,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['verify']
     );
 
+    const encoder = new TextEncoder();
     const signatureInput = encoder.encode(parts[0] + '.' + parts[1]);
 
     // Convert base64url to ArrayBuffer

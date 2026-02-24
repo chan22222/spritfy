@@ -17,6 +17,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => 
   const modalRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstFocusRef = useRef<HTMLButtonElement>(null);
+  const mouseDownTarget = useRef<EventTarget | null>(null);
 
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -193,14 +194,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => 
 
   if (!open) return null;
 
+  const handleOverlayMouseDown = (e: React.MouseEvent) => {
+    mouseDownTarget.current = e.target;
+  };
+
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === e.currentTarget && mouseDownTarget.current === e.currentTarget) onClose();
   };
 
   const currentAvatar = avatarPreview || avatarUrl;
 
   return (
-    <div className="profile-overlay" onClick={handleOverlayClick} role="dialog" aria-modal="true" aria-label={t.profileEditTitle || 'Edit Profile'}>
+    <div className="profile-overlay" onMouseDown={handleOverlayMouseDown} onClick={handleOverlayClick} role="dialog" aria-modal="true" aria-label={t.profileEditTitle || 'Edit Profile'}>
       <div className="profile-modal pixel-border" ref={modalRef}>
         <div className="profile-modal-header">
           <h2 className="profile-modal-title">{t.profileEditTitle || 'Edit Profile'}</h2>

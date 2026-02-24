@@ -26,6 +26,7 @@ const TOOL_OPTIONS: { value: ToolType; i18nKey: string }[] = [
 export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSuccess }) => {
   const { session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mouseDownTarget = useRef<EventTarget | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -71,8 +72,12 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
     setIsDragOver(false);
   };
 
+  const handleOverlayMouseDown = (e: React.MouseEvent) => {
+    mouseDownTarget.current = e.target;
+  };
+
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === e.currentTarget && mouseDownTarget.current === e.currentTarget) onClose();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -134,6 +139,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ lang, t, onClose, onSucc
   return (
     <div
       className="upload-overlay"
+      onMouseDown={handleOverlayMouseDown}
       onClick={handleOverlayClick}
       onKeyDown={handleKeyDown}
       role="dialog"
