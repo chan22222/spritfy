@@ -47,7 +47,7 @@ export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
 
       let query = supabase
         .from('posts')
-        .select('*, profiles(username, display_name, avatar_url)');
+        .select('*, profiles!posts_user_id_fkey(username, display_name, avatar_url)');
 
       if (toolFilter !== 'all') {
         query = query.eq('tool_type', toolFilter);

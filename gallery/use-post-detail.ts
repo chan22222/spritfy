@@ -23,7 +23,7 @@ export function usePostDetail(postId: string, userId?: string): UsePostDetailRet
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select('*, profiles(username, display_name, avatar_url)')
+        .select('*, profiles!user_id(username, display_name, avatar_url)')
         .eq('id', postId)
         .single();
 
@@ -38,7 +38,7 @@ export function usePostDetail(postId: string, userId?: string): UsePostDetailRet
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select('*, profiles(username, display_name, avatar_url)')
+        .select('*, profiles!user_id(username, display_name, avatar_url)')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
