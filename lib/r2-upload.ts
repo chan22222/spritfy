@@ -28,3 +28,26 @@ export async function uploadToR2(
     thumbnailUrl: `${R2_PUBLIC_URL}${data.thumbnailUrl}`,
   };
 }
+
+export async function uploadAvatarToR2(
+  avatarBlob: Blob,
+  userId: string,
+  accessToken: string
+): Promise<string> {
+  const formData = new FormData();
+  formData.append('avatar', avatarBlob, 'avatar.webp');
+
+  const res = await fetch(`${R2_WORKER_URL}/upload-avatar`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || 'Avatar upload failed');
+  }
+
+  const data: { avatarUrl: string } = await res.json();
+  return `${R2_PUBLIC_URL}${data.avatarUrl}?v=${Date.now()}`;
+}

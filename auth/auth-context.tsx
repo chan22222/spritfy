@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -26,6 +27,7 @@ export const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   showAuthModal: false,
   setShowAuthModal: () => {},
+  refreshUser: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -88,6 +90,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const { data: { session: s } } = await supabase.auth.getSession();
+    setSession(s);
+    setUser(s?.user ?? null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -99,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithEmail,
         signUp,
         signOut: handleSignOut,
+        refreshUser,
         showAuthModal,
         setShowAuthModal,
       }}

@@ -40,3 +40,41 @@ export function getImageDimensions(file: File): Promise<{ width: number; height:
     img.src = URL.createObjectURL(file);
   });
 }
+
+export function validateAvatarImage(file: File): { valid: boolean; error?: string } {
+  const maxSize = 2 * 1024 * 1024;
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) return { valid: false, error: 'PNG, JPG, WebP only' };
+  if (file.size > maxSize) return { valid: false, error: 'Max 2MB' };
+  return { valid: true };
+}
+
+export async function generateAvatarThumbnail(file: File, size = 128): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = false;
+      const minDim = Math.min(img.width, img.height);
+      const sx = (img.width - minDim) / 2;
+      const sy = (img.height - minDim) / 2;
+      ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(img.src);
+          blob ? resolve(blob) : reject(new Error('Avatar thumbnail failed'));
+        },
+        'image/webp',
+        0.85
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image'));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}

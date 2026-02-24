@@ -131,6 +131,51 @@ export default {
       );
     }
 
+    // POST /upload-avatar
+    if (request.method === 'POST' && url.pathname === '/upload-avatar') {
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response('Unauthorized', { status: 401, headers });
+      }
+
+      const payload = await verifyJWT(authHeader.slice(7), env.SUPABASE_JWT_SECRET);
+      if (!payload) {
+        return new Response('Invalid token', { status: 401, headers });
+      }
+
+      const userId = payload.sub;
+
+      const formData = await request.formData();
+      const avatar = formData.get('avatar') as File | null;
+
+      if (!avatar) {
+        return new Response('Missing avatar file', { status: 400, headers });
+      }
+
+      if (avatar.size > 2 * 1024 * 1024) {
+        return new Response('File too large (max 2MB)', { status: 413, headers });
+      }
+
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+      if (!allowedTypes.includes(avatar.type)) {
+        return new Response('Invalid file type (PNG, JPG, WebP only)', { status: 415, headers });
+      }
+
+      const avatarKey = `avatars/${userId}/avatar.webp`;
+
+      await env.R2_BUCKET.put(avatarKey, avatar.stream(), {
+        httpMetadata: { contentType: 'image/webp' },
+      });
+
+      return new Response(
+        JSON.stringify({ avatarUrl: `/${avatarKey}` }),
+        {
+          status: 200,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // DELETE /delete/:key
     if (request.method === 'DELETE' && url.pathname.startsWith('/delete/')) {
       const authHeader = request.headers.get('Authorization');
