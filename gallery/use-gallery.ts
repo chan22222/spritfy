@@ -21,7 +21,7 @@ interface UseGalleryReturn {
 export function useGallery(options: UseGalleryOptions): UseGalleryReturn {
   const { sort, toolFilter, search, limit } = options;
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);

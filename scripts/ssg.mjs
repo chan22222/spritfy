@@ -86,6 +86,7 @@ const BLOCKED_PATTERNS = [
   'googleads.g.doubleclick.net',
   'vercel.app/script.js',
   'railway.app/script.js',
+  'supabase.co',
 ];
 
 async function renderRoute(browser, lang, route) {

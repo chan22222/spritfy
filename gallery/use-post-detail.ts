@@ -17,7 +17,7 @@ export function usePostDetail(postId: string, userId?: string): UsePostDetailRet
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLiked, setIsLiked] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchPost = useCallback(async () => {
     try {
