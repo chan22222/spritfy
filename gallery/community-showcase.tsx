@@ -15,6 +15,7 @@ export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({ lang, t })
     sort: 'popular',
     toolFilter: 'all',
     search: '',
+    page: 0,
     limit: 8,
     minLikes: 2,
   });

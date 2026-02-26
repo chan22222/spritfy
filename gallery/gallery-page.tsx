@@ -28,6 +28,9 @@ const TOOL_FILTERS: { key: ToolFilter; i18nKey: string }[] = [
   { key: 'other', i18nKey: 'catOther' },
 ];
 
+const SCROLL_KEY = 'gallery_scroll';
+const PAGE_KEY = 'gallery_page';
+
 export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
   const { user, setShowAuthModal } = useAuth();
   const [sort, setSort] = useState<SortOption>('recent');
@@ -36,13 +39,56 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const limit = 20;
 
-  const { posts, loading, error, hasMore, loadMore, refresh } = useGallery({
+  const [page, setPage] = useState(() => {
+    const saved = sessionStorage.getItem(PAGE_KEY);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  const { posts, loading, error, totalCount, refresh } = useGallery({
     sort,
     toolFilter,
     search: debouncedSearch,
-    limit: 20,
+    page,
+    limit,
   });
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+
+  // 스크롤 복원
+  useEffect(() => {
+    if (!loading && posts.length > 0) {
+      const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+      if (savedScroll) {
+        const el = pageRef.current;
+        if (el) {
+          requestAnimationFrame(() => {
+            el.scrollTop = parseInt(savedScroll, 10);
+          });
+        }
+        sessionStorage.removeItem(SCROLL_KEY);
+      }
+    }
+  }, [loading, posts.length]);
+
+  // 카드 클릭 전 스크롤 위치 저장
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest('a.gallery-card');
+      if (link) {
+        sessionStorage.setItem(SCROLL_KEY, String(el.scrollTop));
+        sessionStorage.setItem(PAGE_KEY, String(page));
+      }
+    };
+
+    el.addEventListener('click', handleClick);
+    return () => el.removeEventListener('click', handleClick);
+  }, [page]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -54,6 +100,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
 
     searchTimerRef.current = setTimeout(() => {
       setDebouncedSearch(value);
+      setPage(0);
     }, 300);
   }, []);
 
@@ -65,6 +112,16 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
     };
   }, []);
 
+  const handleFilterChange = (f: ToolFilter) => {
+    setToolFilter(f);
+    setPage(0);
+  };
+
+  const handleSortChange = (s: SortOption) => {
+    setSort(s);
+    setPage(0);
+  };
+
   const handleUploadClick = () => {
     if (user) {
       setShowUpload(true);
@@ -75,11 +132,12 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
 
   const handleUploadSuccess = () => {
     setShowUpload(false);
+    setPage(0);
     refresh();
   };
 
   return (
-    <div className="gallery-page">
+    <div className="gallery-page" ref={pageRef}>
       <SEO
         title={t.seoGalleryTitle || 'Gallery - Spritfy'}
         description={t.seoGalleryDesc || 'Community pixel art gallery'}
@@ -113,7 +171,7 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
               <button
                 key={f.key}
                 className={`gallery-filter-btn${toolFilter === f.key ? ' active' : ''}`}
-                onClick={() => setToolFilter(f.key)}
+                onClick={() => handleFilterChange(f.key)}
                 aria-pressed={toolFilter === f.key}
               >
                 {t[f.i18nKey] || f.key}
@@ -126,21 +184,21 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
           <div className="gallery-sort-group">
             <button
               className={`gallery-sort-btn${sort === 'recent' ? ' active' : ''}`}
-              onClick={() => setSort('recent')}
+              onClick={() => handleSortChange('recent')}
               aria-pressed={sort === 'recent'}
             >
               {t.gallerySortRecent || 'Recent'}
             </button>
             <button
               className={`gallery-sort-btn${sort === 'popular' ? ' active' : ''}`}
-              onClick={() => setSort('popular')}
+              onClick={() => handleSortChange('popular')}
               aria-pressed={sort === 'popular'}
             >
               {t.gallerySortPopular || 'Popular'}
             </button>
             <button
               className={`gallery-sort-btn${sort === 'comments' ? ' active' : ''}`}
-              onClick={() => setSort('comments')}
+              onClick={() => handleSortChange('comments')}
               aria-pressed={sort === 'comments'}
             >
               {t.gallerySortComments || 'Comments'}
@@ -176,21 +234,52 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ lang, t }) => {
         </div>
       ) : null}
 
-      {/* Load More / Loading */}
-      <div className="gallery-footer-actions">
-        {loading && (
+      {/* Loading */}
+      {loading && (
+        <div className="gallery-footer-actions">
           <div className="gallery-loading" role="status" aria-label="Loading">
             <div className="gallery-loading-dots">
               <span /><span /><span />
             </div>
           </div>
-        )}
-        {!loading && hasMore && posts.length > 0 && (
-          <button className="gallery-load-more pixel-btn pixel-btn-ghost" onClick={loadMore}>
-            {t.galleryLoadMore || 'Load More'}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && !loading && (
+        <div className="gallery-pagination">
+          <button
+            className="gallery-page-btn"
+            disabled={page === 0}
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            aria-label="Previous page"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">chevron_left</span>
           </button>
-        )}
-      </div>
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+            const startPage = Math.max(0, Math.min(page - 4, totalPages - 10));
+            const pageNum = startPage + i;
+            if (pageNum >= totalPages) return null;
+            return (
+              <button
+                key={pageNum}
+                className={`gallery-page-btn${pageNum === page ? ' active' : ''}`}
+                onClick={() => setPage(pageNum)}
+              >
+                {pageNum + 1}
+              </button>
+            );
+          })}
+          <button
+            className="gallery-page-btn"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            aria-label="Next page"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      )}
 
       {/* Upload Modal */}
       {showUpload && (
