@@ -14,7 +14,7 @@ export const NotFoundPage: React.FC<NotFoundProps> = ({ lang, t }) => {
 
   return (
     <div className="legal-page">
-      <div className="legal-content" style={{ textAlign: 'center', paddingTop: 80 }}>
+      <div className="legal-content" style={{ textAlign: 'center', paddingTop: 80, paddingBottom: 120 }}>
         <div style={{
           fontSize: '6rem',
           fontFamily: "'DungGeunMo', monospace",
@@ -96,32 +96,6 @@ export const NotFoundPage: React.FC<NotFoundProps> = ({ lang, t }) => {
           {t.notFoundBackHome}
         </Link>
 
-        <div style={{
-          marginTop: 48,
-          padding: '20px 24px',
-          background: 'var(--bg-panel)',
-          border: '2px solid var(--border)',
-          display: 'inline-block',
-        }}>
-          <div style={{
-            fontFamily: "'DungGeunMo', monospace",
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)',
-            lineHeight: 1.6,
-            whiteSpace: 'pre',
-            letterSpacing: 2,
-          }}>
-{`    . . .
-  . # # # .
-. # . . . # .
-# . X . X . #
-# . . . . . #
-# . . - . . #
-. # . . . # .
-  . # # # .
-    . . .    `}
-          </div>
-        </div>
       </div>
       <Footer lang={lang} t={t} />
     </div>
