@@ -170,6 +170,10 @@ export const SoundDetailPage: React.FC<SoundDetailProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined" aria-hidden="true">{isLiked ? 'favorite' : 'favorite_border'}</span>
             {t.postLike || 'Like'} ({sound.likes_count})
           </button>
+          <a className="post-edit-btn" href={sound.audio_url} download={`${sound.title}.${sound.format}`} style={{ textDecoration: 'none' }}>
+            <span className="material-symbols-outlined" aria-hidden="true">download</span>
+            {t.soundDownload || 'Download'}
+          </a>
           <span className="post-comments-count">
             <span className="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
             {t.postComments || 'Comments'} ({sound.comments_count})

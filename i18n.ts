@@ -681,6 +681,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     soundNotFound: '사운드를 찾을 수 없습니다',
     soundDeleteConfirm: '이 사운드를 삭제하시겠습니까?',
     soundEditTitle: '사운드 수정',
+    soundDownload: '다운로드',
   },
   en: {
     // Navigation
@@ -1354,6 +1355,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     soundNotFound: 'Sound not found',
     soundDeleteConfirm: 'Delete this sound?',
     soundEditTitle: 'Edit Sound',
+    soundDownload: 'Download',
   },
   ja: {
     // Navigation
@@ -2027,6 +2029,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     soundNotFound: 'サウンドが見つかりません',
     soundDeleteConfirm: 'このサウンドを削除しますか？',
     soundEditTitle: 'サウンド編集',
+    soundDownload: 'ダウンロード',
   },
 };
 
