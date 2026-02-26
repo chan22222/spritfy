@@ -7,6 +7,7 @@ import { BoardEditModal } from '@/board/board-edit-modal.tsx';
 import SEO from '@/seo.tsx';
 import { Footer } from '@/footer.tsx';
 import '@/board/board-detail.css';
+import '@/gallery/post-detail.css';
 
 interface BoardDetailProps {
   lang: Lang;
