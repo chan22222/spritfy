@@ -799,15 +799,25 @@ function prerenderPlugin(): Plugin {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="robots" content="noindex" />
-  <title>Spritfy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <title>Spritfy - Free Sound Effects &amp; Music Library</title>
+  <meta name="description" content="Spritfy offers free sound effects and music for creators. Browse, preview, and download high-quality audio." />
+  <link rel="canonical" href="${BASE_URL}/en/" />
+  <link rel="alternate" hreflang="ko" href="${BASE_URL}/ko/" />
+  <link rel="alternate" hreflang="en" href="${BASE_URL}/en/" />
+  <link rel="alternate" hreflang="ja" href="${BASE_URL}/ja/" />
+  <link rel="alternate" hreflang="x-default" href="${BASE_URL}/en/" />
+  <meta http-equiv="refresh" content="0;url=/en/" />
   <script>
     var nav = navigator.language || '';
     var lang = nav.startsWith('ko') ? 'ko' : nav.startsWith('ja') ? 'ja' : 'en';
     window.location.replace('/' + lang + '/');
   </script>
 </head>
-<body></body>
+<body>
+  <noscript><a href="/en/">Go to Spritfy</a></noscript>
+</body>
 </html>`;
       fs.writeFileSync(indexHtmlPath, redirectHtml, 'utf-8');
 
