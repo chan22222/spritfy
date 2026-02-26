@@ -21,6 +21,13 @@ const GuideSpriteSheetPage = lazy(() => import('@/guide-sprite.tsx').then(m => (
 const GuidePixelArtPage = lazy(() => import('@/guide-pixel-art.tsx').then(m => ({ default: m.GuidePixelArtPage })));
 const GalleryPage = lazy(() => import('@/gallery/gallery-page.tsx').then(m => ({ default: m.GalleryPage })));
 const PostDetailPage = lazy(() => import('@/gallery/post-detail.tsx').then(m => ({ default: m.PostDetailPage })));
+const FaqPage = lazy(() => import('@/faq.tsx').then(m => ({ default: m.FaqPage })));
+const ContactPage = lazy(() => import('@/contact.tsx').then(m => ({ default: m.ContactPage })));
+const GuidelinesPage = lazy(() => import('@/guidelines.tsx').then(m => ({ default: m.GuidelinesPage })));
+const BlogListPage = lazy(() => import('@/blog-list.tsx').then(m => ({ default: m.BlogListPage })));
+const BlogPostPage = lazy(() => import('@/blog-post.tsx').then(m => ({ default: m.BlogPostPage })));
+const BoardPage = lazy(() => import('@/board/board-page.tsx').then(m => ({ default: m.BoardPage })));
+const BoardDetailPage = lazy(() => import('@/board/board-detail.tsx').then(m => ({ default: m.BoardDetailPage })));
 
 const detectLang = (): Lang => {
   const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
@@ -150,6 +157,55 @@ const PostDetailWrapper = () => {
   return <LazyWrapper t={t}><PostDetailPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
+const FaqWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><FaqPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const ContactWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><ContactPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const GuidelinesWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><GuidelinesPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const BlogListWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><BlogListPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const BlogPostWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><BlogPostPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const BoardWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><BoardPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const BoardDetailWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><BoardDetailPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
 const NotFoundWrapper = () => {
   const { lang: urlLang } = useParams<{ lang: string }>();
   const validLang: Lang = toValidLang(urlLang);
@@ -187,6 +243,13 @@ const router = createBrowserRouter([
       { path: 'guide/pixel-art', element: <GuidePixelArtWrapper /> },
       { path: 'gallery', element: <GalleryWrapper /> },
       { path: 'gallery/:postId', element: <PostDetailWrapper /> },
+      { path: 'faq', element: <FaqWrapper /> },
+      { path: 'contact', element: <ContactWrapper /> },
+      { path: 'guidelines', element: <GuidelinesWrapper /> },
+      { path: 'blog', element: <BlogListWrapper /> },
+      { path: 'blog/:slug', element: <BlogPostWrapper /> },
+      { path: 'board', element: <BoardWrapper /> },
+      { path: 'board/:postId', element: <BoardDetailWrapper /> },
       { path: '*', element: <NotFoundWrapper /> },
     ],
   },

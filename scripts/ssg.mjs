@@ -21,6 +21,11 @@ const ROUTES = [
   '/about',
   '/privacy',
   '/terms',
+  '/faq',
+  '/contact',
+  '/guidelines',
+  '/blog',
+  '/board',
 ];
 
 const MIME_TYPES = {

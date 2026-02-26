@@ -6,7 +6,7 @@ import { ProfileModal } from '@/auth/profile-modal.tsx';
 import '@/auth/user-menu.css';
 
 export const UserMenu: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const lp = useLangPath();
   const { t } = useLang();
   const [open, setOpen] = useState(false);
@@ -26,13 +26,14 @@ export const UserMenu: React.FC = () => {
   if (!user) return null;
 
   const displayName =
+    profile?.display_name ||
     user.user_metadata?.display_name ||
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
     user.email?.split('@')[0] ||
     'User';
 
-  const avatarUrl = user.user_metadata?.avatar_url || null;
+  const avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url || null;
 
   const handleSignOut = async () => {
     try {

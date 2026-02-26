@@ -1,0 +1,187 @@
+/* ============================================
+   BOARD DETAIL — Single Post View
+   ============================================ */
+
+.bd-page {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background-color: var(--bg-dark);
+}
+
+.bd-nav {
+  padding: 16px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.bd-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+
+.bd-back-link:hover {
+  color: var(--primary);
+}
+
+.bd-back-link .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.bd-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 16px;
+}
+
+.bd-not-found .material-symbols-outlined {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.bd-not-found p {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* ---- Article ---- */
+.bd-article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+
+.bd-article-header {
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.bd-article-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.6rem;
+  font-weight: normal;
+  margin: 12px 0;
+  color: var(--text-main);
+}
+
+.bd-article-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.bd-meta-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.bd-meta-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.bd-meta-avatar-fallback .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bd-meta-author {
+  color: var(--primary);
+}
+
+.bd-meta-sep {
+  opacity: 0.4;
+}
+
+/* ---- Body ---- */
+.bd-article-body {
+  margin-bottom: 24px;
+  min-height: 120px;
+}
+
+.bd-article-content {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  line-height: 1.8;
+  margin: 0 0 20px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bd-article-image {
+  margin-top: 16px;
+  border: 2px solid var(--border);
+  display: inline-block;
+}
+
+.bd-article-image img {
+  max-width: 100%;
+  max-height: 500px;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ---- Actions (reuse gallery post-detail styles) ---- */
+.bd-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .bd-article {
+    padding: 0 16px 24px;
+  }
+
+  .bd-article-title {
+    font-size: 1.3rem;
+  }
+
+  .bd-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bd-article-title {
+    font-size: 1.15rem;
+  }
+}

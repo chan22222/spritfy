@@ -30,6 +30,16 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
           <p>{t.aboutMission}</p>
         </div>
 
+        <section className="legal-section">
+          <h2>{t.aboutStoryTitle}</h2>
+          <p>{t.aboutStoryContent}</p>
+        </section>
+
+        <section className="legal-section">
+          <h2>{t.aboutVisionTitle}</h2>
+          <p>{t.aboutVisionContent}</p>
+        </section>
+
         <h2 className="about-features-title">{t.aboutFeatureTitle}</h2>
         <div className="about-feature-grid">
           {features.map((f, i) => (
@@ -42,6 +52,11 @@ export const AboutPage: React.FC<AboutProps> = ({ lang, t }) => {
             </div>
           ))}
         </div>
+
+        <section className="legal-section">
+          <h2>{t.aboutTechTitle}</h2>
+          <p>{t.aboutTechContent}</p>
+        </section>
 
         <div className="about-contact-card">
           <h2>{t.aboutOperatorTitle}</h2>

@@ -21,6 +21,11 @@ export const GuideSpriteSheetPage: React.FC<GuideSpriteProps> = ({ lang, t }) =>
     { title: t.guideSpriteS3Title, content: t.guideSpriteS3Content },
     { title: t.guideSpriteS4Title, content: t.guideSpriteS4Content },
     { title: t.guideSpriteS5Title, content: t.guideSpriteS5Content },
+    { title: t.guideSpriteS6Title, content: t.guideSpriteS6Content },
+    { title: t.guideSpriteS7Title, content: t.guideSpriteS7Content },
+    { title: t.guideSpriteS8Title, content: t.guideSpriteS8Content },
+    { title: t.guideSpriteS9Title, content: t.guideSpriteS9Content },
+    { title: t.guideSpriteS10Title, content: t.guideSpriteS10Content },
   ];
 
   return (

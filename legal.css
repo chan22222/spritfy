@@ -370,6 +370,173 @@
 }
 
 /* ============================================
+   FAQ PAGE — Accordion Styles
+   ============================================ */
+.faq-item {
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.faq-item:hover {
+  border-color: var(--primary);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--bg-panel);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  gap: 12px;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--primary);
+  transition: transform 0.2s;
+}
+
+.faq-answer {
+  padding: 0 20px 16px;
+  background: var(--bg-panel);
+}
+
+.faq-answer p {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* ============================================
+   BLOG — List & Post Styles
+   ============================================ */
+.blog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.blog-card {
+  display: block;
+  padding: 24px;
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.blog-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.blog-card h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.1rem;
+  font-weight: normal;
+  color: var(--text-main);
+  margin: 8px 0;
+}
+
+.blog-card p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.blog-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.blog-card-category {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.75rem;
+  color: var(--primary);
+  background: rgba(187, 134, 252, 0.1);
+  padding: 2px 8px;
+  border: 1px solid var(--primary);
+}
+
+.blog-card-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.blog-read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.82rem;
+  color: var(--primary);
+}
+
+.blog-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 20px;
+}
+
+.blog-breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.blog-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.blog-breadcrumb span {
+  color: var(--text-muted);
+}
+
+.blog-post-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.blog-post-body h2 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1.15rem;
+  font-weight: normal;
+  color: var(--primary);
+  margin: 28px 0 12px;
+}
+
+.blog-post-body h3 {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 1rem;
+  font-weight: normal;
+  color: var(--secondary);
+  margin: 20px 0 8px;
+}
+
+.blog-post-body p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.85;
+  margin: 0 0 16px;
+}
+
+/* ============================================
    Light Mode Overrides
    ============================================ */
 [data-theme="light"] .legal-content h1 {

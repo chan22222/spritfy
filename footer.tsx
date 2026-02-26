@@ -15,15 +15,17 @@ export const Footer: React.FC<FooterProps> = ({ lang, t }) => {
     <footer className="site-footer">
       <div className="footer-pixel-row" aria-hidden="true" />
       <nav className="footer-nav" aria-label="Footer navigation">
-        <Link to={lp('/guide/sprite-sheet')}>{t.footerGuide} - Sprite</Link>
+        <Link to={lp('/board')}>{t.footerBoard}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
-        <Link to={lp('/guide/pixel-art')}>{t.footerGuide} - Pixel Art</Link>
+        <Link to={lp('/blog')}>{t.footerBlog}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
-        <Link to={lp('/converter')}>{t.footerConverter}</Link>
-        <span className="footer-sep" aria-hidden="true">|</span>
-        <Link to={lp('/gallery')}>{t.navGallery}</Link>
+        <Link to={lp('/faq')}>{t.footerFaq}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
         <Link to={lp('/about')}>{t.footerAbout}</Link>
+        <span className="footer-sep" aria-hidden="true">|</span>
+        <Link to={lp('/contact')}>{t.footerContact}</Link>
+        <span className="footer-sep" aria-hidden="true">|</span>
+        <Link to={lp('/guidelines')}>{t.footerGuidelines}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>
         <Link to={lp('/privacy')}>{t.footerPrivacy}</Link>
         <span className="footer-sep" aria-hidden="true">|</span>

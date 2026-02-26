@@ -21,6 +21,11 @@ export const GuidePixelArtPage: React.FC<GuidePixelProps> = ({ lang, t }) => {
     { title: t.guidePixelS3Title, content: t.guidePixelS3Content },
     { title: t.guidePixelS4Title, content: t.guidePixelS4Content },
     { title: t.guidePixelS5Title, content: t.guidePixelS5Content },
+    { title: t.guidePixelS6Title, content: t.guidePixelS6Content },
+    { title: t.guidePixelS7Title, content: t.guidePixelS7Content },
+    { title: t.guidePixelS8Title, content: t.guidePixelS8Content },
+    { title: t.guidePixelS9Title, content: t.guidePixelS9Content },
+    { title: t.guidePixelS10Title, content: t.guidePixelS10Content },
   ];
 
   return (

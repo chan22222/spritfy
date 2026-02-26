@@ -17,7 +17,7 @@ interface RouteMeta {
   hreflangAlternates: Array<{ lang: string; url: string }>;
 }
 
-const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms'];
+const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms', '/faq', '/contact', '/guidelines', '/blog', '/board'];
 
 const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> = {
   '/': { priority: '1.0', changefreq: 'weekly' },
@@ -30,6 +30,11 @@ const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> =
   '/about': { priority: '0.5', changefreq: 'monthly' },
   '/privacy': { priority: '0.3', changefreq: 'monthly' },
   '/terms': { priority: '0.3', changefreq: 'monthly' },
+  '/faq': { priority: '0.6', changefreq: 'monthly' },
+  '/contact': { priority: '0.4', changefreq: 'monthly' },
+  '/guidelines': { priority: '0.4', changefreq: 'monthly' },
+  '/blog': { priority: '0.7', changefreq: 'weekly' },
+  '/board': { priority: '0.7', changefreq: 'daily' },
 };
 
 const SEO_META: Record<string, Record<string, { title: string; description: string }>> = {
@@ -74,6 +79,26 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: '이용약관 - 스프릿파이 | Spritfy',
       description: '스프릿파이(Spritfy) 서비스 이용약관.',
     },
+    '/faq': {
+      title: '자주 묻는 질문(FAQ) - 스프릿파이 | Spritfy',
+      description: '스프릿파이 자주 묻는 질문. 픽셀 아트 에디터, 스프라이트 시트, 이미지 변환기, 갤러리에 대한 FAQ.',
+    },
+    '/contact': {
+      title: '문의하기 - 스프릿파이 | Spritfy',
+      description: '스프릿파이에 문의사항이 있으시면 언제든 연락주세요. 버그 리포트, 제안, 비즈니스 문의를 받습니다.',
+    },
+    '/guidelines': {
+      title: '커뮤니티 가이드라인 - 스프릿파이 | Spritfy',
+      description: 'Spritfy 커뮤니티 가이드라인. 콘텐츠 기준, 업로드 규칙, 저작권 정책 안내.',
+    },
+    '/blog': {
+      title: '블로그 - 스프릿파이 | 픽셀 아트 팁 & 튜토리얼',
+      description: '픽셀 아트 팁, 스프라이트 시트 가이드, 게임 개발 튜토리얼. 스프릿파이 블로그.',
+    },
+    '/board': {
+      title: '게시판 - 스프릿파이 | 커뮤니티 자유게시판',
+      description: 'Spritfy 커뮤니티 게시판. 자유로운 토론, 질문, 팁 공유, 작품 자랑, 버그 제보.',
+    },
   },
   en: {
     '/': {
@@ -116,6 +141,26 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: 'Terms of Service - Spritfy',
       description: 'Spritfy Terms of Service.',
     },
+    '/faq': {
+      title: 'FAQ - Spritfy | Frequently Asked Questions',
+      description: 'Frequently asked questions about Spritfy. FAQ about the pixel art editor, sprite sheet generator, image converter, and community gallery.',
+    },
+    '/contact': {
+      title: 'Contact Us - Spritfy',
+      description: 'Get in touch with the Spritfy team. We welcome bug reports, suggestions, and business inquiries.',
+    },
+    '/guidelines': {
+      title: 'Community Guidelines - Spritfy',
+      description: 'Spritfy Community Guidelines. Content standards, upload rules, and copyright policies.',
+    },
+    '/blog': {
+      title: 'Blog - Spritfy | Pixel Art Tips & Tutorials',
+      description: 'Pixel art tips, sprite sheet guides, and game development tutorials. Spritfy Blog.',
+    },
+    '/board': {
+      title: 'Board - Spritfy | Community Discussion Board',
+      description: 'Spritfy community board. Free discussions, questions, tips, showcase, and bug reports.',
+    },
   },
   ja: {
     '/': {
@@ -157,6 +202,26 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/terms': {
       title: '利用規約 - Spritfy',
       description: 'Spritfy 利用規約。',
+    },
+    '/faq': {
+      title: 'よくある質問(FAQ) - Spritfy',
+      description: 'Spritfyのよくある質問。ピクセルアートエディタ、スプライトシート、画像変換、ギャラリーに関するFAQ。',
+    },
+    '/contact': {
+      title: 'お問い合わせ - Spritfy',
+      description: 'Spritfyへのお問い合わせ。バグ報告、ご提案、ビジネスに関するご相談をお待ちしております。',
+    },
+    '/guidelines': {
+      title: 'コミュニティガイドライン - Spritfy',
+      description: 'Spritfyコミュニティガイドライン。コンテンツ基準、アップロードルール、著作権ポリシー。',
+    },
+    '/blog': {
+      title: 'ブログ - Spritfy | ドット絵のヒント＆チュートリアル',
+      description: 'ドット絵のヒント、スプライトシートガイド、ゲーム開発チュートリアル。Spritfyブログ。',
+    },
+    '/board': {
+      title: '掲示板 - Spritfy | コミュニティ掲示板',
+      description: 'Spritfyコミュニティ掲示板。自由な議論、質問、ティップス共有、作品紹介、バグ報告。',
     },
   },
 };
@@ -483,6 +548,72 @@ function buildStructuredData(lang: string, route: string): string {
           ? '無料オンラインドット絵エディター、スプライトシート生成ツール、画像フォーマット変換ツールを提供するWebサービスです。'
           : 'A free online pixel art editor, sprite sheet generator, and image format converter.',
       sameAs: [],
+    });
+  }
+
+  // FAQ 페이지: FAQPage 스키마
+  if (route === '/faq') {
+    const faqEntries = lang === 'ko'
+      ? [
+          { q: 'Spritfy는 어떤 서비스인가요?', a: 'Spritfy는 브라우저 기반의 무료 온라인 픽셀 아트 에디터이자 스프라이트 시트 생성기입니다.' },
+          { q: 'Spritfy는 무료인가요?', a: '네, Spritfy의 모든 핵심 기능은 완전히 무료입니다.' },
+          { q: '어떤 브라우저를 지원하나요?', a: 'Chrome, Firefox, Edge, Safari 등 최신 웹 브라우저에서 작동합니다.' },
+          { q: '어떤 동영상 포맷을 지원하나요?', a: 'MP4, WebM 동영상 형식과 GIF 애니메이션 파일을 지원합니다.' },
+          { q: '이미지 변환기에서 어떤 포맷을 지원하나요?', a: 'PNG, JPG, WebP, BMP, GIF, ICO 등 다양한 이미지 포맷 간의 변환을 지원합니다.' },
+        ]
+      : lang === 'ja'
+      ? [
+          { q: 'Spritfyとはどんなサービスですか？', a: 'Spritfyは、ブラウザベースの無料オンラインピクセルアートエディタ兼スプライトシートジェネレーターです。' },
+          { q: 'Spritfyは無料ですか？', a: 'はい、Spritfyのすべてのコア機能は完全に無料です。' },
+          { q: 'どのブラウザに対応していますか？', a: 'Chrome、Firefox、Edge、Safariなどの最新ブラウザで動作します。' },
+          { q: 'どの動画フォーマットが対応していますか？', a: 'MP4とWebMの動画形式、およびGIFアニメーションファイルに対応しています。' },
+          { q: '画像変換ツールはどのフォーマットに対応していますか？', a: 'PNG、JPG、WebP、BMP、GIF、ICOなど、さまざまな画像フォーマット間の変換に対応しています。' },
+        ]
+      : [
+          { q: 'What is Spritfy?', a: 'Spritfy is a free browser-based online pixel art editor and sprite sheet generator.' },
+          { q: 'Is Spritfy free to use?', a: 'Yes, all core features of Spritfy are completely free.' },
+          { q: 'Which browsers are supported?', a: 'Spritfy works on modern web browsers including Chrome, Firefox, Edge, and Safari.' },
+          { q: 'What video formats are supported?', a: 'The sprite sheet generator supports MP4 and WebM video formats as well as GIF animation files.' },
+          { q: 'What formats does the image converter support?', a: 'It supports conversion between PNG, JPG, WebP, BMP, GIF, and ICO formats.' },
+        ];
+
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqEntries.map(entry => ({
+        '@type': 'Question',
+        name: entry.q,
+        acceptedAnswer: { '@type': 'Answer', text: entry.a },
+      })),
+    });
+  }
+
+  // 블로그 페이지: Blog 스키마
+  if (route === '/blog') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      publisher,
+      inLanguage,
+    });
+  }
+
+  // Contact 페이지: ContactPage 스키마
+  if (route === '/contact') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      mainEntity: {
+        '@type': 'Organization',
+        name: 'Spritfy',
+        email: 'hckwon@kakao.com',
+      },
     });
   }
 
