@@ -151,6 +151,58 @@ export default {
       );
     }
 
+    // POST /upload-audio
+    if (request.method === 'POST' && url.pathname === '/upload-audio') {
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response('Unauthorized', { status: 401, headers });
+      }
+
+      const payload = parseJWT(authHeader.slice(7));
+      if (!payload) {
+        return new Response('Invalid token', { status: 401, headers });
+      }
+
+      const formData = await request.formData();
+      const audio = formData.get('audio') as File | null;
+
+      if (!audio) {
+        return new Response('Missing audio file', { status: 400, headers });
+      }
+
+      if (audio.size > 10 * 1024 * 1024) {
+        return new Response('File too large (max 10MB)', { status: 413, headers });
+      }
+
+      const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/flac'];
+      if (!allowedTypes.includes(audio.type)) {
+        return new Response('Invalid file type (MP3, WAV, OGG, FLAC only)', { status: 415, headers });
+      }
+
+      const uuid = crypto.randomUUID();
+      const extMap: Record<string, string> = {
+        'audio/mpeg': 'mp3',
+        'audio/wav': 'wav',
+        'audio/x-wav': 'wav',
+        'audio/ogg': 'ogg',
+        'audio/flac': 'flac',
+      };
+      const ext = extMap[audio.type] || 'mp3';
+      const audioKey = `sounds/${uuid}/audio.${ext}`;
+
+      await env.R2_BUCKET.put(audioKey, audio.stream(), {
+        httpMetadata: { contentType: audio.type },
+      });
+
+      return new Response(
+        JSON.stringify({ audioUrl: `/${audioKey}` }),
+        {
+          status: 200,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // DELETE /delete/:key
     if (request.method === 'DELETE' && url.pathname.startsWith('/delete/')) {
       const authHeader = request.headers.get('Authorization');

@@ -537,6 +537,24 @@ function buildStructuredData(lang: string, route: string): string {
         name: lang === 'ko' ? '이미지 변환기' : lang === 'ja' ? '画像変換ツール' : 'Image Converter',
         item: `${BASE_URL}/${lang}/converter`,
       },
+      {
+        '@type': 'ListItem',
+        position: 5,
+        name: lang === 'ko' ? '갤러리' : lang === 'ja' ? 'ギャラリー' : 'Gallery',
+        item: `${BASE_URL}/${lang}/gallery`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 6,
+        name: lang === 'ko' ? '사운드' : lang === 'ja' ? 'サウンド' : 'Sounds',
+        item: `${BASE_URL}/${lang}/sounds`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 7,
+        name: lang === 'ko' ? '게시판' : lang === 'ja' ? '掲示板' : 'Board',
+        item: `${BASE_URL}/${lang}/board`,
+      },
     ];
 
     schemas.push({
@@ -627,6 +645,73 @@ function buildStructuredData(lang: string, route: string): string {
         name: 'Spritfy',
         email: 'hckwon@kakao.com',
       },
+    });
+  }
+
+  // 갤러리 페이지: CollectionPage 스키마
+  if (route === '/gallery') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      publisher,
+      inLanguage,
+      mainEntity: {
+        '@type': 'ImageGallery',
+        name: lang === 'ko' ? '픽셀 아트 갤러리' : lang === 'ja' ? 'ピクセルアートギャラリー' : 'Pixel Art Gallery',
+        description: seo.description,
+      },
+    });
+  }
+
+  // 사운드 페이지: CollectionPage 스키마
+  if (route === '/sounds') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      publisher,
+      inLanguage,
+      mainEntity: {
+        '@type': 'MusicPlaylist',
+        name: lang === 'ko' ? '게임 사운드 라이브러리' : lang === 'ja' ? 'ゲームサウンドライブラリ' : 'Game Sound Library',
+        description: seo.description,
+      },
+    });
+  }
+
+  // 게시판 페이지: WebPage + DiscussionForumPosting 스키마
+  if (route === '/board') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      publisher,
+      inLanguage,
+      mainEntity: {
+        '@type': 'DiscussionForumPosting',
+        headline: lang === 'ko' ? '커뮤니티 게시판' : lang === 'ja' ? 'コミュニティ掲示板' : 'Community Board',
+        description: seo.description,
+      },
+    });
+  }
+
+  // 가이드라인 페이지: WebPage 스키마
+  if (route === '/guidelines') {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: seo.title,
+      description: seo.description,
+      url: canonical,
+      publisher,
+      inLanguage,
     });
   }
 
