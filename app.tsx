@@ -28,6 +28,8 @@ const BlogListPage = lazy(() => import('@/blog-list.tsx').then(m => ({ default: 
 const BlogPostPage = lazy(() => import('@/blog-post.tsx').then(m => ({ default: m.BlogPostPage })));
 const BoardPage = lazy(() => import('@/board/board-page.tsx').then(m => ({ default: m.BoardPage })));
 const BoardDetailPage = lazy(() => import('@/board/board-detail.tsx').then(m => ({ default: m.BoardDetailPage })));
+const SoundPage = lazy(() => import('@/sounds/sound-page.tsx').then(m => ({ default: m.SoundPage })));
+const SoundDetailPage = lazy(() => import('@/sounds/sound-detail.tsx').then(m => ({ default: m.SoundDetailPage })));
 
 const detectLang = (): Lang => {
   const nav = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || '';
@@ -206,6 +208,20 @@ const BoardDetailWrapper = () => {
   return <LazyWrapper t={t}><BoardDetailPage lang={validLang} t={t} /></LazyWrapper>;
 };
 
+const SoundWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><SoundPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
+const SoundDetailWrapper = () => {
+  const { lang: urlLang } = useParams<{ lang: string }>();
+  const validLang: Lang = toValidLang(urlLang);
+  const t = i18n[validLang];
+  return <LazyWrapper t={t}><SoundDetailPage lang={validLang} t={t} /></LazyWrapper>;
+};
+
 const NotFoundWrapper = () => {
   const { lang: urlLang } = useParams<{ lang: string }>();
   const validLang: Lang = toValidLang(urlLang);
@@ -250,6 +266,8 @@ const router = createBrowserRouter([
       { path: 'blog/:slug', element: <BlogPostWrapper /> },
       { path: 'board', element: <BoardWrapper /> },
       { path: 'board/:postId', element: <BoardDetailWrapper /> },
+      { path: 'sounds', element: <SoundWrapper /> },
+      { path: 'sounds/:soundId', element: <SoundDetailWrapper /> },
       { path: '*', element: <NotFoundWrapper /> },
     ],
   },

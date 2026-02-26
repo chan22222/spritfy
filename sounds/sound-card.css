@@ -1,0 +1,104 @@
+/* ============================================
+   SOUND CARD
+   ============================================ */
+.sound-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 14px;
+  gap: 4px;
+}
+
+.sound-card:hover {
+  transform: translateY(-2px) translate(-2px, -2px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
+  border-color: var(--primary);
+}
+
+.sound-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sound-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sound-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border: 1px solid;
+}
+
+.sound-cat-badge.cat-bgm { color: #bb86fc; border-color: #bb86fc; background: rgba(187, 134, 252, 0.1); }
+.sound-cat-badge.cat-sfx { color: #03dac6; border-color: #03dac6; background: rgba(3, 218, 198, 0.1); }
+.sound-cat-badge.cat-ui { color: #cf6679; border-color: #cf6679; background: rgba(207, 102, 121, 0.1); }
+.sound-cat-badge.cat-ambient { color: #82b1ff; border-color: #82b1ff; background: rgba(130, 177, 255, 0.1); }
+.sound-cat-badge.cat-voice { color: #ffab40; border-color: #ffab40; background: rgba(255, 171, 64, 0.1); }
+
+.sound-card-format {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.sound-card-title {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 0.95rem;
+  font-weight: normal;
+  margin: 0;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.sound-card-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sound-card-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.sound-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.sound-card-stat .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* ---- Light Mode ---- */
+[data-theme="light"] .sound-card {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .sound-card:hover {
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.16);
+}

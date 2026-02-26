@@ -63,6 +63,10 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>photo_library</span>
           <span className="nav-label">{t.navGallery}</span>
         </NavLink>
+        <NavLink to={lp('/sounds')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navSounds}>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>music_note</span>
+          <span className="nav-label">{t.navSounds}</span>
+        </NavLink>
         <NavLink to={lp('/board')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navBoard}>
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>forum</span>
           <span className="nav-label">{t.navBoard}</span>

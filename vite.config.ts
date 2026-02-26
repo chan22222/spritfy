@@ -17,7 +17,7 @@ interface RouteMeta {
   hreflangAlternates: Array<{ lang: string; url: string }>;
 }
 
-const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms', '/faq', '/contact', '/guidelines', '/blog', '/board'];
+const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms', '/faq', '/contact', '/guidelines', '/blog', '/board', '/sounds'];
 
 const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> = {
   '/': { priority: '1.0', changefreq: 'weekly' },
@@ -35,6 +35,7 @@ const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> =
   '/guidelines': { priority: '0.4', changefreq: 'monthly' },
   '/blog': { priority: '0.7', changefreq: 'weekly' },
   '/board': { priority: '0.7', changefreq: 'daily' },
+  '/sounds': { priority: '0.7', changefreq: 'daily' },
 };
 
 const SEO_META: Record<string, Record<string, { title: string; description: string }>> = {
@@ -99,6 +100,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: '게시판 - 스프릿파이 | 커뮤니티 자유게시판',
       description: 'Spritfy 커뮤니티 게시판. 자유로운 토론, 질문, 팁 공유, 작품 자랑, 버그 제보.',
     },
+    '/sounds': {
+      title: '사운드 - 스프릿파이 | 게임 사운드 공유',
+      description: '게임 사운드 이펙트와 음악을 공유하세요. BGM, 효과음, UI 사운드, 환경음, 보이스 클립.',
+    },
   },
   en: {
     '/': {
@@ -161,6 +166,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: 'Board - Spritfy | Community Discussion Board',
       description: 'Spritfy community board. Free discussions, questions, tips, showcase, and bug reports.',
     },
+    '/sounds': {
+      title: 'Sounds - Spritfy | Game Sound Effects & Music',
+      description: 'Share game sound effects and music. BGM, SFX, UI sounds, ambient, and voice clips.',
+    },
   },
   ja: {
     '/': {
@@ -222,6 +231,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/board': {
       title: '掲示板 - Spritfy | コミュニティ掲示板',
       description: 'Spritfyコミュニティ掲示板。自由な議論、質問、ティップス共有、作品紹介、バグ報告。',
+    },
+    '/sounds': {
+      title: 'サウンド - Spritfy | ゲームサウンドエフェクト＆音楽',
+      description: 'ゲームサウンドエフェクトと音楽を共有しましょう。BGM、効果音、UIサウンド、環境音、ボイスクリップ。',
     },
   },
 };

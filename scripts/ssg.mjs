@@ -26,6 +26,7 @@ const ROUTES = [
   '/guidelines',
   '/blog',
   '/board',
+  '/sounds',
 ];
 
 const MIME_TYPES = {

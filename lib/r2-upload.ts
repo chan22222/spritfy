@@ -37,6 +37,28 @@ export async function uploadToR2(
   };
 }
 
+export async function uploadAudioToR2(
+  file: File,
+  accessToken: string
+): Promise<{ audioUrl: string }> {
+  const formData = new FormData();
+  formData.append('audio', file);
+
+  const res = await fetch(`${R2_WORKER_URL}/upload-audio`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new UploadError(text || 'Audio upload failed', res.status);
+  }
+
+  const data: { audioUrl: string } = await res.json();
+  return { audioUrl: `${R2_PUBLIC_URL}${data.audioUrl}` };
+}
+
 export async function uploadAvatarToR2(
   avatarBlob: Blob,
   userId: string,
