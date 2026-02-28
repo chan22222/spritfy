@@ -1,0 +1,59 @@
+:{$PORT} {
+	root * /app/dist
+
+	# 기존 URL -> /ko/ 301 리다이렉트 (SEO 랭킹 보전)
+	@oldRoutes path /editor /sprite /converter /about /privacy /terms /guide/sprite-sheet /guide/pixel-art
+	redir @oldRoutes /ko{uri} 301
+
+	# 한국어 SPA fallback
+	@koRoutes path /ko /ko/ /ko/*
+	handle @koRoutes {
+		try_files {path} /ko/index.html
+		file_server
+	}
+
+	# 영어 SPA fallback
+	@enRoutes path /en /en/ /en/*
+	handle @enRoutes {
+		try_files {path} /en/index.html
+		file_server
+	}
+
+	# 일본어 SPA fallback
+	@jaRoutes path /ja /ja/ /ja/*
+	handle @jaRoutes {
+		try_files {path} /ja/index.html
+		file_server
+	}
+
+	# 루트 및 기타 (정적 파일 + 리다이렉트 HTML)
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Hashed assets - immutable long cache (1 year)
+	@hashedAssets path /assets/*
+	header @hashedAssets Cache-Control "public, max-age=31536000, immutable"
+
+	# Static images/icons
+	@images path *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp
+	header @images Cache-Control "public, max-age=86400"
+
+	# Sitemap - XML Content-Type 명시
+	@sitemap path /sitemap.xml
+	header @sitemap Content-Type "application/xml; charset=utf-8"
+	header @sitemap Cache-Control "public, max-age=3600"
+
+	# robots, ads, llms
+	@seoFiles path /robots.txt /ads.txt /llms.txt
+	header @seoFiles Cache-Control "public, max-age=3600"
+
+	# Service Worker - always revalidate
+	@sw path /sw.js
+	header @sw Cache-Control "no-cache"
+
+	# HTML pages - short cache for quick updates
+	@html path *.html
+	header @html Cache-Control "public, max-age=300"
+}
