@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 
 Sitemap: https://spritfy.xyz/sitemap.xml
+Sitemap: https://spritfy.xyz/sitemap.txt
 
 # AI Crawlers
 User-agent: GPTBot

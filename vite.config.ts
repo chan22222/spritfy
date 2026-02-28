@@ -823,6 +823,15 @@ function prerenderPlugin(): Plugin {
 
       // sitemap.xml 생성
       fs.writeFileSync(path.join(distDir, 'sitemap.xml'), generateSitemap(), 'utf-8');
+
+      // sitemap.txt 생성 (텍스트 형식 대체 사이트맵)
+      const sitemapTxt = BASE_ROUTES.flatMap(route =>
+        LANGS.map(lang => {
+          const langPath = route === '/' ? '/' : route;
+          return `${BASE_URL}/${lang}${langPath}`;
+        })
+      ).join('\n');
+      fs.writeFileSync(path.join(distDir, 'sitemap.txt'), sitemapTxt, 'utf-8');
     },
   };
 }

@@ -45,6 +45,11 @@
 	header @sitemap Content-Type "application/xml; charset=utf-8"
 	header @sitemap Cache-Control "public, max-age=3600"
 
+	# sitemap.txt
+	@sitemapTxt path /sitemap.txt
+	header @sitemapTxt Content-Type "text/plain; charset=utf-8"
+	header @sitemapTxt Cache-Control "public, max-age=3600"
+
 	# robots, ads, llms
 	@seoFiles path /robots.txt /ads.txt /llms.txt
 	header @seoFiles Cache-Control "public, max-age=3600"
