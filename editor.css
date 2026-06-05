@@ -514,6 +514,11 @@
   flex-shrink: 0;
 }
 
+/* 타임라인 좌우 광고 슬롯 — 위쪽 캔버스 영역의 광고와 세로로 정렬되도록 높이를 채운다 */
+.editor-timeline > .ad-slot {
+  align-self: stretch;
+}
+
 .timeline-frames {
   flex: 1;
   display: flex;

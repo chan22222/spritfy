@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { Footer } from '@/footer.tsx';
+import { ToolInfo } from '@/tool-info.tsx';
 import '@/legal.css';
 import './converter.css';
 
@@ -513,6 +514,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
           </div>
         )}
       </div>
+      <ToolInfo t={t} toolKey="converter" />
       <Footer lang={lang} t={t} />
     </div>
   );

@@ -128,7 +128,7 @@ export const SoundPage: React.FC<SoundPageProps> = ({ lang, t }) => {
       {error && (
         <div className="sound-error" role="alert">
           <span className="material-symbols-outlined" aria-hidden="true">error</span>
-          {error}
+          {t.loadError || 'Failed to load data.'}
         </div>
       )}
 

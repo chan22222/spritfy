@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import SEO from '@/seo.tsx';
 import { useBlocker } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
+import { ToolInfo } from '@/tool-info.tsx';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import '@/editor.css';
 
@@ -2028,6 +2029,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
       {/* Timeline */}
       <div className="editor-timeline">
+        <div className="ad-slot ad-slot-left" />
         <div className="timeline-frames">
           {frames.map((frame, i) => (
             <div
@@ -2113,6 +2115,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             </button>
           </div>
         </div>
+        <div className="ad-slot ad-slot-right" />
       </div>
 
       {/* Frame Context Menu */}
@@ -2469,6 +2472,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       <input ref={importImageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportImage} />
       <input ref={importVideoGifRef} type="file" accept="video/*,.gif" style={{ display: 'none' }} onChange={handleImportVideoGifSelect} />
       <input ref={importSpriteSheetRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportSpriteSheetSelect} />
+      <ToolInfo t={t} toolKey="editor" />
     </div>
   );
 };

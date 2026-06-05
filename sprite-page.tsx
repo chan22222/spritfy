@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
+import { ToolInfo } from '@/tool-info.tsx';
 
 
 interface Frame {
@@ -2332,6 +2333,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
           </div>
         </div>
       )}
+      <ToolInfo t={t} toolKey="sprite" />
     </>
   );
 };

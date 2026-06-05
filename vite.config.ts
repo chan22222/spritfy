@@ -2,6 +2,8 @@ import path from 'path';
 import fs from 'fs';
 import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { i18n } from './i18n';
+import { blogPosts } from './blog-data';
 
 const LANGS = ['ko', 'en', 'ja'] as const;
 const BASE_URL = 'https://spritfy.xyz';
@@ -238,6 +240,23 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     },
   },
 };
+
+// 블로그 개별 글 라우트 (blog-data.ts 기반으로 동적 생성)
+const BLOG_ROUTES = blogPosts.map((post) => `/blog/${post.id}`);
+
+// 블로그 개별 글의 SEO 메타·우선순위를 i18n에서 가져와 등록한다.
+// 이렇게 하면 SEO_META/ROUTE_PRIORITY 기반 로직(메타 주입·사이트맵)이 자동으로 블로그 글을 처리한다.
+for (const lang of LANGS) {
+  for (const post of blogPosts) {
+    SEO_META[lang][`/blog/${post.id}`] = {
+      title: i18n[lang][post.titleKey],
+      description: i18n[lang][post.descKey],
+    };
+  }
+}
+for (const post of blogPosts) {
+  ROUTE_PRIORITY[`/blog/${post.id}`] = { priority: '0.6', changefreq: 'monthly' };
+}
 
 function buildRouteMeta(lang: string, route: string): RouteMeta {
   const seo = SEO_META[lang][route];
@@ -632,6 +651,23 @@ function buildStructuredData(lang: string, route: string): string {
     });
   }
 
+  // 블로그 개별 글: BlogPosting 스키마
+  const blogPost = blogPosts.find((p) => `/blog/${p.id}` === route);
+  if (blogPost) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: seo.title,
+      description: seo.description,
+      author: { '@type': 'Organization', name: 'Spritfy' },
+      publisher,
+      datePublished: blogPost.date,
+      dateModified: blogPost.date,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+      inLanguage,
+    });
+  }
+
   // Contact 페이지: ContactPage 스키마
   if (route === '/contact') {
     schemas.push({
@@ -731,7 +767,7 @@ function generateSitemap(): string {
   const today = new Date().toISOString().split('T')[0];
   const entries: string[] = [];
 
-  for (const route of BASE_ROUTES) {
+  for (const route of [...BASE_ROUTES, ...BLOG_ROUTES]) {
     for (const lang of LANGS) {
       const langPath = route === '/' ? '/' : route;
       const loc = `${BASE_URL}/${lang}${langPath}`;
@@ -777,7 +813,7 @@ function prerenderPlugin(): Plugin {
 
       // 각 언어 x 각 라우트에 대해 HTML 생성
       for (const lang of LANGS) {
-        for (const route of BASE_ROUTES) {
+        for (const route of [...BASE_ROUTES, ...BLOG_ROUTES]) {
           const meta = buildRouteMeta(lang, route);
           const langRoute = route === '/' ? lang : `${lang}${route}`;
           const routeDir = path.join(distDir, langRoute);
@@ -825,7 +861,7 @@ function prerenderPlugin(): Plugin {
       fs.writeFileSync(path.join(distDir, 'sitemap.xml'), generateSitemap(), 'utf-8');
 
       // sitemap.txt 생성 (텍스트 형식 대체 사이트맵)
-      const sitemapTxt = BASE_ROUTES.flatMap(route =>
+      const sitemapTxt = [...BASE_ROUTES, ...BLOG_ROUTES].flatMap(route =>
         LANGS.map(lang => {
           const langPath = route === '/' ? '/' : route;
           return `${BASE_URL}/${lang}${langPath}`;

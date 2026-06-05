@@ -5,30 +5,30 @@
 	@oldRoutes path /editor /sprite /converter /about /privacy /terms /guide/sprite-sheet /guide/pixel-art
 	redir @oldRoutes /ko{uri} 301
 
-	# 한국어 SPA fallback
+	# 한국어 SPA fallback (SSG된 하위 페이지의 index.html을 우선 서빙)
 	@koRoutes path /ko /ko/ /ko/*
 	handle @koRoutes {
-		try_files {path} /ko/index.html
+		try_files {path} {path}/index.html /ko/index.html
 		file_server
 	}
 
-	# 영어 SPA fallback
+	# 영어 SPA fallback (SSG된 하위 페이지의 index.html을 우선 서빙)
 	@enRoutes path /en /en/ /en/*
 	handle @enRoutes {
-		try_files {path} /en/index.html
+		try_files {path} {path}/index.html /en/index.html
 		file_server
 	}
 
-	# 일본어 SPA fallback
+	# 일본어 SPA fallback (SSG된 하위 페이지의 index.html을 우선 서빙)
 	@jaRoutes path /ja /ja/ /ja/*
 	handle @jaRoutes {
-		try_files {path} /ja/index.html
+		try_files {path} {path}/index.html /ja/index.html
 		file_server
 	}
 
 	# 루트 및 기타 (정적 파일 + 리다이렉트 HTML)
 	handle {
-		try_files {path} /index.html
+		try_files {path} {path}/index.html /index.html
 		file_server
 	}
 
