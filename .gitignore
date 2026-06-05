@@ -29,9 +29,8 @@ client_secret_*.json
 .env.local
 .env.production
 
-# Infrastructure (sensitive)
-Caddyfile
-Dockerfile
+# Infrastructure
+# Caddyfile/Dockerfile은 Railway 빌드에 필요하므로 추적한다(민감 정보 없음).
 cloudflare-worker/wrangler.toml
 
 # Misc
