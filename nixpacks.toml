@@ -1,0 +1,12 @@
+# Railway Nixpacks 빌드에서 SSG(puppeteer)용 Chromium과 실행 의존성을 설치한다.
+# 이 설정이 없으면 puppeteer가 내려받은 Chromium이 시스템 라이브러리(libglib-2.0.so.0 등)
+# 부재로 실행되지 못해 SSG 단계가 실패한다(빌드 전체 실패).
+#
+# apt로 설치한 chromium 패키지는 필요한 공유 라이브러리를 함께 설치하므로,
+# 이 시스템 chromium을 PUPPETEER_EXECUTABLE_PATH로 가리켜 사용한다.
+[phases.setup]
+aptPkgs = ["chromium", "fonts-noto-cjk", "fonts-ipafont-gothic"]
+
+[variables]
+PUPPETEER_SKIP_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
