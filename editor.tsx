@@ -417,6 +417,7 @@ const stampBrush = (
 // ===== Main Component =====
 export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang, t }) => {
   // Canvas dimensions
+  const [panelsOpen, setPanelsOpen] = useState(false);
   const [canvasWidth, setCanvasWidth] = useState(32);
   const [canvasHeight, setCanvasHeight] = useState(32);
 
@@ -1761,7 +1762,12 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         </div>
 
         {/* Right Panels */}
-        <div className="editor-panels">
+        <div
+          className={`editor-panels-backdrop${panelsOpen ? ' open' : ''}`}
+          onClick={() => setPanelsOpen(false)}
+          aria-hidden="true"
+        />
+        <div id="editor-panels" className={`editor-panels${panelsOpen ? ' open' : ''}`}>
           {/* Color */}
           <div className="editor-panel">
             <h4>{t.colorPalette}</h4>
@@ -2472,6 +2478,15 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       <input ref={importImageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportImage} />
       <input ref={importVideoGifRef} type="file" accept="video/*,.gif" style={{ display: 'none' }} onChange={handleImportVideoGifSelect} />
       <input ref={importSpriteSheetRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImportSpriteSheetSelect} />
+      <button
+        type="button"
+        className={`editor-panels-toggle${panelsOpen ? ' open' : ''}`}
+        aria-expanded={panelsOpen}
+        aria-controls="editor-panels"
+        onClick={() => setPanelsOpen(o => !o)}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">{panelsOpen ? 'close' : 'tune'}</span>
+      </button>
       <ToolInfo t={t} toolKey="editor" />
     </div>
   );

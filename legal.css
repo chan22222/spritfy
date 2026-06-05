@@ -589,3 +589,54 @@
     font-size: 0.75rem;
   }
 }
+
+/* 콘텐츠 페이지 모바일 보강 */
+@media (max-width: 768px) {
+  .legal-section h2 {
+    font-size: 1.05rem;
+  }
+  .legal-section p {
+    font-size: 0.86rem;
+    line-height: 1.75;
+  }
+  .legal-intro {
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .legal-section {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+  }
+  .legal-section h2 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  .legal-section p {
+    font-size: 0.84rem;
+    line-height: 1.7;
+  }
+  .faq-question {
+    padding: 12px 14px;
+    font-size: 0.86rem;
+    gap: 8px;
+  }
+  .faq-answer {
+    padding: 0 14px 12px;
+  }
+  .faq-answer p {
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+  .faq-chevron {
+    font-size: 18px;
+  }
+  /* 좁은 화면에서 구분자(|)는 숨기고 gap으로 구분 */
+  .footer-sep {
+    display: none;
+  }
+  .footer-nav {
+    gap: 10px 14px;
+  }
+}

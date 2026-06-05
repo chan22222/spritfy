@@ -650,3 +650,42 @@
     display: none;
   }
 }
+
+/* 태블릿 — highlights 4→3열 (769~900px, PC 4열/768 이하 2열 불변) */
+@media (min-width: 769px) and (max-width: 900px) {
+  .landing-highlights-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 폰 미세 조정 */
+@media (max-width: 480px) {
+  .landing-feature-card {
+    padding: 20px 18px;
+  }
+  .landing-feature-card h2 {
+    font-size: 1.1rem;
+  }
+  .landing-feature-card p {
+    font-size: 0.82rem;
+  }
+  .landing-highlights-title {
+    font-size: 1.25rem;
+  }
+  .landing-highlight-item {
+    padding: 18px 10px;
+  }
+  .landing-highlight-item h3 {
+    font-size: 0.88rem;
+  }
+  .landing-highlight-item p {
+    font-size: 0.78rem;
+  }
+  .landing-hero-desc {
+    font-size: 0.95rem;
+  }
+  .landing-hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+}

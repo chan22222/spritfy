@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { Lang, i18n } from '@/i18n.ts';
 import { useLangPath } from '@/lang-context.ts';
 import { useTheme } from '@/theme-context.ts';
@@ -23,16 +23,36 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   const { theme, toggleTheme } = useTheme();
   const { user, setShowAuthModal } = useAuth();
   const [langOpen, setLangOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setLangOpen(false);
       }
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setNavOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 라우트 이동 시 모바일 메뉴 닫기
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
+  // ESC로 모바일 메뉴 닫기
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNavOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, []);
 
   const currentLang = LANG_OPTIONS.find(o => o.value === lang)!;
@@ -42,7 +62,18 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
       <Link to={lp('/')} className="brand">
         <img src="/logo.png" alt="Spritfy" width={700} height={250} style={{ height: 52, width: 'auto' }} />
       </Link>
-      <nav className="header-nav" aria-label="Main navigation">
+      <div className="header-nav-wrap" ref={navRef}>
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-label={navOpen ? t.navClose : t.navMenu}
+          aria-expanded={navOpen}
+          aria-controls="header-nav"
+          onClick={() => setNavOpen(v => !v)}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">{navOpen ? 'close' : 'menu'}</span>
+        </button>
+        <nav id="header-nav" className={`header-nav${navOpen ? ' open' : ''}`} aria-label="Main navigation">
         <NavLink to={lp('/')} end className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navHome}>
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>home</span>
           <span className="nav-label">{t.navHome}</span>
@@ -71,7 +102,8 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>forum</span>
           <span className="nav-label">{t.navBoard}</span>
         </NavLink>
-      </nav>
+        </nav>
+      </div>
       <div className="header-actions">
         {user ? (
           <UserMenu />

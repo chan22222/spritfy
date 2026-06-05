@@ -887,3 +887,85 @@
 [data-theme="light"] .sprite-sheet-preview {
   background: #e0e0e0;
 }
+
+/* ===== Mobile (<=768px) — 우측 패널 토글 시트 + 광고/타임라인 압축 (PC 불변) ===== */
+.editor-panels-toggle,
+.editor-panels-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* 좌우 광고 슬롯 제거 → 캔버스 최대화 */
+  .ad-slot {
+    display: none;
+  }
+
+  /* 우측 패널 → 우측 슬라이드 시트 (tool-info 패턴과 동일) */
+  .editor-panels {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(300px, 88vw);
+    z-index: 960;
+    border-left: 1px solid var(--border);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+    transform: translateX(105%);
+    transition: transform 0.28s ease;
+    overflow-y: auto;
+  }
+
+  .editor-panels.open {
+    transform: translateX(0);
+  }
+
+  .editor-panels-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 950;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .editor-panels-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* 플로팅 토글 버튼 — 좌하단 (도움말 버튼 우하단과 충돌 회피) */
+  .editor-panels-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 900;
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #1a1a1a;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+
+  .editor-panels-toggle .material-symbols-outlined {
+    font-size: 22px;
+  }
+
+  /* 타임라인 압축 */
+  .editor-timeline {
+    height: 84px;
+  }
+
+  .timeline-frame,
+  .timeline-add-frame {
+    width: 44px;
+    height: 44px;
+  }
+}

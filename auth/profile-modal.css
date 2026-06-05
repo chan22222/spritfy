@@ -228,3 +228,26 @@
 [data-theme="light"] .profile-avatar-edit {
   background: rgba(0, 0, 0, 0.4);
 }
+
+/* 폰 — 패딩/아바타 축소 + input 16px(iOS 포커스 자동 줌 방지) */
+@media (max-width: 480px) {
+  .profile-modal {
+    padding: 22px 18px;
+    width: 94%;
+  }
+  .profile-modal-title {
+    font-size: 1.15rem;
+  }
+  .profile-avatar-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+  .profile-input,
+  .profile-username-at,
+  .profile-username-input {
+    font-size: 16px;
+  }
+  .profile-label {
+    font-size: 0.82rem;
+  }
+}

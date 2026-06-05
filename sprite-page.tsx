@@ -66,6 +66,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [exportColumns, setExportColumns] = useState(0); // 0 = auto
   const [gridSize, setGridSize] = useState(100); // frame thumbnail size in px
   const [sidebarWidth, setSidebarWidth] = useState(360);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExportingGif, setIsExportingGif] = useState(false);
   const [exportSizeMode, setExportSizeMode] = useState<'scale' | 'fixed'>('scale');
   const [exportScale, setExportScale] = useState(100);
@@ -1955,7 +1956,12 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         <div className="resize-handle" onMouseDown={handleResizeStart} />
 
         {/* RIGHT PANEL: TOOLS */}
-        <div className="sidebar" style={{ width: sidebarWidth }}>
+        <div
+          className={`sidebar-backdrop${sidebarOpen ? ' open' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+        <div className={`sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: sidebarWidth }}>
             <div className="sidebar-section">
                 <h3>{t.preview}</h3>
                 <div 
@@ -2333,6 +2339,14 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
           </div>
         </div>
       )}
+      <button
+        type="button"
+        className={`sidebar-toggle${sidebarOpen ? ' open' : ''}`}
+        aria-expanded={sidebarOpen}
+        onClick={() => setSidebarOpen(o => !o)}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">{sidebarOpen ? 'close' : 'tune'}</span>
+      </button>
       <ToolInfo t={t} toolKey="sprite" />
     </>
   );

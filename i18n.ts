@@ -4,6 +4,8 @@ export const i18n: Record<Lang, Record<string, string>> = {
   ko: {
     // Navigation
     navHome: '홈',
+    navMenu: '메뉴',
+    navClose: '닫기',
     navSprite: '스프라이트',
     navEditor: '에디터',
 
@@ -753,6 +755,8 @@ export const i18n: Record<Lang, Record<string, string>> = {
   en: {
     // Navigation
     navHome: 'Home',
+    navMenu: 'Menu',
+    navClose: 'Close',
     navSprite: 'Sprite',
     navEditor: 'Editor',
 
@@ -1494,6 +1498,8 @@ export const i18n: Record<Lang, Record<string, string>> = {
   ja: {
     // Navigation
     navHome: 'ホーム',
+    navMenu: 'メニュー',
+    navClose: '閉じる',
     navSprite: 'スプライト',
     navEditor: 'エディター',
 

@@ -479,3 +479,91 @@
     font-size: 0.78rem;
   }
 }
+
+/* ===== Mobile (<=600px) — 테이블을 카드로 (PC 테이블 불변, 파일 최하단에 둬 768/480의 display:none을 override) ===== */
+@media (max-width: 600px) {
+  .board-table-wrapper {
+    overflow-x: hidden;
+    padding: 0 12px;
+  }
+
+  .board-table,
+  .board-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .board-table thead {
+    display: none;
+  }
+
+  .board-table tr {
+    display: block;
+  }
+
+  .board-table tr.board-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+  }
+
+  .board-table td {
+    display: inline-flex;
+    align-items: center;
+    border: none !important;
+    padding: 0;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    white-space: normal;
+  }
+
+  /* 제목: 카드 첫 줄 전체 차지 */
+  .board-td-title {
+    flex-basis: 100%;
+    max-width: none;
+    margin-bottom: 2px;
+  }
+  .board-title-link {
+    font-size: 0.95rem;
+  }
+  .board-title-text {
+    white-space: normal;
+  }
+
+  /* 메타 줄: 카테고리 · 작성자 · 날짜 · 조회 · 추천 (768/480에서 숨긴 것 복원) */
+  .board-td-category { order: 1; }
+  .board-td-author { order: 2; display: inline-flex; }
+  .board-td-date { order: 3; display: inline-flex; }
+  .board-td-views { order: 4; display: inline-flex; }
+  .board-td-likes { order: 5; display: inline-flex; }
+
+  .board-td-author::after,
+  .board-td-date::after {
+    content: '·';
+    margin: 0 5px;
+    opacity: 0.5;
+  }
+  .board-td-views::before {
+    content: '👁';
+    margin-right: 3px;
+    opacity: 0.7;
+  }
+  .board-td-likes::before {
+    content: '♥';
+    margin-right: 3px;
+    opacity: 0.7;
+  }
+
+  /* 빈 상태(colSpan) */
+  .board-table .board-empty-row {
+    display: block;
+    text-align: center;
+    padding: 40px 0;
+    font-size: 0.9rem;
+  }
+}
