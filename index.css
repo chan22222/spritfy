@@ -891,7 +891,7 @@ select {
 }
 
 /* Ad Slots */
-.ad-slot {
+.side-rail {
   width: 160px;
   flex-shrink: 0;
   background: var(--bg-panel);
@@ -1065,7 +1065,7 @@ select {
 
 @media (max-width: 768px) {
   /* 광고 슬롯/리사이즈 핸들 제거 → 프레임 영역 최대화 */
-  .ad-slot {
+  .side-rail {
     display: none;
   }
   .resize-handle {

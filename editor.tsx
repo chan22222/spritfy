@@ -1665,7 +1665,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
       <SEO title={t.seoEditorTitle} description={t.seoEditorDesc} path="/editor" lang={lang} />
       <div className="editor-main">
         {/* LEFT AD */}
-        <div className="ad-slot ad-slot-left" />
+        <div className="side-rail side-rail-left" />
 
         {/* Left Toolbar */}
         <div className="editor-toolbar">
@@ -2030,12 +2030,12 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
         </div>
 
         {/* RIGHT AD */}
-        <div className="ad-slot ad-slot-right" />
+        <div className="side-rail side-rail-right" />
       </div>
 
       {/* Timeline */}
       <div className="editor-timeline">
-        <div className="ad-slot ad-slot-left" />
+        <div className="side-rail side-rail-left" />
         <div className="timeline-frames">
           {frames.map((frame, i) => (
             <div
@@ -2121,7 +2121,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
             </button>
           </div>
         </div>
-        <div className="ad-slot ad-slot-right" />
+        <div className="side-rail side-rail-right" />
       </div>
 
       {/* Frame Context Menu */}

@@ -1465,7 +1465,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       <SEO title={t.seoSpriteTitle} description={t.seoSpriteDesc} path="/sprite" lang={lang} />
       <div className="main-workspace">
         {/* LEFT AD */}
-        <div className="ad-slot ad-slot-left" />
+        <div className="side-rail side-rail-left" />
 
         {/* Hidden Video for processing */}
         <video 
@@ -2095,7 +2095,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         </div>
 
         {/* RIGHT AD */}
-        <div className="ad-slot ad-slot-right" />
+        <div className="side-rail side-rail-right" />
       </div>
 
       {/* Sprite Sheet Split Modal */}
