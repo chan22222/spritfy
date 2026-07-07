@@ -172,23 +172,55 @@ async function main() {
   // Chromium이 없는 로컬 환경 등에서 의도적으로 프리렌더를 건너뛰려면 SSG_SKIP=true 를 명시한다.
   const allowSkip = process.env.SSG_SKIP === 'true';
 
+  const baseArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--disable-crashpad',
+    '--disable-breakpad',
+    '--mute-audio',
+  ];
+  // Railway 등 syscall이 제한된 빌드 샌드박스에서는 Chromium의 zygote/renderer
+  // 프로세스 분리가 막혀 브라우저가 즉시 죽는다(exit code null). 표준 플래그로
+  // 실패하면 single-process 모드로 재시도한다.
+  const attemptArgsList = [
+    baseArgs,
+    [...baseArgs, '--no-zygote', '--single-process'],
+  ];
+
   let browser;
-  try {
+  const launchErrors = [];
+  for (const args of attemptArgsList) {
     const launchOptions = {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+      args,
+      dumpio: process.env.SSG_DEBUG === 'true',
     };
     if (process.env.PUPPETEER_EXECUTABLE_PATH) {
       launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
     }
-    browser = await puppeteer.launch(launchOptions);
-  } catch (err) {
+    try {
+      browser = await puppeteer.launch(launchOptions);
+      if (args.includes('--single-process')) {
+        process.stdout.write('SSG: Chromium launched in single-process fallback mode.\n');
+      }
+      break;
+    } catch (err) {
+      launchErrors.push(err.message);
+    }
+  }
+
+  if (!browser) {
+    const detail = launchErrors
+      .map((msg, i) => `--- attempt ${i + 1} ---\n${msg}`)
+      .join('\n');
     if (allowSkip) {
-      process.stdout.write(`SSG skipped (SSG_SKIP=true): Chromium launch failed — ${err.message}\n`);
+      process.stdout.write(`SSG skipped (SSG_SKIP=true): Chromium launch failed —\n${detail}\n`);
       process.exit(0);
     }
-    process.stderr.write(`\nSSG FAILED: could not launch Chromium.\n${err.message}\n`);
-    process.stderr.write('Install Chromium (or set PUPPETEER_EXECUTABLE_PATH), or set SSG_SKIP=true to build without prerendering (NOT recommended for production).\n');
+    process.stderr.write(`\nSSG FAILED: could not launch Chromium.\n${detail}\n`);
+    process.stderr.write('Install Chromium (or set PUPPETEER_EXECUTABLE_PATH), or set SSG_SKIP=true to build without prerendering (NOT recommended for production). Set SSG_DEBUG=true for full Chromium output.\n');
     process.exit(1);
   }
 

@@ -4,6 +4,7 @@ FROM node:20-slim AS build
 # Puppeteer/Chromium 의존성 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
+    dbus \
     fonts-ipafont-gothic \
     fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
@@ -27,7 +28,8 @@ ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_R2_WORKER_URL=$VITE_R2_WORKER_URL
 ENV VITE_R2_PUBLIC_URL=$VITE_R2_PUBLIC_URL
 
-RUN npm run build
+# Chromium이 시스템 dbus에 접속하지 못해 죽는 경우를 막기 위해 빌드 전에 dbus를 띄운다.
+RUN mkdir -p /run/dbus && (dbus-daemon --system --fork || true) && npm run build
 
 # --- Serve stage ---
 FROM caddy:2-alpine
