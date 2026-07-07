@@ -181,33 +181,37 @@ async function main() {
     '--disable-breakpad',
     '--mute-audio',
   ];
-  // Railway 등 syscall이 제한된 빌드 샌드박스에서는 Chromium의 zygote/renderer
-  // 프로세스 분리가 막혀 브라우저가 즉시 죽는다(exit code null). 표준 플래그로
-  // 실패하면 single-process 모드로 재시도한다.
-  const attemptArgsList = [
-    baseArgs,
-    [...baseArgs, '--no-zygote', '--single-process'],
+  // Railway 등 제한된 빌드 샌드박스에서는 시스템 Chromium(풀 브라우저)이 실행 중
+  // 크래시로 죽는 경우가 있다(exit code null). 순서대로 폴백한다:
+  //   1) 시스템/번들 Chromium 표준 플래그
+  //   2) + single-process (프로세스 분리가 막힌 환경용)
+  //   3) chrome-headless-shell (dbus/UI 스택이 없는 헤드리스 전용 경량 바이너리,
+  //      Dockerfile에서 `npx puppeteer browsers install chrome-headless-shell`로 설치)
+  //   4) chrome-headless-shell + single-process
+  const attempts = [
+    { name: 'chromium', headless: true, args: baseArgs, useEnvPath: true },
+    { name: 'chromium single-process', headless: true, args: [...baseArgs, '--no-zygote', '--single-process'], useEnvPath: true },
+    { name: 'headless-shell', headless: 'shell', args: baseArgs, useEnvPath: false },
+    { name: 'headless-shell single-process', headless: 'shell', args: [...baseArgs, '--no-zygote', '--single-process'], useEnvPath: false },
   ];
 
   let browser;
   const launchErrors = [];
-  for (const args of attemptArgsList) {
+  for (const attempt of attempts) {
     const launchOptions = {
-      headless: true,
-      args,
+      headless: attempt.headless,
+      args: attempt.args,
       dumpio: process.env.SSG_DEBUG === 'true',
     };
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    if (attempt.useEnvPath && process.env.PUPPETEER_EXECUTABLE_PATH) {
       launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
     }
     try {
       browser = await puppeteer.launch(launchOptions);
-      if (args.includes('--single-process')) {
-        process.stdout.write('SSG: Chromium launched in single-process fallback mode.\n');
-      }
+      process.stdout.write(`SSG: browser launched (${attempt.name}).\n`);
       break;
     } catch (err) {
-      launchErrors.push(err.message);
+      launchErrors.push(`[${attempt.name}] ${err.message}`);
     }
   }
 
