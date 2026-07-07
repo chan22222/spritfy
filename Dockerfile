@@ -34,12 +34,17 @@ ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_R2_WORKER_URL=$VITE_R2_WORKER_URL
 ENV VITE_R2_PUBLIC_URL=$VITE_R2_PUBLIC_URL
 
-# 진단: 시스템 Chromium이 이 빌드 환경에서 직접 실행되는지 확인한다.
-# 크래시 시 셸이 신호명(Segmentation fault/Killed 등)을 그대로 출력하므로
-# SSG 실패 원인 분석에 쓰인다. 빌드 실패로 이어지지는 않는다.
-RUN chromium --version && \
-    (chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/dev/null \
-      && echo "diag: chromium headless OK") || echo "diag: chromium headless FAILED"
+# 진단: 각 브라우저 바이너리가 이 빌드 환경에서 직접 실행되는지 종료 코드와 함께 확인한다.
+# 종료 코드 의미: 0=정상, 139=SIGSEGV, 159=SIGSYS(seccomp 차단), 137=SIGKILL(OOM/강제종료).
+# 빌드 실패로 이어지지는 않는다.
+RUN chromium --version; \
+    chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/dev/null 2>/tmp/diag1.log; \
+    echo "diag: chromium exit=$?"; cat /tmp/diag1.log; \
+    SHELL_BIN=$(find /root/.cache/puppeteer/chrome-headless-shell -type f -name chrome-headless-shell 2>/dev/null | head -n 1); \
+    echo "diag: headless-shell bin=$SHELL_BIN"; \
+    "$SHELL_BIN" --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/dev/null 2>/tmp/diag2.log; \
+    echo "diag: headless-shell exit=$?"; cat /tmp/diag2.log; \
+    true
 
 # Chromium이 시스템 dbus에 접속하지 못해 죽는 경우를 막기 위해 빌드 전에 dbus를 띄운다.
 # SSG_DEBUG=true: 실패 시 Chromium 전체 출력을 빌드 로그에 남긴다(원인 확정 후 제거 가능).

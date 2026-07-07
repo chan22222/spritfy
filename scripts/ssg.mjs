@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import http from 'http';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -162,6 +163,20 @@ async function renderRoute(browser, lang, route) {
   return true;
 }
 
+// puppeteer 캐시(~/.cache/puppeteer)에 설치된 chrome-headless-shell 바이너리를 찾는다.
+async function findHeadlessShellPath() {
+  try {
+    const { getInstalledBrowsers } = await import('@puppeteer/browsers');
+    const cacheDir = process.env.PUPPETEER_CACHE_DIR
+      || path.join(os.homedir(), '.cache', 'puppeteer');
+    const installed = await getInstalledBrowsers({ cacheDir });
+    const shell = installed.find((b) => b.browser === 'chrome-headless-shell');
+    return shell ? shell.executablePath : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   if (!fs.existsSync(DIST_DIR)) {
     process.stderr.write('SSG FAILED: dist directory not found. Run "vite build" first.\n');
@@ -188,12 +203,26 @@ async function main() {
   //   3) chrome-headless-shell (dbus/UI 스택이 없는 헤드리스 전용 경량 바이너리,
   //      Dockerfile에서 `npx puppeteer browsers install chrome-headless-shell`로 설치)
   //   4) chrome-headless-shell + single-process
+  //
+  // 주의: PUPPETEER_EXECUTABLE_PATH 환경변수가 설정돼 있으면 puppeteer가
+  // executablePath 미지정 시에도 그 경로를 우선하므로, headless-shell은 캐시에서
+  // 찾은 경로를 반드시 명시적으로 넘겨야 실제로 다른 바이너리가 실행된다.
+  const envPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
+  const shellPath = await findHeadlessShellPath();
+  if (shellPath) {
+    process.stdout.write(`SSG: chrome-headless-shell available at ${shellPath}\n`);
+  }
+
   const attempts = [
-    { name: 'chromium', headless: true, args: baseArgs, useEnvPath: true },
-    { name: 'chromium single-process', headless: true, args: [...baseArgs, '--no-zygote', '--single-process'], useEnvPath: true },
-    { name: 'headless-shell', headless: 'shell', args: baseArgs, useEnvPath: false },
-    { name: 'headless-shell single-process', headless: 'shell', args: [...baseArgs, '--no-zygote', '--single-process'], useEnvPath: false },
+    { name: 'chromium', headless: true, args: baseArgs, execPath: envPath },
+    { name: 'chromium single-process', headless: true, args: [...baseArgs, '--no-zygote', '--single-process'], execPath: envPath },
   ];
+  if (shellPath) {
+    attempts.push(
+      { name: 'headless-shell', headless: 'shell', args: baseArgs, execPath: shellPath },
+      { name: 'headless-shell single-process', headless: 'shell', args: [...baseArgs, '--no-zygote', '--single-process'], execPath: shellPath },
+    );
+  }
 
   let browser;
   const launchErrors = [];
@@ -203,8 +232,8 @@ async function main() {
       args: attempt.args,
       dumpio: process.env.SSG_DEBUG === 'true',
     };
-    if (attempt.useEnvPath && process.env.PUPPETEER_EXECUTABLE_PATH) {
-      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (attempt.execPath) {
+      launchOptions.executablePath = attempt.execPath;
     }
     try {
       browser = await puppeteer.launch(launchOptions);
@@ -213,6 +242,9 @@ async function main() {
     } catch (err) {
       launchErrors.push(`[${attempt.name}] ${err.message}`);
     }
+  }
+  if (!browser && !shellPath) {
+    launchErrors.push('[headless-shell] not installed — run `npx puppeteer browsers install chrome-headless-shell`');
   }
 
   if (!browser) {
