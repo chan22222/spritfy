@@ -16,8 +16,6 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithGithub: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
@@ -31,8 +29,6 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   signInWithGoogle: async () => {},
   signInWithGithub: async () => {},
-  signInWithEmail: async () => {},
-  signUp: async () => {},
   signOut: async () => {},
   showAuthModal: false,
   setShowAuthModal: () => {},
@@ -104,16 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   }, []);
 
-  const signInWithEmail = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-  }, []);
-
-  const signUp = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-  }, []);
-
   const handleSignOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -135,8 +121,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         signInWithGoogle,
         signInWithGithub,
-        signInWithEmail,
-        signUp,
         signOut: handleSignOut,
         refreshUser,
         showAuthModal,

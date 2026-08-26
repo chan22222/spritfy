@@ -7,6 +7,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 좌우 여백 + 극단적으로 낮은 뷰포트에서의 안전망 */
+  padding: 16px;
+  overflow-y: auto;
   animation: dropdown-in 0.15s ease-out;
 }
 
@@ -14,7 +17,11 @@
 .auth-modal {
   position: relative;
   max-width: 400px;
-  width: 90%;
+  width: 100%;
+  /* body{overflow:hidden}이라 모달이 화면보다 길면 접근 불가 → 내부 스크롤 */
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -45,35 +52,16 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* Tabs */
-.auth-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 24px;
+/* Title */
+.auth-title {
+  margin: 0 0 24px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
-}
-
-.auth-tab {
-  flex: 1;
-  padding: 10px 0;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.auth-tab:hover {
   color: var(--text-main);
-}
-
-.auth-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+  word-break: keep-all;
 }
 
 /* Social Buttons */
@@ -92,85 +80,21 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 0;
   transition: background 0.15s, border-color 0.15s;
   margin-bottom: 8px;
+}
+
+/* 라벨 span이 flex 자식이라 min-width:auto면 축소되지 않고 밀어낸다 */
+.auth-social-btn > span {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .auth-social-btn:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: var(--text-muted);
-}
-
-/* Divider */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 16px 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-/* Form */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-main);
-  font-family: inherit;
-  font-size: 0.88rem;
-  outline: none;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-}
-
-.auth-input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.7;
-}
-
-.auth-input:focus {
-  border-color: var(--primary);
-}
-
-/* Submit Button */
-.auth-submit-btn {
-  width: 100%;
-  padding: 10px 16px;
-  background: var(--primary);
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.auth-submit-btn:hover {
-  opacity: 0.9;
-}
-
-.auth-submit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Error Message */
@@ -179,6 +103,8 @@
   font-size: 0.82rem;
   margin: 0;
   text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* Light theme adjustments */
@@ -194,22 +120,24 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
-/* 폰 — 패딩 축소 + input 16px(iOS 포커스 자동 줌 방지) */
+/* 폰 — 패딩 축소 + 히트 영역 확대 */
 @media (max-width: 480px) {
+  .auth-overlay {
+    padding: 12px;
+  }
   .auth-modal {
     padding: 24px 18px 20px;
-    width: 94%;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
   }
-  .auth-tab {
-    font-size: 0.88rem;
+  /* 아이콘 위치는 그대로(가장자리에서 16px) 두고 히트 영역만 28 → 36px로 확대 */
+  .auth-close {
+    top: 8px;
+    right: 8px;
+    padding: 8px;
   }
   .auth-social-btn {
+    padding: 12px 16px;
     font-size: 0.85rem;
-  }
-  .auth-input {
-    font-size: 16px;
-  }
-  .auth-submit-btn {
-    font-size: 0.95rem;
   }
 }

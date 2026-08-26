@@ -72,6 +72,7 @@ const LangLayout = () => {
       <main id="main-content">
         <Outlet />
       </main>
+      <AuthModal />
     </LangContext.Provider>
   );
 };
@@ -238,6 +239,7 @@ const RootNotFoundWrapper = () => {
       <main id="main-content">
         <NotFoundPage lang={lang} t={t} />
       </main>
+      <AuthModal />
     </LangContext.Provider>
   );
 };
@@ -292,7 +294,6 @@ export const App = () => {
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <AuthProvider>
         <RouterProvider router={router} />
-        <AuthModal />
       </AuthProvider>
     </ThemeContext.Provider>
   );
