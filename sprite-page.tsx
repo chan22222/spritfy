@@ -1,8 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { parseGIF, decompressFrame } from 'gifuct-js';
 import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { ToolInfo } from '@/tool-info.tsx';
 
+
+// gifuct-js가 원본 프레임 타입을 export하지 않아 시그니처에서 뽑아 쓴다
+type RawGifFrame = Parameters<typeof decompressFrame>[0];
 
 interface Frame {
   id: number;
@@ -44,6 +48,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [selectedFrameIds, setSelectedFrameIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   
   // Extraction Settings
   const [extractionInterval, setExtractionInterval] = useState(5); // Every N frames
@@ -510,18 +515,15 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
+    // 일부 환경에선 드롭된 파일의 type이 비어 있어 확장자도 함께 본다
     const isVideo = file.type.startsWith('video/');
-    const isGif = file.type === 'image/gif';
+    const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name);
     const isImage = file.type.startsWith('image/') && !isGif;
 
     if (isVideo || isGif) {
-      const url = URL.createObjectURL(file);
-      if (videoRef.current) {
-        videoRef.current.src = url;
-        setIsLoading(true);
-        setProgress(0);
-      }
+      loadMediaFile(file);
     } else if (isImage) {
+      setLoadError(false);
       const url = URL.createObjectURL(file);
       setSplitImageUrl(url);
       setSplitMode(true);
@@ -529,27 +531,184 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   };
 
   // --- File Handling ---
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // 새 파일을 읽기 전 프레임과 그에 딸린 파생 상태를 모두 비운다.
+  // 배경제거/보정 백업을 남겨두면 '복원'이 이전 파일의 이미지를 새 파일에 덮어쓴다.
+  const clearFrameState = () => {
+    frames.forEach(f => URL.revokeObjectURL(f.url));
+    bgBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
+    bgBackupRef.current = [];
+    adjustBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
+    adjustBackupRef.current = [];
+    setHasBgBackup(false);
+    setHasAdjustBackup(false);
+    setFrames([]);
+    setSelectedFrameIds(new Set());
+    setFrameOrder([]);
+    setDedupResult(null);
+    setCurrentPreviewFrameIndex(0);
+  };
 
-    const url = URL.createObjectURL(file);
+  // <video>는 GIF를 재생하지 못하므로(loadedmetadata가 발생하지 않음) 별도 디코더로 처리한다.
+  const extractGifFrames = async (file: File) => {
+    setIsLoading(true);
+    setProgress(0);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const gif = parseGIF(buffer);
+
+      // decompressFrames는 전 프레임의 비압축 RGBA를 한꺼번에 메모리에 올린다
+      // (640x480 200프레임에서 약 470MB). 프레임 단위로 디코딩해 피크를 낮춘다.
+      const rawFrames = gif.frames.filter((f): f is RawGifFrame => 'image' in f);
+
+      // GIF가 아니거나 손상된 파일이면 parseGIF가 던지거나 빈 배열이 나온다
+      if (rawFrames.length === 0) {
+        throw new Error('No frames in GIF');
+      }
+
+      // 이전 프레임과 파생 상태 정리
+      clearFrameState();
+
+      // 논리 화면 크기 — 프레임 dims는 부분 갱신 영역이라 전체 크기와 다를 수 있다
+      const width = gif.lsd.width || rawFrames[0].image.descriptor.width;
+      const height = gif.lsd.height || rawFrames[0].image.descriptor.height;
+
+      // 디스포절을 반영해 프레임을 누적 합성하는 캔버스
+      const composite = document.createElement('canvas');
+      composite.width = width;
+      composite.height = height;
+      const compositeCtx = composite.getContext('2d', { willReadFrequently: true });
+
+      // 중복 비교용 축소 캔버스 (동영상 경로와 동일한 방식)
+      const smallCanvas = document.createElement('canvas');
+      smallCanvas.width = 64;
+      smallCanvas.height = 64;
+      const smallCtx = smallCanvas.getContext('2d', { willReadFrequently: true });
+
+      const patchCanvas = document.createElement('canvas');
+      const patchCtx = patchCanvas.getContext('2d');
+
+      if (!compositeCtx || !smallCtx || !patchCtx) {
+        throw new Error('Canvas 2D context unavailable');
+      }
+
+      // GIF은 이미 프레임 단위로 저작된 시퀀스라 전 프레임을 그대로 가져온다.
+      // (동영상의 '추출 간격'은 연속 신호를 샘플링하기 위한 값이라 여기엔 적용하지 않는다.
+      //  프레임을 줄이려면 가져온 뒤 '중복 프레임 제거'나 선택 삭제를 쓰면 된다.)
+      const newFrames: Frame[] = [];
+      let lastSmallData: Uint8ClampedArray | null = null;
+      let elapsed = 0;
+      // 디스포절 3(이전 상태로 복원)을 위해 그리기 직전 캔버스를 보관한다
+      let prevState: ImageData | null = null;
+
+      for (let i = 0; i < rawFrames.length; i++) {
+        const { dims, patch, disposalType, delay } = decompressFrame(rawFrames[i], gif.gct, true);
+
+        if (disposalType === 3) {
+          prevState = compositeCtx.getImageData(0, 0, width, height);
+        }
+
+        patchCanvas.width = dims.width;
+        patchCanvas.height = dims.height;
+        const patchData = patchCtx.createImageData(dims.width, dims.height);
+        patchData.data.set(patch);
+        patchCtx.putImageData(patchData, 0, 0);
+        compositeCtx.drawImage(patchCanvas, dims.left, dims.top);
+
+        // 중복 제거 감도는 기본이 0(끔)이며, 켰을 때만 동영상과 같은 방식으로 걸러낸다
+        let isDuplicate = false;
+        smallCtx.clearRect(0, 0, 64, 64);
+        smallCtx.drawImage(composite, 0, 0, 64, 64);
+        const currentSmallData = smallCtx.getImageData(0, 0, 64, 64).data;
+
+        if (similarityThreshold > 0 && lastSmallData) {
+          let diff = 0;
+          for (let p = 0; p < currentSmallData.length; p += 4) {
+            diff += Math.abs(currentSmallData[p] - lastSmallData[p]) +
+                    Math.abs(currentSmallData[p + 1] - lastSmallData[p + 1]) +
+                    Math.abs(currentSmallData[p + 2] - lastSmallData[p + 2]);
+          }
+          const avgDiff = diff / (64 * 64);
+          const thresholdVal = (100 - similarityThreshold) / 100 * 50;
+          if (avgDiff < thresholdVal) {
+            isDuplicate = true;
+          }
+        }
+
+        if (!isDuplicate) {
+          lastSmallData = currentSmallData;
+          const blob = await new Promise<Blob | null>(resolve => composite.toBlob(resolve, 'image/png'));
+          if (blob) {
+            newFrames.push({
+              id: i,
+              blob,
+              url: URL.createObjectURL(blob),
+              timestamp: elapsed / 1000,
+            });
+          }
+        }
+
+        if (disposalType === 2) {
+          // 2 = 다음 프레임 전에 해당 영역을 배경(투명)으로 되돌린다
+          compositeCtx.clearRect(dims.left, dims.top, dims.width, dims.height);
+        } else if (disposalType === 3 && prevState) {
+          // 3 = 이 프레임을 그리기 직전 상태로 되돌린다 (없으면 잔상이 남는다)
+          compositeCtx.putImageData(prevState, 0, 0);
+          prevState = null;
+        }
+
+        elapsed += delay || 100;
+        setProgress(((i + 1) / rawFrames.length) * 100);
+      }
+
+      setFrames(newFrames);
+      setSelectedFrameIds(new Set(newFrames.map(f => f.id)));
+      setExportColumns(Math.ceil(Math.sqrt(Math.max(1, newFrames.length))));
+    } catch {
+      setLoadError(true);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  const loadMediaFile = (file: File) => {
+    setLoadError(false);
+
+    if (file.type === 'image/gif' || /\.gif$/i.test(file.name)) {
+      void extractGifFrames(file);
+      return;
+    }
+
     if (videoRef.current) {
-      videoRef.current.src = url;
+      videoRef.current.src = URL.createObjectURL(file);
       setIsLoading(true);
       setProgress(0);
       // Wait for metadata to load before starting extraction
     }
   };
 
+  // 동영상 로드 실패 시 로딩 오버레이가 영원히 걸리는 것을 막는다
+  const handleVideoError = () => {
+    setIsLoading(false);
+    setProgress(0);
+    setLoadError(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // 같은 파일을 다시 골라도 onChange가 발생하도록 값을 비운다
+    e.target.value = '';
+    if (!file) return;
+    loadMediaFile(file);
+  };
+
   const startExtraction = async () => {
     const video = videoRef.current;
     if (!video) return;
     
-    // Revoke old frames
-    frames.forEach(f => URL.revokeObjectURL(f.url));
-    setFrames([]);
-    setSelectedFrameIds(new Set());
+    // 이전 프레임과 파생 상태(배경제거/보정 백업 포함) 정리
+    clearFrameState();
 
     const duration = video.duration;
     const width = video.videoWidth;
@@ -996,6 +1155,29 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       return s;
     });
     setDeleteTargetId(null);
+  };
+
+  // --- Bulk Selection / Delete ---
+  const selectAllFrames = () => setSelectedFrameIds(new Set(frames.map(f => f.id)));
+  const clearFrameSelection = () => setSelectedFrameIds(new Set());
+
+  // 선택된 프레임을 지운다
+  const deleteSelectedFrames = () => {
+    if (selectedFrameIds.size === 0) return;
+    frames.forEach(f => {
+      if (selectedFrameIds.has(f.id)) URL.revokeObjectURL(f.url);
+    });
+    setFrames(prev => prev.filter(f => !selectedFrameIds.has(f.id)));
+    setSelectedFrameIds(new Set());
+  };
+
+  // 선택되지 않은 프레임을 지운다 (= 선택한 것만 남긴다)
+  const deleteUnselectedFrames = () => {
+    if (selectedFrameIds.size === 0 || selectedFrameIds.size === frames.length) return;
+    frames.forEach(f => {
+      if (!selectedFrameIds.has(f.id)) URL.revokeObjectURL(f.url);
+    });
+    setFrames(prev => prev.filter(f => selectedFrameIds.has(f.id)));
   };
 
   // --- Frame Edit Modal ---
@@ -1472,8 +1654,9 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
             ref={videoRef} 
             style={{ display: 'none' }} 
             crossOrigin="anonymous" 
-            playsInline 
+            playsInline
             onLoadedMetadata={startExtraction}
+            onError={handleVideoError}
         />
 
         {/* Loading Overlay */}
@@ -1487,6 +1670,13 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         {/* LEFT PANEL: GRID */}
         <div className="frame-panel">
           <div className="panel-toolbar" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+             {/* 파일 로드 실패 알림 — 프레임이 이미 있는 상태의 실패도 보여야 하므로 분기 바깥에 둔다 */}
+             {loadError && (
+                <div className="row" role="alert" style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>
+                   <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>error</span>
+                   {t.dedupError}
+                </div>
+             )}
              {frames.length === 0 ? (
                 <div className="row">
                     <label className="btn">
@@ -1549,8 +1739,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                            <span className="badge">{t.totalFrames}: {frames.length}</span>
                         </div>
                         <div className="flex-grow"></div>
-                        <button className="btn btn-secondary" onClick={() => setSelectedFrameIds(new Set())}>{t.clearSelection}</button>
-                        <button className="btn btn-secondary" onClick={() => setSelectedFrameIds(new Set(frames.map(f => f.id)))}>{t.selectAll}</button>
+                        {/* 선택/삭제 버튼은 아래 '기본' 탭의 프레임 크기 행에 모아 두었다 */}
                         <div className="row" style={{ marginLeft: 12, gap: 6, width: 120 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--text-muted)' }}>grid_view</span>
                             <input
@@ -1696,6 +1885,47 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                                         <span className="badge">px</span>
                                     </div>
                                 )}
+
+                                {/* 선택/삭제 일괄 작업 */}
+                                <div className="flex-grow"></div>
+                                <div className="row" style={{ gap: 6 }}>
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                        onClick={selectAllFrames}
+                                        disabled={selectedFrameIds.size === frames.length}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>select_all</span>
+                                        {t.selectAll}
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                        onClick={clearFrameSelection}
+                                        disabled={selectedFrameIds.size === 0}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>deselect</span>
+                                        {t.clearSelection}
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
+                                        onClick={deleteSelectedFrames}
+                                        disabled={selectedFrameIds.size === 0}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                                        {t.deleteSelected}
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
+                                        onClick={deleteUnselectedFrames}
+                                        disabled={selectedFrameIds.size === 0 || selectedFrameIds.size === frames.length}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete_sweep</span>
+                                        {t.deleteUnselected}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -2210,6 +2440,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                   setSelectedFrameIds(new Set());
                   setIsLoading(false);
                   setProgress(0);
+                  setLoadError(false);
                   setChromaColor(null);
                   setDedupResult(null);
                   setCurrentPreviewFrameIndex(0);
