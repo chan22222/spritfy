@@ -374,8 +374,9 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
           <div className="converter-controls">
             <div className="converter-controls-row">
               <div className="control-group">
-                <label>{t.converterFormat}</label>
+                <label htmlFor="conv-format">{t.converterFormat}</label>
                 <select
+                  id="conv-format"
                   value={outputFormat}
                   onChange={e => setOutputFormat(e.target.value)}
                   className="converter-select"
@@ -391,8 +392,9 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
 
               {showQuality && (
                 <div className="control-group control-group-wide">
-                  <label>{t.converterQuality}: {quality}%</label>
+                  <label htmlFor="conv-quality">{t.converterQuality}: {quality}%</label>
                   <input
+                    id="conv-quality"
                     type="range"
                     min={1}
                     max={100}
@@ -405,8 +407,9 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
 
               {showIcoSize && (
                 <div className="control-group">
-                  <label>{t.converterIcoSize}</label>
+                  <label htmlFor="conv-ico-size">{t.converterIcoSize}</label>
                   <select
+                    id="conv-ico-size"
                     value={icoSize}
                     onChange={e => setIcoSize(Number(e.target.value))}
                     className="converter-select"
@@ -476,6 +479,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
                     <button
                       className="file-action-btn"
                       onClick={() => convertFile(f.id)}
+                      aria-label={t.converterConvert}
                       title={t.converterConvert}
                     >
                       <span className="material-symbols-outlined">sync</span>
@@ -485,6 +489,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
                     <button
                       className="file-action-btn action-download"
                       onClick={() => downloadFile(f)}
+                      aria-label={t.converterDownload}
                       title={t.converterDownload}
                     >
                       <span className="material-symbols-outlined">download</span>
@@ -493,6 +498,7 @@ export const ConverterPage: React.FC<ConverterProps> = ({ lang, t }) => {
                   <button
                     className="file-action-btn action-remove"
                     onClick={() => removeFile(f.id)}
+                    aria-label={t.converterRemove}
                     title={t.converterRemove}
                   >
                     <span className="material-symbols-outlined">close</span>

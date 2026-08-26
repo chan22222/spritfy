@@ -82,6 +82,8 @@
   font-weight: normal;
   margin: 12px 0;
   color: var(--text-main);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .bd-article-meta {
@@ -135,7 +137,8 @@
   line-height: 1.8;
   margin: 0 0 20px;
   white-space: pre-wrap;
-  word-break: break-word;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .bd-article-image {
@@ -155,7 +158,9 @@
 .bd-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
+  row-gap: 10px;
   padding: 16px 0;
   border-top: 2px solid var(--border);
   border-bottom: 2px solid var(--border);
@@ -175,7 +180,6 @@
   }
 
   .bd-actions {
-    flex-wrap: wrap;
     gap: 10px;
   }
 }

@@ -1,10 +1,11 @@
 /* ===== Pixel Art Editor Layout ===== */
+/* 높이는 flex로만 결정한다 — 헤더 높이(60px/48px)를 하드코딩하면 ≤600px에서 어긋난다 */
 .editor-container {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
-  height: calc(100vh - 60px);
 }
 
 .editor-main {
@@ -83,6 +84,7 @@
 /* ===== Canvas Area ===== */
 .editor-canvas-area {
   flex: 1;
+  min-width: 0;
   position: relative;
   overflow: hidden;
   background: #888888;
@@ -138,7 +140,11 @@
   font-size: 0.82rem;
   pointer-events: none;
   z-index: 50;
-  white-space: nowrap;
+  /* 좁은 캔버스에서 잘리지 않도록 줄바꿈 허용 (넓은 화면에선 한 줄 유지) */
+  max-width: min(90%, 420px);
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   border: 1px solid var(--border);
   animation: toast-in 0.25s ease-out;
 }
@@ -167,6 +173,8 @@
   background: var(--bg-panel);
   border-left: 1px solid var(--border);
   overflow-y: auto;
+  /* overflow-y:auto 만 주면 overflow-x가 auto로 계산돼 팔레트 hover 확대 시 가로 스크롤바가 깜빡인다 */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -186,11 +194,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .editor-panel h4 .panel-actions {
   display: flex;
   gap: 4px;
+  /* 패널이 좁아져도 아이콘 버튼이 찌그러지지 않도록 (제목 쪽이 줄바꿈된다) */
+  flex-shrink: 0;
 }
 
 .panel-icon-btn {
@@ -444,10 +455,14 @@
 .layer-opacity-row input[type="range"] {
   flex: 1;
   height: 3px;
+  min-width: 0;
 }
 
 .layer-opacity-row span:first-child {
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .layer-opacity-row span:last-child {
@@ -461,15 +476,19 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .size-inputs label {
   font-size: 0.75rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .size-inputs input[type="number"] {
   width: 60px;
+  flex: 0 0 60px;
+  min-width: 0;
   padding: 4px 6px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -697,7 +716,13 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px;
-  min-width: 160px;
+  /* 좁은 화면·화면 끝에서 우클릭했을 때 메뉴가 뷰포트를 넘지 않도록 */
+  min-width: min(160px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  /* dvh: 모바일 주소창을 제외한 실제 가시 영역 */
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
@@ -746,6 +771,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
   z-index: 200;
 }
 
@@ -754,7 +780,14 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
-  min-width: 300px;
+  /* body가 overflow:hidden 이라 모달이 뷰포트를 넘으면 스크롤로 도달할 수 없다 */
+  min-width: min(300px, 100%);
+  max-width: calc(100vw - 32px);
+  /* dvh: 모바일 주소창을 제외한 실제 가시 영역 */
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .editor-modal h3 {
@@ -771,44 +804,12 @@
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-/* ===== Sprite Sheet Import Preview ===== */
-.sprite-sheet-preview {
-  margin-bottom: 16px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  background: #222;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.sprite-sheet-preview-inner {
-  position: relative;
-  display: inline-block;
-  line-height: 0;
-  max-width: 100%;
-}
 
-.sprite-sheet-preview-inner img {
-  max-width: 100%;
-  max-height: 200px;
-  display: block;
-  image-rendering: pixelated;
-}
 
-.sprite-sheet-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(187, 134, 252, 0.5) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(187, 134, 252, 0.5) 1px, transparent 1px);
-  border-right: 1px solid rgba(187, 134, 252, 0.5);
-  border-bottom: 1px solid rgba(187, 134, 252, 0.5);
-  pointer-events: none;
-}
 
 /* ===== Light Mode Overrides ===== */
 [data-theme="light"] .editor-canvas-area {
@@ -884,16 +885,68 @@
   background: rgba(0,0,0,0.4);
 }
 
-[data-theme="light"] .sprite-sheet-preview {
-  background: #e0e0e0;
-}
 
-/* ===== Mobile (<=768px) — 우측 패널 토글 시트 + 광고/타임라인 압축 (PC 불변) ===== */
+/* ===== Responsive — 넓은 폭 → 좁은 폭 순서 (max-width는 뒤 블록이 이긴다) ===== */
 .editor-panels-toggle,
 .editor-panels-backdrop {
   display: none;
 }
 
+/* --- 표준 데스크톱: 광고 레일 축소 --- */
+@media (max-width: 1200px) {
+  .editor-main > .side-rail,
+  .editor-timeline > .side-rail {
+    width: 120px;
+  }
+}
+
+/* --- 태블릿 가로: 광고 레일 제거 + 패널 축소 --- */
+@media (max-width: 1024px) {
+  /* 레일을 남기면 캔버스가 300px 이하로 짜부라지고 프레임 스트립이 사라진다 */
+  .editor-main > .side-rail,
+  .editor-timeline > .side-rail {
+    display: none;
+  }
+
+  .editor-panels {
+    width: 230px;
+  }
+
+  .editor-panel {
+    padding: 10px;
+  }
+
+  /* 세로 공간이 부족한 태블릿·가로 모드에서 툴바 버튼이 뭉개지거나 잘려 나가는 것 방지 */
+  .editor-toolbar {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+  }
+
+  .tool-btn,
+  .tool-divider {
+    flex-shrink: 0;
+  }
+
+  /* 컨트롤이 축소 불가라 프레임 스트립이 0px로 사라지던 문제 — 스트립 최소 폭을 확보하고
+     대신 컨트롤이 줄바꿈되게 한다 */
+  .editor-timeline {
+    height: auto;
+    min-height: 100px;
+  }
+
+  .timeline-frames {
+    min-width: 180px;
+  }
+
+  .timeline-controls {
+    flex-shrink: 1;
+    min-width: 0;
+    gap: 8px;
+  }
+}
+
+/* --- 모바일: 우측 패널 토글 시트 + 타임라인 2행 분리 --- */
 @media (max-width: 768px) {
   /* 좌우 광고 슬롯 제거 → 캔버스 최대화 */
   .side-rail {
@@ -942,7 +995,7 @@
     justify-content: center;
     position: fixed;
     left: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 900;
     width: 48px;
     height: 48px;
@@ -954,18 +1007,97 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   }
 
+  /* 시트가 열리면 backdrop(950)·시트(960) 위로 올려 닫기 아이콘이 보이게 한다 */
+  .editor-panels-toggle.open {
+    z-index: 965;
+  }
+
   .editor-panels-toggle .material-symbols-outlined {
     font-size: 22px;
   }
 
-  /* 타임라인 압축 */
+  /* 패널 시트(960)·토글(965)·도움말 백드롭(970)·도움말 패널(980) 위.
+     헤더(1000)보다는 아래로 두어 데스크톱(기본 200)과 같은 순서를 유지한다. */
+  .editor-modal-overlay {
+    z-index: 990;
+  }
+
+  /* 터치 타깃 확대 */
+  .tool-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .panel-icon-btn,
+  .layer-visibility-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .layer-item {
+    padding: 6px;
+  }
+
+  /* 타임라인 — 컨트롤(축소 불가)과 프레임 스트립을 2행으로 분리.
+     컨트롤을 order:-1 로 윗행에 두어 좌하단 토글 버튼이 재생 버튼을 덮지 않게 한다 */
   .editor-timeline {
-    height: 84px;
+    height: auto;
+    min-height: 84px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .timeline-controls {
+    order: -1;
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 8px;
+    padding: 6px 8px;
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timeline-frames {
+    flex: 1 1 100%;
+    min-width: 0;
+    /* 좌하단 토글 버튼(left:16px, 48px)에 첫 프레임이 가리지 않도록 여백 확보 */
+    padding: 6px 8px 6px 72px;
   }
 
   .timeline-frame,
   .timeline-add-frame {
     width: 44px;
     height: 44px;
+  }
+}
+
+/* --- 소형 모바일 --- */
+@media (max-width: 480px) {
+  .timeline-controls {
+    gap: 6px;
+  }
+
+  .timeline-frame,
+  .timeline-add-frame {
+    width: 40px;
+    height: 40px;
+  }
+
+  .editor-modal {
+    padding: 16px;
+  }
+
+  /* 좁은 폭에서 취소/확인 버튼이 한 줄을 채우도록 */
+  .editor-modal .modal-actions .btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* --- 초소형 모바일 --- */
+@media (max-width: 360px) {
+  /* editor.tsx 인라인 minWidth(280/320px) 오버라이드 — 초소형 화면에서 모달 넘침 방지 */
+  .editor-modal {
+    min-width: 0 !important;
   }
 }

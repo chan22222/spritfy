@@ -139,7 +139,9 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
+  /* 모바일 주소창 때문에 100vh는 실제 가시 영역보다 크다. dvh 지원 시 그쪽을 쓴다 */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -196,6 +198,12 @@ main {
   flex-direction: column;
 }
 
+/* 이미지 전역 상한 — body가 overflow:hidden이라 넘치면 스크롤 없이 잘린다 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* App Header */
 .app-header {
   height: 60px;
@@ -215,11 +223,19 @@ main {
   font-size: 1.2rem;
   color: var(--primary);
   transition: opacity 0.15s, filter 0.15s;
+  flex-shrink: 0;
 }
 
 .brand:hover {
   filter: drop-shadow(0 0 6px rgba(187, 134, 252, 0.4));
   transform: scale(1.05);
+}
+
+/* 로고 크기는 CSS에서만 관리 (마크업 인라인 style 제거 → 미디어쿼리로 축소 가능) */
+.brand img {
+  height: 52px;
+  width: auto;
+  max-width: none;
 }
 
 /* Header Navigation */
@@ -250,6 +266,8 @@ main {
 .header-nav {
   display: flex;
   gap: 4px;
+  /* flex 자식 기본값 min-width:auto 때문에 줄지 않고 옆 요소를 밀어내는 것을 방지 */
+  min-width: 0;
 }
 
 .nav-link {
@@ -280,6 +298,8 @@ main {
   display: flex;
   align-items: center;
   gap: 6px;
+  /* 언어/테마 버튼이 헤더 밖으로 밀려나 클릭 불가가 되지 않도록 */
+  flex-shrink: 0;
 }
 
 .header-action-btn {
@@ -379,91 +399,6 @@ main {
 
 [data-theme="light"] .lang-menu-item:hover {
   background: rgba(0, 0, 0, 0.05);
-}
-
-/* Tablet/Mobile Header — 햄버거 드롭다운 (PC 레이아웃 불변) */
-@media (max-width: 768px) {
-  .app-header {
-    position: relative;
-  }
-
-  .nav-toggle {
-    display: flex;
-    margin-left: auto;
-    margin-right: 4px;
-  }
-
-  .header-nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    z-index: 1000;
-  }
-
-  .header-nav.open {
-    display: flex;
-  }
-
-  /* 드롭다운에선 라벨/간격 복원 (600px 블록의 라벨 숨김을 구체성으로 override) */
-  .header-nav.open .nav-link {
-    width: 100%;
-    padding: 12px 16px;
-    gap: 10px;
-  }
-
-  .header-nav.open .nav-label {
-    display: inline;
-  }
-}
-
-/* Mobile Header */
-@media (max-width: 600px) {
-  .app-header {
-    height: 48px;
-    padding: 0 12px;
-  }
-
-  .brand img {
-    height: 36px !important;
-  }
-
-  .nav-link {
-    padding: 6px 10px;
-    gap: 0;
-  }
-
-  .nav-label {
-    display: none;
-  }
-
-  .header-actions {
-    gap: 4px;
-  }
-
-  .header-action-btn {
-    padding: 4px 6px;
-  }
-
-  .lang-current {
-    display: none;
-  }
-
-  .lang-chevron {
-    display: none;
-  }
-
-  .lang-menu {
-    right: 0;
-    min-width: 130px;
-  }
 }
 
 /* Layout */
@@ -786,6 +721,15 @@ select {
   margin: 0;
 }
 
+/* 한국어/일본어는 어절 단위로 줄바꿈, 긴 영단어만 강제 분리 */
+.empty-drop-title,
+.empty-drop-sub,
+.empty-feature-card h4,
+.empty-feature-card p {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 .empty-features {
   display: flex;
   flex-wrap: wrap;
@@ -851,7 +795,8 @@ select {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  /* 시트(960)·도움말 패널(980)·플로팅 버튼(900) 위, 헤더 드롭다운(1000) 아래 */
+  z-index: 985;
 }
 
 .spinner {
@@ -874,8 +819,14 @@ select {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+/* flex 자식의 min-width:auto 때문에 내용이 컨테이너를 밀어내는 것을 막는다 */
+.row > .control-group {
+  min-width: 0;
 }
 
 .flex-grow {
@@ -963,6 +914,16 @@ select {
   padding: 24px;
 }
 
+/* 뷰포트가 낮을 때(가로 모드 폰 등) 모달이 잘려 닫기 버튼까지 사라지는 것 방지 */
+.edit-modal,
+.split-modal {
+  /* dvh: 모바일 주소창을 제외한 실제 가시 영역 */
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .edit-modal-body {
   display: flex;
   gap: 20px;
@@ -1019,6 +980,8 @@ select {
   gap: 0;
   border-bottom: 2px solid var(--border);
   margin-top: 4px;
+  /* 좁아지면 잘리는 대신 줄바꿈 (한 줄에 들어가는 폭에선 아무 영향 없음) */
+  flex-wrap: wrap;
 }
 
 .toolbar-tab {
@@ -1057,17 +1020,174 @@ select {
   border: 1px solid var(--border);
 }
 
-/* ===== Mobile (<=768px) — 스프라이트 사이드바 토글 시트 (PC 불변) ===== */
+/* 모바일 전용 요소 — 기본 숨김, 아래 768px 블록에서 노출 */
 .sidebar-toggle,
 .sidebar-backdrop {
   display: none;
 }
 
-@media (max-width: 768px) {
-  /* 광고 슬롯/리사이즈 핸들 제거 → 프레임 영역 최대화 */
+/* ============================================================
+   반응형 — 폭이 큰 순서로 정렬 (뒤에 오는 블록이 이긴다)
+   1200 → 1024 → 768 → 600 → 480 → 360
+   ============================================================ */
+
+/* ===== 표준 데스크톱 (<=1200px) — 헤더 3단 압축 ===== */
+/* 스프라이트 시트 가져오기 프리뷰 — editor.tsx와 sprite-page.tsx가 공유한다.
+   sprite-page.tsx는 editor.css를 import하지 않으므로 전역 시트인 여기에 둔다. */
+.sprite-sheet-preview {
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sprite-sheet-preview-inner {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  max-width: 100%;
+}
+.sprite-sheet-preview-inner img {
+  max-width: 100%;
+  max-height: 200px;
+  display: block;
+  image-rendering: pixelated;
+}
+.sprite-sheet-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(187, 134, 252, 0.5) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(187, 134, 252, 0.5) 1px, transparent 1px);
+  border-right: 1px solid rgba(187, 134, 252, 0.5);
+  border-bottom: 1px solid rgba(187, 134, 252, 0.5);
+  pointer-events: none;
+}
+[data-theme="light"] .sprite-sheet-preview {
+  background: #e0e0e0;
+}
+
+@media (max-width: 1200px) {
+  .app-header {
+    padding: 0 16px;
+    gap: 6px;
+  }
+
+  .brand img {
+    height: 44px;
+  }
+
+  .header-nav {
+    gap: 3px;
+  }
+
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  /* 네비는 아이콘 온리 — 라벨을 유지하면 KO/JA가 1140px 부근부터 넘친다.
+     각 NavLink에 aria-label이 있고, 햄버거 드롭다운에선 아래 규칙이 라벨을 복원한다. */
+  .header-nav .nav-label {
+    display: none;
+  }
+
+  .header-action-btn {
+    padding: 5px 8px;
+    gap: 3px;
+    font-size: 0.8rem;
+  }
+
+  .lang-chevron {
+    display: none;
+  }
+
+  /* 광고 슬롯 축소 + 사이드바 상한 (인라인 width는 max-width로 제한 → !important 불필요) */
+  .side-rail {
+    width: 100px;
+  }
+
+  .sidebar {
+    max-width: 34vw;
+  }
+}
+
+/* ===== 태블릿 가로 (<=1024px) ===== */
+@media (max-width: 1024px) {
+  /* 언어 라벨 숨김 — 버튼에 aria-label, 드롭다운에 현재 언어 체크 표시가 있다 */
+  .lang-current {
+    display: none;
+  }
+
+  /* 터치 타깃 확보 */
+  .nav-link {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  /* 광고 슬롯 제거 → 본문 폭 확보 */
   .side-rail {
     display: none;
   }
+
+  .panel-toolbar {
+    padding: 12px;
+    gap: 8px;
+  }
+}
+
+/* ===== 태블릿 세로/모바일 (<=768px) ===== */
+@media (max-width: 768px) {
+  /* 헤더 → 햄버거 드롭다운 */
+  .app-header {
+    position: relative;
+  }
+
+  .nav-toggle {
+    display: flex;
+    margin-left: auto;
+    margin-right: 4px;
+  }
+
+  .header-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    /* 가로 모드 폰에서 하단 링크가 화면 밖으로 나가지 않도록 */
+    max-height: calc(100vh - 60px);
+    max-height: calc(100dvh - 60px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .header-nav.open {
+    display: flex;
+  }
+
+  /* 드롭다운에선 라벨/간격 복원 (라벨 숨김 규칙들을 구체성으로 override) */
+  .header-nav.open .nav-link {
+    width: 100%;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .header-nav.open .nav-label {
+    display: inline;
+  }
+
+  /* 리사이즈 핸들 제거 → 프레임 영역 최대화 */
   .resize-handle {
     display: none;
   }
@@ -1079,6 +1199,8 @@ select {
     right: 0;
     bottom: 0;
     width: min(340px, 90vw) !important;
+    /* 1200px 블록의 34vw 상한 해제 */
+    max-width: none;
     z-index: 960;
     border-left: 1px solid var(--border);
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
@@ -1113,7 +1235,7 @@ select {
     justify-content: center;
     position: fixed;
     right: 16px;
-    bottom: 76px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     z-index: 900;
     width: 48px;
     height: 48px;
@@ -1127,5 +1249,121 @@ select {
 
   .sidebar-toggle .material-symbols-outlined {
     font-size: 22px;
+  }
+
+  /* 편집 모달 — 좁은 폭에서 프리뷰가 짓눌리므로 세로 배치 */
+  .edit-modal-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .edit-modal-preview {
+    min-height: 160px;
+  }
+
+  .edit-modal-controls {
+    width: 100%;
+    max-height: none;
+  }
+  /* sprite-page.tsx의 인라인 style width(240/180/160/120px)는 미디어쿼리로 못 이긴다.
+     좁은 폭에서는 !important로 세로 스택시킨다 (지침상 인라인 오버라이드는 허용). */
+  .panel-toolbar .control-group,
+  .panel-toolbar .row > .control-group {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  /* range 입력의 브라우저 기본 intrinsic min-width(약 129px)가 행을 밀어낸다 */
+  .panel-toolbar input[type="range"],
+  .panel-toolbar .control-group input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* ===== 모바일 (<=600px) ===== */
+@media (max-width: 600px) {
+  .app-header {
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .brand img {
+    height: 36px;
+  }
+
+  .header-nav {
+    /* dvh: 모바일 주소창을 제외한 실제 가시 영역 */
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    gap: 0;
+  }
+
+  /* 로그인 버튼 라벨까지 숨김 (버튼에 aria-label 있음) */
+  .nav-label {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-action-btn {
+    padding: 4px 8px;
+    min-width: 40px;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .lang-menu {
+    right: 0;
+    min-width: 130px;
+  }
+
+  .lang-menu-item {
+    min-height: 40px;
+  }
+
+  /* 카드가 반쪽으로 뜨지 않도록 2열로 채운다 */
+  .empty-feature-card {
+    flex: 1 1 calc(50% - 7px);
+    min-width: 0;
+  }
+}
+
+/* ===== 소형 모바일 (<=480px) ===== */
+@media (max-width: 480px) {
+  .panel-toolbar {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .panel-toolbar .btn {
+    padding: 7px 10px;
+    font-size: 0.78rem;
+  }
+
+  .empty-state {
+    gap: 24px;
+    padding: 24px 12px;
+  }
+
+  .empty-drop-zone {
+    padding: 24px 20px;
+  }
+
+  .frame-grid-scroll {
+    padding: 12px;
+  }
+}
+
+/* ===== 초소형 (<=360px) ===== */
+@media (max-width: 360px) {
+  .empty-feature-card {
+    flex-basis: 100%;
   }
 }

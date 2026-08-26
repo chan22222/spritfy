@@ -159,7 +159,44 @@
   cursor: pointer;
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive (넓은 폭 → 좁은 폭 순서) ---- */
+/* 모바일 — 보이는 두께는 유지하고 히트 영역만 넓혀 터치 타깃 확보 */
+@media (max-width: 768px) {
+  .ap-mini-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ap-mini-bar {
+    padding: 15px 0;
+    background-clip: content-box;
+  }
+
+  .ap-full-btn {
+    padding: 2px;
+    margin: -2px;
+  }
+
+  .ap-full-bar {
+    padding: 16px 0;
+    background-clip: content-box;
+  }
+
+  .ap-full-volume {
+    height: 6px;
+  }
+
+  .ap-full-volume::-webkit-slider-thumb {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ap-full-volume::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 @media (max-width: 480px) {
   .ap-full {
     padding: 16px;

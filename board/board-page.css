@@ -173,7 +173,9 @@
   font-family: 'DungGeunMo', monospace;
   font-size: 0.82rem;
   cursor: pointer;
-  padding: 0;
+  /* 히트 영역만 넓히고 음수 마진으로 th 행 높이는 그대로 유지 */
+  padding: 8px 6px;
+  margin: -8px -6px;
   transition: color 0.15s;
 }
 
@@ -255,7 +257,10 @@
 .board-title-link {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
+  max-width: 100%;
+  min-width: 0;
   text-decoration: none;
   color: var(--text-main);
   transition: color 0.15s;
@@ -272,9 +277,11 @@
   flex-shrink: 0;
 }
 
+/* nowrap이 없어 ellipsis는 동작하지 않으므로 줄바꿈으로 처리 */
 .board-title-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .board-comment-count {
@@ -342,8 +349,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 4px;
-  padding: 20px 24px;
+  row-gap: 6px;
+  padding: 20px clamp(8px, 3vw, 24px);
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -412,8 +421,49 @@
 }
 
 /* ============================================
-   Responsive
+   Responsive (넓은 폭 → 좁은 폭 순서 — max-width는 뒤에 오는 블록이 이긴다)
    ============================================ */
+
+/* ---- 태블릿 가로 (<=1024px) ---- */
+@media (max-width: 1024px) {
+  .board-toolbar {
+    padding: 14px clamp(12px, 2vw, 24px);
+    gap: 12px;
+  }
+
+  .board-search-input {
+    width: min(200px, 22vw);
+  }
+
+  .board-cat-btn {
+    padding: 6px 9px;
+  }
+
+  /* auto 레이아웃에서는 th의 width가 무시돼 제목 칸이 짓눌린다 → fixed로 전환 */
+  .board-table {
+    table-layout: fixed;
+  }
+
+  /* fixed 전환 시 잘리지 않도록 실제 min-content에 맞춰 재조정 */
+  .board-th-category { width: 104px; }
+  .board-th-author { width: 100px; }
+  .board-th-date { width: 92px; }
+  .board-th-views,
+  .board-th-likes { width: 62px; }
+
+  /* 남는 폭은 전부 제목 열에 */
+  .board-td-title {
+    max-width: none;
+  }
+
+  .board-td-author,
+  .board-td-date {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---- 태블릿 세로 / 모바일 (<=768px) ---- */
 @media (max-width: 768px) {
   .board-header {
     padding: 32px 16px 16px;
@@ -442,6 +492,16 @@
   .board-write-btn {
     width: 100%;
     justify-content: center;
+    padding: 12px 20px;
+  }
+
+  /* 터치 타깃 40px 확보 + 오탭 방지용 간격 */
+  .board-categories {
+    gap: 6px;
+  }
+
+  .board-cat-btn {
+    padding: 11px 12px;
   }
 
   .board-table-wrapper {
@@ -459,28 +519,7 @@
   }
 }
 
-@media (max-width: 480px) {
-  .board-title {
-    font-size: 1.4rem;
-  }
-
-  .board-th-likes,
-  .board-td-likes {
-    display: none;
-  }
-
-  .board-table td {
-    padding: 8px 6px;
-    font-size: 0.82rem;
-  }
-
-  .board-table th {
-    padding: 8px 6px;
-    font-size: 0.78rem;
-  }
-}
-
-/* ===== Mobile (<=600px) — 테이블을 카드로 (PC 테이블 불변, 파일 최하단에 둬 768/480의 display:none을 override) ===== */
+/* ---- 모바일 (<=600px) — 테이블을 카드로 (PC 테이블 불변) ---- */
 @media (max-width: 600px) {
   .board-table-wrapper {
     overflow-x: hidden;
@@ -535,12 +574,22 @@
     white-space: normal;
   }
 
-  /* 메타 줄: 카테고리 · 작성자 · 날짜 · 조회 · 추천 (768/480에서 숨긴 것 복원) */
+  /* 메타 줄: 카테고리 · 작성자 · 날짜 · 조회 · 추천 (768에서 숨긴 것 복원) */
   .board-td-category { order: 1; }
-  .board-td-author { order: 2; display: inline-flex; }
   .board-td-date { order: 3; display: inline-flex; }
   .board-td-views { order: 4; display: inline-flex; }
   .board-td-likes { order: 5; display: inline-flex; }
+
+  /* 작성자: 잘라내면 식별 불가 → 줄바꿈으로 처리 */
+  .board-td-author {
+    order: 2;
+    display: inline-flex;
+    max-width: 45%;
+    min-width: 0;
+    overflow: visible;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
 
   .board-td-author::after,
   .board-td-date::after {
@@ -565,5 +614,23 @@
     text-align: center;
     padding: 40px 0;
     font-size: 0.9rem;
+  }
+}
+
+/* ---- 소형 모바일 (<=480px) ---- */
+@media (max-width: 480px) {
+  .board-title {
+    font-size: 1.4rem;
+  }
+
+  .board-pagination {
+    padding: 16px 8px;
+  }
+
+  .board-page-btn {
+    min-width: 30px;
+    height: 40px;
+    padding: 0 6px;
+    font-size: 0.8rem;
   }
 }

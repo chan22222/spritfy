@@ -40,6 +40,8 @@
   font-size: 0.72rem;
   padding: 2px 8px;
   border: 1px solid;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sound-cat-badge.cat-bgm { color: #bb86fc; border-color: #bb86fc; background: rgba(187, 134, 252, 0.1); }
@@ -53,6 +55,7 @@
   font-size: 0.68rem;
   color: var(--text-muted);
   opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .sound-card-title {
@@ -61,6 +64,7 @@
   font-weight: normal;
   margin: 0;
   color: var(--text-main);
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -71,6 +75,7 @@
   font-size: 0.78rem;
   color: var(--text-muted);
   margin: 0;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,7 +83,9 @@
 
 .sound-card-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  row-gap: 4px;
   margin-top: 4px;
 }
 

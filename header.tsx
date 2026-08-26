@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
   return (
     <header className="app-header" role="banner">
       <Link to={lp('/')} className="brand">
-        <img src="/logo.png" alt="Spritfy" width={700} height={250} style={{ height: 52, width: 'auto' }} />
+        <img src="/logo.png" alt="Spritfy" width={700} height={250} />
       </Link>
       <div className="header-nav-wrap" ref={navRef}>
         <button

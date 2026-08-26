@@ -112,7 +112,19 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
-/* Mobile */
+/* ===== 표준 데스크톱 (<=1200px) — 헤더 폭 확보 ===== */
+@media (max-width: 1200px) {
+  .user-menu-name {
+    max-width: 72px;
+  }
+
+  .user-menu-btn {
+    padding: 4px 8px;
+    gap: 4px;
+  }
+}
+
+/* ===== 모바일 (<=600px) ===== */
 @media (max-width: 600px) {
   .user-menu-name {
     display: none;
@@ -120,10 +132,15 @@
 
   .user-menu-btn {
     padding: 4px 6px;
+    min-height: 40px;
   }
 
   .user-menu-dropdown {
     right: 0;
     min-width: 140px;
+  }
+
+  .user-menu-item {
+    min-height: 40px;
   }
 }

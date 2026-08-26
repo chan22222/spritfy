@@ -2,7 +2,7 @@
 .tool-info-toggle {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 900;
   display: inline-flex;
   align-items: center;
@@ -29,12 +29,12 @@
   font-size: 20px;
 }
 
-/* 어두운 반투명 배경 */
+/* 어두운 반투명 배경 — 사이드바/패널 드로어(950/960)보다 위에 온다 */
 .tool-info-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 950;
+  z-index: 970;
 }
 
 /* 슬라이드 패널 — 항상 렌더되고, 닫힘 상태에선 화면 밖으로 이동(콘텐츠는 DOM에 유지) */
@@ -44,7 +44,7 @@
   right: 0;
   bottom: 0;
   width: min(440px, 92vw);
-  z-index: 960;
+  z-index: 980;
   display: flex;
   flex-direction: column;
   background: var(--bg-dark, #1e1e1e);
@@ -75,10 +75,16 @@
   font-weight: 600;
   margin: 0;
   line-height: 1.4;
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .tool-info-close {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   padding: 4px;
   border: none;
   border-radius: 6px;
@@ -94,6 +100,17 @@
 .tool-info-body {
   padding: 20px;
   overflow-y: auto;
+}
+
+/* 좁은 패널에서 한국어/일본어를 어절 단위로 끊는다 */
+.tool-info-intro,
+.tool-info-block h3,
+.tool-info-steps li,
+.tool-info-features li,
+.tool-info-faq dt,
+.tool-info-faq dd {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .tool-info-intro {
@@ -158,14 +175,31 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
-@media (max-width: 640px) {
+/* 사이드바/패널이 드로어로 바뀌는 지점과 맞춘다 */
+@media (max-width: 768px) {
   .tool-info-toggle-label {
     display: none;
   }
 
+  /* 아이콘 20px + 패딩 24px = 44px 정사각 (다른 FAB와 정렬) */
   .tool-info-toggle {
     padding: 12px;
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tool-info-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tool-info-header {
+    padding: 14px 16px;
+  }
+
+  .tool-info-title {
+    font-size: 1rem;
   }
 }

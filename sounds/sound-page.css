@@ -42,7 +42,7 @@
 
 .sound-footer-actions { display: flex; justify-content: center; padding: 24px; }
 
-.sound-pagination { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 24px 16px 32px; }
+.sound-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; row-gap: 6px; padding: 24px clamp(8px, 2vw, 16px) 32px; }
 .sound-page-btn { font-family: 'DungGeunMo', monospace; font-size: 0.88rem; min-width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; background: transparent; border: 2px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
 .sound-page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--text-main); }
 .sound-page-btn.active { background: var(--primary); border-color: var(--primary); color: var(--bg-dark); }
@@ -55,19 +55,34 @@
 [data-theme="light"] .sound-filter-btn.active { background: rgba(124, 77, 255, 0.1); }
 [data-theme="light"] .sound-sort-btn.active { background: rgba(124, 77, 255, 0.1); }
 
-/* ---- Responsive ---- */
+/* ---- Responsive (넓은 폭 → 좁은 폭 순서) ---- */
+/* 태블릿 가로 — 툴바가 3줄로 흩어지기 전에 우측 블록부터 줄인다 */
+@media (max-width: 1024px) {
+  .sound-toolbar { padding: 16px clamp(12px, 2vw, 24px); gap: 12px; }
+  .sound-search-input { width: min(220px, 24vw); }
+  .sound-filter-btn { padding: 6px 9px; }
+  .sound-sort-btn { padding: 6px 10px; }
+  .sound-grid { grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 16px; padding: 8px clamp(12px, 2vw, 24px) 32px; }
+}
+
 @media (max-width: 768px) {
   .sound-header { padding: 32px 16px 16px; }
   .sound-title { font-size: 1.8rem; }
   .sound-toolbar { flex-direction: column; align-items: stretch; padding: 12px 16px; gap: 12px; }
   .sound-toolbar-left { flex-direction: column; align-items: stretch; }
-  .sound-toolbar-right { justify-content: space-between; }
+  .sound-toolbar-right { justify-content: space-between; margin-top: 0; }
   .sound-search-input { width: 100%; }
-  .sound-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 8px 16px 24px; }
+  /* 터치 타깃 40px 확보 */
+  .sound-filters { gap: 6px; }
+  .sound-filter-btn { padding: 11px 12px; }
+  .sound-sort-btn { padding: 12px 14px; }
+  .sound-upload-btn { padding: 12px 20px; }
+  .sound-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 12px; padding: 8px 16px 24px; }
 }
 
 @media (max-width: 480px) {
   .sound-title { font-size: 1.4rem; }
   .sound-grid { grid-template-columns: 1fr; gap: 10px; }
-  .sound-upload-btn { padding: 6px 14px; font-size: 0.82rem; }
+  .sound-upload-btn { padding: 12px 14px; font-size: 0.82rem; }
+  .sound-page-btn { min-width: 32px; height: 40px; padding: 0 6px; font-size: 0.82rem; }
 }

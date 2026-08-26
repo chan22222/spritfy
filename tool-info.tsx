@@ -35,6 +35,7 @@ export const ToolInfo: React.FC<ToolInfoProps> = ({ t, toolKey }) => {
       <button
         type="button"
         className="tool-info-toggle"
+        aria-label={helpLabel}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
@@ -54,6 +55,7 @@ export const ToolInfo: React.FC<ToolInfoProps> = ({ t, toolKey }) => {
         className={`tool-info-panel${open ? ' open' : ''}`}
         aria-label={title}
         aria-hidden={!open}
+        inert={!open}
       >
         <div className="tool-info-header">
           <h2 className="tool-info-title">{title}</h2>

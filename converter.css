@@ -39,6 +39,8 @@
   color: var(--text-main);
   margin: 0 0 8px;
   text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.15);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .converter-subtitle {
@@ -46,6 +48,8 @@
   color: var(--text-muted);
   margin: 0;
   line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* Drop Zone */
@@ -107,12 +111,16 @@
   font-size: 0.95rem;
   color: var(--text-main);
   margin: 0 0 6px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .dropzone-hint {
   font-size: 0.78rem;
   color: var(--text-muted);
   margin: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* Controls */
@@ -148,6 +156,9 @@
   font-size: 0.78rem;
   color: var(--text-muted);
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .converter-select {
@@ -222,6 +233,7 @@
 
 .conv-btn .material-symbols-outlined {
   font-size: 16px;
+  flex-shrink: 0;
 }
 
 .conv-btn-primary {
@@ -464,6 +476,8 @@
   font-family: 'DungGeunMo', monospace;
   font-size: 0.9rem;
   margin: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* ============================================
@@ -518,8 +532,45 @@
     min-width: 0;
   }
 
+  /* index.css의 에디터용 .control-group 여백이 새는 것을 컨버터에서만 정리 */
+  .converter-controls .control-group,
+  .converter-controls .control-group label {
+    margin-bottom: 0;
+  }
+
+  /* 좁은 폭에서는 라벨을 잘라내지 말고 줄바꿈시킨다 */
+  .control-group label {
+    white-space: normal;
+  }
+
+  /* 트랙 모양은 유지하고 터치 히트 영역만 키운다 */
+  .converter-range {
+    height: 32px;
+    background: linear-gradient(var(--border), var(--border)) center / 100% 4px no-repeat;
+  }
+
+  .converter-range::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .converter-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
   .converter-actions {
     justify-content: center;
+  }
+
+  .conv-btn {
+    min-height: 40px;
+    padding: 8px 14px;
+    max-width: 100%;
+    min-width: 0;
+    /* 라벨이 길어지면 밀어내지 말고 버튼 안에서 줄바꿈 */
+    white-space: normal;
+    word-break: keep-all;
   }
 
   .file-counter {
@@ -527,6 +578,33 @@
     width: 100%;
     text-align: center;
     margin-top: 4px;
+  }
+
+  .file-card-actions {
+    gap: 6px;
+  }
+
+  .file-action-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* 도움말 FAB(fixed, 우하단)이 푸터를 가리지 않도록 여유 확보 */
+  .converter-content ~ .site-footer {
+    padding-bottom: 84px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* 터치 기기에서는 title 툴팁을 못 보므로 파일명을 2줄까지 노출 */
+  .file-card-name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
   }
 }
 

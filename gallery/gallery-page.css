@@ -13,7 +13,7 @@
 /* ---- Header ---- */
 .gallery-header {
   text-align: center;
-  padding: 48px 24px 24px;
+  padding: clamp(24px, 4vw, 48px) clamp(16px, 2.5vw, 24px) 24px;
   position: relative;
   z-index: 1;
   background: radial-gradient(ellipse at 50% 20%, rgba(187, 134, 252, 0.06) 0%, transparent 50%);
@@ -21,17 +21,21 @@
 
 .gallery-title {
   font-family: 'DungGeunMo', monospace;
-  font-size: 2.4rem;
+  font-size: clamp(1.4rem, 3.2vw, 2.4rem);
   font-weight: normal;
   margin: 0 0 12px;
   color: var(--text-main);
   text-shadow: 4px 4px 0 rgba(187, 134, 252, 0.2);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .gallery-subtitle {
   font-size: 1rem;
   color: var(--text-muted);
   margin: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Toolbar ---- */
@@ -67,6 +71,7 @@
 .gallery-search-wrapper {
   position: relative;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .gallery-search-icon {
@@ -81,6 +86,7 @@
 
 .gallery-search-input {
   width: 220px;
+  max-width: 100%;
   padding: 8px 12px 8px 34px;
   background: var(--bg-card);
   border: 2px solid var(--border);
@@ -134,6 +140,7 @@
 .gallery-sort-group {
   display: flex;
   border: 2px solid var(--border);
+  min-width: 0;
 }
 
 .gallery-sort-btn {
@@ -174,7 +181,7 @@
 /* ---- Grid ---- */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 20px;
   padding: 8px 24px 32px;
   max-width: 1200px;
@@ -191,10 +198,14 @@
   margin: 0 auto;
   color: var(--danger);
   font-size: 0.9rem;
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .gallery-error .material-symbols-outlined {
   font-size: 20px;
+  flex-shrink: 0;
 }
 
 /* ---- Empty State ---- */
@@ -218,6 +229,8 @@
   font-family: 'DungGeunMo', monospace;
   font-size: 1.1rem;
   margin: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Footer Actions (Loading) ---- */
@@ -234,6 +247,7 @@
   justify-content: center;
   gap: 4px;
   padding: 24px 16px 32px;
+  flex-wrap: wrap;
 }
 
 .gallery-page-btn {
@@ -327,13 +341,45 @@
 /* ============================================
    Responsive
    ============================================ */
-@media (max-width: 768px) {
-  .gallery-header {
-    padding: 32px 16px 16px;
+@media (max-width: 1200px) {
+  /* 카드 최소폭만 낮춰 1067px 부근에서 3열 거대 카드로 떨어지지 않게 한다
+     (컨테이너 1152px에서는 4열 273px로 기존과 동일) */
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .gallery-toolbar {
+    padding: 16px clamp(12px, 2.5vw, 24px);
+    gap: 12px;
   }
 
-  .gallery-title {
-    font-size: 1.8rem;
+  /* 검색창이 남는 폭에 맞춰 줄어들도록 고정 해제 */
+  .gallery-search-wrapper {
+    flex: 0 1 auto;
+  }
+
+  .gallery-toolbar-right {
+    margin-top: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .gallery-filter-btn {
+    padding: 6px 10px;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+    gap: 16px;
+    padding: 8px 20px 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gallery-header {
+    padding: clamp(24px, 4vw, 48px) clamp(16px, 2.5vw, 24px) 16px;
   }
 
   .gallery-toolbar {
@@ -358,26 +404,65 @@
 
   .gallery-filters {
     flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* 터치 타깃 최소 40px 확보 */
+  .gallery-filter-btn,
+  .gallery-sort-btn {
+    min-height: 40px;
+    padding: 8px 12px;
   }
 
   .gallery-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+    gap: 14px;
     padding: 8px 16px 24px;
   }
 }
 
-@media (max-width: 480px) {
-  .gallery-title {
-    font-size: 1.4rem;
+@media (max-width: 600px) {
+  /* 버튼 12개(476px)가 한 줄에 안 들어가므로 간격 축소 + 터치 타깃 확대 */
+  .gallery-pagination {
+    gap: 6px;
+    padding: 20px 12px 28px;
   }
 
+  .gallery-page-btn {
+    min-width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
+  /* 정렬 그룹과 업로드 버튼을 각각 전폭 한 줄로 분리 */
+  .gallery-toolbar-right {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .gallery-sort-group {
+    flex: 1 1 100%;
+  }
+
+  .gallery-sort-btn {
+    flex: 1;
+    padding: 8px 4px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .gallery-upload-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: 40px;
     padding: 6px 14px;
     font-size: 0.82rem;
   }

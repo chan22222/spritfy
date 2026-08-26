@@ -145,9 +145,10 @@
 .hero-badge::before { top: -2px; left: -2px; }
 .hero-badge::after { top: -2px; right: -2px; }
 
+/* 폭 기준으로 축소 — 넓은 화면에선 392×140(원본 비율 2.8)로 기존과 동일 */
 .landing-hero-logo {
-  height: 140px;
-  width: auto;
+  width: min(392px, 100%);
+  height: auto;
   margin-bottom: 24px;
   filter: drop-shadow(0 0 32px rgba(187, 134, 252, 0.3));
   image-rendering: auto;
@@ -155,7 +156,8 @@
 
 .landing-hero-title {
   font-family: 'DungGeunMo', monospace;
-  font-size: 3rem;
+  /* 1200px 이상에서 정확히 3rem, 좁아질수록 연속 축소 */
+  font-size: clamp(1.4rem, 3vw + 0.75rem, 3rem);
   font-weight: normal;
   margin: 0 0 24px;
   color: var(--text-main);
@@ -170,6 +172,8 @@
   margin: 0 0 20px;
   max-width: none;
   line-height: 1.8;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .landing-hero-desc {
@@ -178,6 +182,8 @@
   margin: 0 0 36px;
   max-width: none;
   line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Pixel Buttons ---- */
@@ -248,9 +254,10 @@
 }
 
 /* ---- Feature Cards ---- */
+/* 컬럼이 260px 밑으로 좁아지면 3→2열로 자동 전환 (컨테이너 960px에선 3열 고정) */
 .landing-features {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 20px;
   max-width: 960px;
   margin: 0 auto;
@@ -263,6 +270,7 @@
   background: var(--bg-panel);
   padding: 28px;
   position: relative;
+  min-width: 0;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -384,6 +392,7 @@
   color: var(--primary);
   text-decoration: none;
   transition: gap 0.2s;
+  min-width: 0;
 }
 
 .feature-cta-link:hover {
@@ -392,6 +401,7 @@
 
 .feature-cta-link .material-symbols-outlined {
   font-size: 18px;
+  flex-shrink: 0;
 }
 
 .link-secondary {
@@ -439,9 +449,10 @@
   text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.15);
 }
 
+/* 컬럼이 190px 밑으로 좁아지면 4→3열로 자동 전환 (컨테이너 880px에선 4열 고정) */
 .landing-highlights-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
   gap: 16px;
   max-width: 880px;
   margin: 0 auto;
@@ -450,6 +461,7 @@
 .landing-highlight-item {
   text-align: center;
   padding: 24px 12px;
+  min-width: 0;
   border: 2px solid transparent;
   transition: border-color 0.2s;
 }
@@ -592,17 +604,29 @@
 /* ============================================
    Responsive
    ============================================ */
+/* 태블릿 가로 — 카드 여백 축소로 좁은 컬럼의 본문 폭 확보 */
+@media (max-width: 1024px) {
+  .landing-feature-card {
+    padding: 22px 20px;
+  }
+
+  /* 좁은 컬럼에서 한국어/일본어를 어절 단위로 끊는다 */
+  .landing-feature-card h2,
+  .landing-feature-card p,
+  .landing-highlight-item h3,
+  .landing-highlight-item p {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 768px) {
   .landing-hero {
     padding: 40px 20px 24px;
   }
 
   .landing-hero-logo {
-    height: 100px;
-  }
-
-  .landing-hero-title {
-    font-size: 1.8rem;
+    width: min(280px, 100%);
   }
 
   .landing-hero-subtitle {
@@ -618,6 +642,11 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  /* 터치 타깃 확보 — 1열에서 카드마다 유일한 CTA */
+  .feature-cta-link {
+    min-height: 44px;
+  }
+
   .pixel-character {
     transform: scale(0.8);
   }
@@ -625,67 +654,69 @@
   .pixel-star { display: none; }
 }
 
-@media (max-width: 480px) {
-  .landing-hero-title {
-    font-size: 1.5rem;
-    text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.2);
-  }
-
+/* CTA 두 개가 한 줄에 들어가지 않는 구간부터 세로 배치 */
+@media (max-width: 600px) {
   .landing-hero-cta {
     flex-direction: column;
+    align-items: stretch;
     width: 100%;
     padding: 0 12px;
   }
 
-  .pixel-btn {
+  .landing-hero-cta .pixel-btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* 폰 미세 조정 */
+@media (max-width: 480px) {
+  .landing-hero-title {
+    text-shadow: 3px 3px 0 rgba(187, 134, 252, 0.2);
+  }
+
+  .landing-hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .landing-hero-desc {
+    font-size: 0.95rem;
+  }
+
+  .landing-feature-card {
+    padding: 20px 18px;
+  }
+
+  .landing-feature-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .landing-feature-card p {
+    font-size: 0.82rem;
+  }
+
+  .landing-highlights-title {
+    font-size: 1.25rem;
   }
 
   .landing-highlights-grid {
     grid-template-columns: 1fr;
   }
 
-  .pixel-character {
-    display: none;
-  }
-}
-
-/* 태블릿 — highlights 4→3열 (769~900px, PC 4열/768 이하 2열 불변) */
-@media (min-width: 769px) and (max-width: 900px) {
-  .landing-highlights-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* 폰 미세 조정 */
-@media (max-width: 480px) {
-  .landing-feature-card {
-    padding: 20px 18px;
-  }
-  .landing-feature-card h2 {
-    font-size: 1.1rem;
-  }
-  .landing-feature-card p {
-    font-size: 0.82rem;
-  }
-  .landing-highlights-title {
-    font-size: 1.25rem;
-  }
   .landing-highlight-item {
     padding: 18px 10px;
   }
+
   .landing-highlight-item h3 {
     font-size: 0.88rem;
   }
+
   .landing-highlight-item p {
     font-size: 0.78rem;
   }
-  .landing-hero-desc {
-    font-size: 0.95rem;
-  }
-  .landing-hero-subtitle {
-    font-size: 0.88rem;
-    line-height: 1.6;
+
+  .pixel-character {
+    display: none;
   }
 }
