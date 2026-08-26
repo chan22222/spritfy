@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { parseGIF, decompressFrame } from 'gifuct-js';
+import {
+  motionEnergy, pickByMotionArcLength, findLoopSeam, despill,
+  frameMetrics, planAlignment, extractionQuality, frameDiff,
+  type LoopSeam, type ExtractionQuality, type FrameMetrics,
+} from '@/lib/sprite-analysis.ts';
 import SEO from '@/seo.tsx';
 import { Lang } from '@/i18n.ts';
 import { ToolInfo } from '@/tool-info.tsx';
@@ -51,12 +56,23 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [loadError, setLoadError] = useState(false);
   
   // Extraction Settings
-  const [extractionInterval, setExtractionInterval] = useState(5); // Every N frames
+  // 동영상 샘플링 간격 (30fps 기준 N프레임마다 = 10fps). 조절 UI 없이 넉넉히 뽑고
+  // '프레임 줄이기' / '중복 프레임 제거' / 선택 삭제로 다듬는 흐름을 따른다.
+  const [extractionInterval] = useState(3);
   const [similarityThreshold, setSimilarityThreshold] = useState(0); // 0-100%
+  const [reduceTarget, setReduceTarget] = useState(12); // '프레임 줄이기' 목표 수
+  const [loopSeam, setLoopSeam] = useState<LoopSeam | null>(null);
+  const [quality, setQuality] = useState<ExtractionQuality | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAligning, setIsAligning] = useState(false);
+  const [alignNotice, setAlignNotice] = useState(false); // 투명 배경이 없어 정렬 불가
+  const [alignMode, setAlignMode] = useState<'stable' | 'feet'>('stable');
+  const [loopNotice, setLoopNotice] = useState(false);
 
   // Chroma Key Settings
   const [chromaColor, setChromaColor] = useState<string | null>(null);
   const [chromaTolerance, setChromaTolerance] = useState(30);
+  const [despillStrength, setDespillStrength] = useState(0); // 0 = 끔
   const [isPickingColor, setIsPickingColor] = useState(false);
 
   // Dedup
@@ -78,6 +94,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [exportFixedW, setExportFixedW] = useState(64);
   const [exportFixedH, setExportFixedH] = useState(64);
   const [lockAspectRatio, setLockAspectRatio] = useState(true);
+  const [anchorAlign, setAnchorAlign] = useState(false); // 발 baseline 정렬 시트
   const lockedRatioRef = useRef(1); // W / H
 
   // Drag & Drop
@@ -94,8 +111,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [bgChromaTolerance, setBgChromaTolerance] = useState(30);
   const [isBgPickingColor, setIsBgPickingColor] = useState(false);
   const [bgRemoveTolerance, setBgRemoveTolerance] = useState(20);
-  const bgBackupRef = useRef<{ id: number; url: string; blob: Blob }[]>([]);
-  const [hasBgBackup, setHasBgBackup] = useState(false);
 
   // Image Adjustment
   const [adjustBrightness, setAdjustBrightness] = useState(100);
@@ -106,8 +121,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const [adjustSharpen, setAdjustSharpen] = useState(0);
   const [adjustInvert, setAdjustInvert] = useState(false);
   const [adjustGrayscale, setAdjustGrayscale] = useState(false);
-  const adjustBackupRef = useRef<{ id: number; url: string; blob: Blob }[]>([]);
-  const [hasAdjustBackup, setHasAdjustBackup] = useState(false);
 
   // Animation - Trim
   const [trimStart, setTrimStart] = useState(0);
@@ -242,6 +255,8 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   useEffect(() => {
     return () => {
       framesRef.current.forEach(f => URL.revokeObjectURL(f.url));
+      historyRef.current.forEach(sn => sn.frames.forEach(f => URL.revokeObjectURL(f.url)));
+      historyRef.current = [];
     };
   }, []);
 
@@ -411,12 +426,15 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       
       // Calculate distance
       const dist = Math.abs(r - rTarget) + Math.abs(g - gTarget) + Math.abs(b - bTarget);
-      
+
       if (dist < threshold) {
         data[i + 3] = 0; // Set Alpha to 0
       }
     }
-    
+
+    // 배경을 지워도 경계에 키 색이 남는다(spill). 키 채널을 나머지 채널 기준으로 클램프해 걷어낸다.
+    despill(data, [rTarget, gTarget, bTarget], despillStrength);
+
     ctx.putImageData(imgData, 0, 0);
   };
 
@@ -425,6 +443,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     if (frames.length < 2) return;
     setIsDeduping(true);
     setDedupResult(null);
+    pushHistory();
 
     const size = 64;
     const compareCanvas = document.createElement('canvas');
@@ -466,8 +485,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         if (avgDiff >= thresholdVal) {
           kept.push(frames[i]);
           lastData = currentData;
-        } else {
-          URL.revokeObjectURL(frames[i].url);
         }
       }
 
@@ -530,22 +547,83 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     }
   };
 
+  // --- 되돌리기 스택 ---
+  // 프레임 목록/픽셀을 바꾸는 모든 작업(삭제·중복 제거·트림·배경 제거·보정·정렬 등)이
+  // 실행 직전에 스냅샷을 쌓는다. 스냅샷은 blob URL을 공유하며, URL 해제는
+  // 어떤 스냅샷과 현재 프레임 어디에도 남지 않게 됐을 때만 한다.
+  type FrameSnapshot = { frames: Frame[]; frameOrder: number[]; selected: Set<number> };
+  const historyRef = useRef<FrameSnapshot[]>([]);
+  const [historyDepth, setHistoryDepth] = useState(0);
+  const HISTORY_MAX = 30;
+
+  const revokeOrphans = (candidates: Frame[], keep: Frame[][]) => {
+    const live = new Set<string>();
+    keep.forEach(list => list.forEach(f => live.add(f.url)));
+    candidates.forEach(f => {
+      if (!live.has(f.url)) URL.revokeObjectURL(f.url);
+    });
+  };
+
+  /** 프레임을 바꾸는 작업 직전에 호출한다 */
+  const pushHistory = () => {
+    const stack = historyRef.current;
+    stack.push({ frames, frameOrder, selected: new Set(selectedFrameIds) });
+    if (stack.length > HISTORY_MAX) {
+      const dropped = stack.shift();
+      if (dropped) revokeOrphans(dropped.frames, [frames, ...stack.map(sn => sn.frames)]);
+    }
+    setHistoryDepth(stack.length);
+  };
+
+  const undoHistory = () => {
+    const snap = historyRef.current.pop();
+    if (!snap) return;
+    revokeOrphans(frames, [snap.frames, ...historyRef.current.map(sn => sn.frames)]);
+    setFrames(snap.frames);
+    setFrameOrder(snap.frameOrder);
+    setSelectedFrameIds(new Set(snap.selected));
+    setHistoryDepth(historyRef.current.length);
+    setDedupResult(null);
+    setQuality(null);
+  };
+
+  const clearHistory = (current: Frame[]) => {
+    const all = historyRef.current.flatMap(sn => sn.frames);
+    revokeOrphans(all, [current]);
+    historyRef.current = [];
+    setHistoryDepth(0);
+  };
+
+  // Ctrl+Z / Cmd+Z (입력 요소에 포커스가 있으면 브라우저 기본 동작에 맡긴다)
+  const undoRef = useRef<() => void>(() => {});
+  undoRef.current = undoHistory;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      undoRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // --- File Handling ---
-  // 새 파일을 읽기 전 프레임과 그에 딸린 파생 상태를 모두 비운다.
-  // 배경제거/보정 백업을 남겨두면 '복원'이 이전 파일의 이미지를 새 파일에 덮어쓴다.
+  // 새 파일을 읽기 전 프레임과 되돌리기 스택을 모두 비운다.
   const clearFrameState = () => {
+    // 되돌리기 스택까지 모두 비운다 (새 파일)
+    clearHistory([]);
     frames.forEach(f => URL.revokeObjectURL(f.url));
-    bgBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
-    bgBackupRef.current = [];
-    adjustBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
-    adjustBackupRef.current = [];
-    setHasBgBackup(false);
-    setHasAdjustBackup(false);
     setFrames([]);
     setSelectedFrameIds(new Set());
     setFrameOrder([]);
     setDedupResult(null);
     setCurrentPreviewFrameIndex(0);
+    setAlignNotice(false);
+    setLoopNotice(false);
+    setQuality(null);
+    setLoopSeam(null);
   };
 
   // <video>는 GIF를 재생하지 못하므로(loadedmetadata가 발생하지 않음) 별도 디코더로 처리한다.
@@ -568,6 +646,8 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
       // 이전 프레임과 파생 상태 정리
       clearFrameState();
+      setLoopSeam(null);
+      setQuality(null);
 
       // 논리 화면 크기 — 프레임 dims는 부분 갱신 영역이라 전체 크기와 다를 수 있다
       const width = gif.lsd.width || rawFrames[0].image.descriptor.width;
@@ -593,8 +673,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       }
 
       // GIF은 이미 프레임 단위로 저작된 시퀀스라 전 프레임을 그대로 가져온다.
-      // (동영상의 '추출 간격'은 연속 신호를 샘플링하기 위한 값이라 여기엔 적용하지 않는다.
-      //  프레임을 줄이려면 가져온 뒤 '중복 프레임 제거'나 선택 삭제를 쓰면 된다.)
+      // (프레임을 줄이려면 가져온 뒤 '프레임 줄이기' · '중복 프레임 제거' · 선택 삭제를 쓴다)
       const newFrames: Frame[] = [];
       let lastSmallData: Uint8ClampedArray | null = null;
       let elapsed = 0;
@@ -706,9 +785,11 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const startExtraction = async () => {
     const video = videoRef.current;
     if (!video) return;
-    
+
     // 이전 프레임과 파생 상태(배경제거/보정 백업 포함) 정리
     clearFrameState();
+    setLoopSeam(null);
+    setQuality(null);
 
     const duration = video.duration;
     const width = video.videoWidth;
@@ -827,8 +908,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     setIsLoading(true);
     setProgress(0);
 
-    // Backup for undo
-    bgBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+    pushHistory();
 
     const tolerance = bgRemoveTolerance;
     const newFrames = [...frames];
@@ -896,7 +976,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     }
 
     setFrames(newFrames);
-    setHasBgBackup(true);
     setIsLoading(false);
     setProgress(0);
   };
@@ -910,7 +989,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     setIsLoading(true);
     setProgress(0);
 
-    bgBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+    pushHistory();
 
     const rTarget = parseInt(bgChromaColor.slice(1, 3), 16);
     const gTarget = parseInt(bgChromaColor.slice(3, 5), 16);
@@ -951,24 +1030,8 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     }
 
     setFrames(newFrames);
-    setHasBgBackup(true);
     setIsLoading(false);
     setProgress(0);
-  };
-
-  const undoBgRemoval = () => {
-    if (bgBackupRef.current.length === 0) return;
-    const backup = bgBackupRef.current;
-    setFrames(prev => prev.map(f => {
-      const b = backup.find(bk => bk.id === f.id);
-      if (b) {
-        URL.revokeObjectURL(f.url);
-        return { ...f, url: b.url, blob: b.blob };
-      }
-      return f;
-    }));
-    bgBackupRef.current = [];
-    setHasBgBackup(false);
   };
 
   // --- Image Adjustment ---
@@ -982,7 +1045,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     setIsLoading(true);
     setProgress(0);
 
-    adjustBackupRef.current = targetFrames.map(f => ({ id: f.id, url: f.url, blob: f.blob }));
+    pushHistory();
 
     const newFrames = [...frames];
     for (let fi = 0; fi < targetFrames.length; fi++) {
@@ -1014,26 +1077,11 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     }
 
     setFrames(newFrames);
-    setHasAdjustBackup(true);
     resetAdjustSliders();
     setIsLoading(false);
     setProgress(0);
   };
 
-  const undoAdjustment = () => {
-    if (adjustBackupRef.current.length === 0) return;
-    const backup = adjustBackupRef.current;
-    setFrames(prev => prev.map(f => {
-      const b = backup.find(bk => bk.id === f.id);
-      if (b) {
-        URL.revokeObjectURL(f.url);
-        return { ...f, url: b.url, blob: b.blob };
-      }
-      return f;
-    }));
-    adjustBackupRef.current = [];
-    setHasAdjustBackup(false);
-  };
 
   const resetAdjustSliders = () => {
     setAdjustBrightness(100);
@@ -1048,6 +1096,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   // --- Animation Editing ---
   const handleReverse = () => {
+    pushHistory();
     setFrameOrder(prev => [...prev].reverse());
   };
 
@@ -1078,6 +1127,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       setProgress(Math.round(((i + 1) / reverseIds.length) * 100));
     }
 
+    pushHistory();
     setFrames(prev => [...prev, ...newFrames]);
     setFrameOrder([...order, ...newFrames.map(f => f.id)]);
     setIsLoading(false);
@@ -1103,6 +1153,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
       });
     }
 
+    pushHistory();
     setFrames(prev => [...prev, ...newFrames]);
     setSelectedFrameIds(prev => {
       const s = new Set(prev);
@@ -1119,9 +1170,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     if (start + end >= order.length) return;
 
     const keepIds = new Set(order.slice(start, order.length - end));
-    const removedFrames = frames.filter(f => !keepIds.has(f.id));
-    removedFrames.forEach(f => URL.revokeObjectURL(f.url));
-
+    pushHistory();
     setFrames(prev => prev.filter(f => keepIds.has(f.id)));
     setSelectedFrameIds(prev => {
       const s = new Set<number>();
@@ -1146,8 +1195,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   // --- Delete Frame ---
   const handleDeleteFrame = (id: number) => {
-    const frame = frames.find(f => f.id === id);
-    if (frame) URL.revokeObjectURL(frame.url);
+    pushHistory();
     setFrames(prev => prev.filter(f => f.id !== id));
     setSelectedFrameIds(prev => {
       const s = new Set(prev);
@@ -1157,16 +1205,228 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     setDeleteTargetId(null);
   };
 
-  // --- Bulk Selection / Delete ---
+  // --- 추출 품질 분석 ---
+  // 발 위치·중심이 얼마나 흔들리는지, 루프가 얼마나 매끄럽게 이어지는지를 숫자로 낸다.
+  // 위치 지표는 알파가 있어야 의미가 있으므로 배경 제거 후에 보는 것이 정확하다.
+  const analyzeQuality = async () => {
+    if (activeFrames.length === 0) return;
+    setIsAnalyzing(true);
+    try {
+      const full = document.createElement('canvas');
+      const fullCtx = full.getContext('2d', { willReadFrequently: true });
+      const small = document.createElement('canvas');
+      small.width = 64;
+      small.height = 64;
+      const smallCtx = small.getContext('2d', { willReadFrequently: true });
+      if (!fullCtx || !smallCtx) return;
+
+      const metricsList: FrameMetrics[] = [];
+      const smalls: Uint8ClampedArray[] = [];
+
+      for (const f of activeFrames) {
+        const img = await loadImage(f.url);
+        full.width = img.width;
+        full.height = img.height;
+        fullCtx.clearRect(0, 0, img.width, img.height);
+        fullCtx.drawImage(img, 0, 0);
+        if (chromaColor) applyChromaKey(fullCtx, img.width, img.height);
+
+        const m = frameMetrics(fullCtx.getImageData(0, 0, img.width, img.height).data, img.width, img.height);
+        if (m) metricsList.push(m);
+
+        smallCtx.clearRect(0, 0, 64, 64);
+        smallCtx.drawImage(img, 0, 0, 64, 64);
+        smalls.push(smallCtx.getImageData(0, 0, 64, 64).data);
+      }
+
+      const loopDiff = loopSeam
+        ? loopSeam.diff
+        : smalls.length > 1
+          ? frameDiff(smalls[0], smalls[smalls.length - 1])
+          : 0;
+
+      setQuality(extractionQuality(metricsList, loopDiff));
+    } catch {
+      setQuality(null);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // --- 정렬 계획 ---
+  // 프레임을 캔버스에 올려(크로마키 반영) 정렬 계획을 세운다. 알파가 전혀 없으면 null.
+  const buildAlignmentPlan = async (list: Frame[]) => {
+    const images: (HTMLCanvasElement | null)[] = [];
+    const inputs: { data: Uint8ClampedArray; w: number; h: number }[] = [];
+    let anyAlpha = false;
+    for (let i = 0; i < list.length; i++) {
+      const img = await loadImage(list[i].url);
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const cx = c.getContext('2d', { willReadFrequently: true });
+      if (!cx) {
+        images.push(null);
+        inputs.push({ data: new Uint8ClampedArray(4), w: 1, h: 1 });
+        continue;
+      }
+      cx.drawImage(img, 0, 0);
+      if (chromaColor) applyChromaKey(cx, img.width, img.height);
+      const data = cx.getImageData(0, 0, img.width, img.height).data;
+      if (!anyAlpha) {
+        for (let q = 3; q < data.length; q += 4) {
+          if (data[q] === 0) { anyAlpha = true; break; }
+        }
+      }
+      images.push(c);
+      inputs.push({ data, w: img.width, h: img.height });
+      setProgress(((i + 1) / list.length) * 40);
+    }
+    if (!anyAlpha) return null;
+    const order = frameOrder.length > 0 ? frameOrder : list.map(f => f.id);
+    const refIndex = Math.max(0, list.findIndex(f => f.id === order[0]));
+    const plan = planAlignment(inputs, { mode: alignMode, refIndex, pad: 4, onProgress: pr => setProgress(40 + pr * 20) });
+    return plan ? { images, plan } : null;
+  };
+
+  // --- 발 정렬 적용 ---
+  // 품질 분석이 보여주는 '발 흔들림'과 '중심 이동'을 실제로 잡는 조치.
+  // 움직이지 않는 부위(또는 발 바닥)를 기준으로 전 프레임을 균일한 셀에 다시 그린다.
+  const applyAnchorAlignment = async () => {
+    if (frames.length === 0) return;
+    setIsAligning(true);
+    setProgress(0);
+
+    try {
+      const built = await buildAlignmentPlan(frames);
+      if (!built) {
+        setAlignNotice(true);
+        return;
+      }
+      const { images, plan } = built;
+
+      const out = document.createElement('canvas');
+      out.width = plan.cellW;
+      out.height = plan.cellH;
+      const outCtx = out.getContext('2d', { willReadFrequently: true });
+      if (!outCtx) return;
+
+      pushHistory();
+      const metricsList: FrameMetrics[] = [];
+      const replaced = new Map<number, { url: string; blob: Blob }>();
+      for (let i = 0; i < frames.length; i++) {
+        const src = images[i];
+        if (!src) continue;
+        outCtx.clearRect(0, 0, plan.cellW, plan.cellH);
+        outCtx.drawImage(src, plan.originX + plan.shifts[i][0], plan.originY + plan.shifts[i][1]);
+        const m = frameMetrics(outCtx.getImageData(0, 0, plan.cellW, plan.cellH).data, plan.cellW, plan.cellH);
+        if (m) metricsList.push(m);
+        const blob = await new Promise<Blob | null>(resolve => out.toBlob(resolve, 'image/png'));
+        if (blob) replaced.set(frames[i].id, { url: URL.createObjectURL(blob), blob });
+        setProgress(60 + ((i + 1) / frames.length) * 40);
+      }
+
+      setFrames(prev => prev.map(f => {
+        const r = replaced.get(f.id);
+        return r ? { ...f, url: r.url, blob: r.blob } : f;
+      }));
+      setAlignNotice(false);
+      // 정렬 결과를 바로 지표로 보여준다 (루프 일치도는 위치와 무관하므로 유지)
+      setQuality(extractionQuality(metricsList, quality?.loopDiff ?? 0));
+    } catch {
+      setLoadError(true);
+    } finally {
+      setIsAligning(false);
+      setProgress(0);
+    }
+  };
+
+  // --- 프레임 줄이기 / 루프 구간 ---
+  const orderedFrames = (): Frame[] => {
+    const order = frameOrder.length > 0 ? frameOrder : frames.map(f => f.id);
+    return order.map(id => frames.find(f => f.id === id)).filter((f): f is Frame => !!f);
+  };
+
+  const loadSmalls = async (list: Frame[]): Promise<Uint8ClampedArray[]> => {
+    const c = document.createElement('canvas');
+    c.width = 64;
+    c.height = 64;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    if (!cx) return [];
+    const out: Uint8ClampedArray[] = [];
+    for (const f of list) {
+      const img = await loadImage(f.url);
+      cx.clearRect(0, 0, 64, 64);
+      cx.drawImage(img, 0, 0, 64, 64);
+      out.push(cx.getImageData(0, 0, 64, 64).data);
+    }
+    return out;
+  };
+
+  // 누적 모션량을 등분해 목표 수만 남긴다 — 정지 구간은 덜, 동작 구간은 더
+  const reduceFramesByMotion = async () => {
+    const list = orderedFrames();
+    if (list.length <= reduceTarget) return;
+    setIsLoading(true);
+    setProgress(0);
+    try {
+      const smalls = await loadSmalls(list);
+      const picks = new Set(pickByMotionArcLength(motionEnergy(smalls), reduceTarget).slice(0, reduceTarget));
+      const keepIds = new Set(list.filter((_, i) => picks.has(i)).map(f => f.id));
+      pushHistory();
+      setFrames(prev => prev.filter(f => keepIds.has(f.id)));
+      setSelectedFrameIds(prev => {
+        const kept = new Set<number>();
+        prev.forEach(id => { if (keepIds.has(id)) kept.add(id); });
+        return kept;
+      });
+      setDedupResult(null);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  // 가장 닮은 두 프레임 사이(매끄러운 사이클)만 남긴다
+  const keepLoopRange = async () => {
+    const list = orderedFrames();
+    setIsLoading(true);
+    setProgress(0);
+    try {
+      const smalls = await loadSmalls(list);
+      const { seam } = findLoopSeam(smalls, 1);
+      if (!seam) {
+        setLoopNotice(true);
+        return;
+      }
+      const keepIds = new Set(list.slice(seam.i, seam.j).map(f => f.id));
+      pushHistory();
+      setFrames(prev => prev.filter(f => keepIds.has(f.id)));
+      setSelectedFrameIds(prev => {
+        const kept = new Set<number>();
+        prev.forEach(id => { if (keepIds.has(id)) kept.add(id); });
+        return kept;
+      });
+      setLoopSeam(seam);
+      setLoopNotice(false);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  // --- Bulk Selection / Delete ---  // --- Bulk Selection / Delete ---
   const selectAllFrames = () => setSelectedFrameIds(new Set(frames.map(f => f.id)));
   const clearFrameSelection = () => setSelectedFrameIds(new Set());
 
   // 선택된 프레임을 지운다
   const deleteSelectedFrames = () => {
     if (selectedFrameIds.size === 0) return;
-    frames.forEach(f => {
-      if (selectedFrameIds.has(f.id)) URL.revokeObjectURL(f.url);
-    });
+    pushHistory();
     setFrames(prev => prev.filter(f => !selectedFrameIds.has(f.id)));
     setSelectedFrameIds(new Set());
   };
@@ -1174,9 +1434,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   // 선택되지 않은 프레임을 지운다 (= 선택한 것만 남긴다)
   const deleteUnselectedFrames = () => {
     if (selectedFrameIds.size === 0 || selectedFrameIds.size === frames.length) return;
-    frames.forEach(f => {
-      if (!selectedFrameIds.has(f.id)) URL.revokeObjectURL(f.url);
-    });
+    pushHistory();
     setFrames(prev => prev.filter(f => selectedFrameIds.has(f.id)));
   };
 
@@ -1307,7 +1565,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     const blob = await new Promise<Blob | null>(resolve => cvs.toBlob(resolve, 'image/png'));
     if (blob) {
       const newUrl = URL.createObjectURL(blob);
-      URL.revokeObjectURL(frame.url);
+      pushHistory();
       setFrames(prev => prev.map(f =>
         f.id === editTargetId ? { ...f, blob, url: newUrl } : f
       ));
@@ -1389,10 +1647,61 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     }
   };
 
-  // --- Export ---
+  /**
+   * 정렬 시트 내보내기 — '발 정렬 적용'과 같은 계획(고정 부위/발 바닥)을 쓰되
+   * 프레임을 바꾸지 않고 내보내기 캔버스에서만 정렬한다.
+   */
+  const exportAnchoredSheet = async () => {
+    const built = await buildAlignmentPlan(activeFrames);
+    if (!built) {
+      setAlignNotice(true);
+      return;
+    }
+    const { images, plan } = built;
+
+    const { w: fitW, h: fitH } = getExportSize(plan.cellW, plan.cellH);
+    const scale = Math.min(fitW / plan.cellW, fitH / plan.cellH);
+    const cellW = Math.max(1, Math.round(plan.cellW * scale));
+    const cellH = Math.max(1, Math.round(plan.cellH * scale));
+    const cols = exportColumns > 0 ? exportColumns : Math.ceil(Math.sqrt(activeFrames.length));
+    const rows = Math.ceil(activeFrames.length / cols);
+
+    const sheet = document.createElement('canvas');
+    sheet.width = cols * cellW;
+    sheet.height = rows * cellH;
+    const ctx = sheet.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    activeFrames.forEach((_, i) => {
+      const src = images[i];
+      if (!src) return;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      ctx.drawImage(
+        src,
+        col * cellW + (plan.originX + plan.shifts[i][0]) * scale,
+        row * cellH + (plan.originY + plan.shifts[i][1]) * scale,
+        src.width * scale,
+        src.height * scale
+      );
+    });
+
+    const link = document.createElement('a');
+    link.download = 'sprite-sheet.png';
+    link.href = sheet.toDataURL('image/png');
+    link.click();
+  };
+
+  // --- Export ---  // --- Export ---
   const handleExport = () => {
     if (activeFrames.length === 0) return;
-    
+
+    if (anchorAlign) {
+      void exportAnchoredSheet();
+      return;
+    }
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -1694,28 +2003,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                        {t.mergeImages}
                        <input type="file" className="hidden-input" accept="image/*" multiple onChange={handleMergeImages} />
                     </label>
-                    <div className="row" style={{ marginLeft: 20, gap: 20 }}>
-                        <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
-                            <label>{t.extractInterval} ({extractionInterval})</label>
-                            <input
-                               type="range"
-                               min="1"
-                               max="30"
-                               value={extractionInterval}
-                               onChange={(e) => setExtractionInterval(Number(e.target.value))}
-                            />
-                        </div>
-                        <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
-                            <label>{t.dedupSensitivity} ({similarityThreshold}%)</label>
-                            <input
-                               type="range"
-                               min="0"
-                               max="90"
-                               value={similarityThreshold}
-                               onChange={(e) => setSimilarityThreshold(Number(e.target.value))}
-                            />
-                        </div>
-                    </div>
                 </div>
              ) : (
                 <>
@@ -1739,7 +2026,55 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                            <span className="badge">{t.totalFrames}: {frames.length}</span>
                         </div>
                         <div className="flex-grow"></div>
-                        {/* 선택/삭제 버튼은 아래 '기본' 탭의 프레임 크기 행에 모아 두었다 */}
+                        {/* 선택/삭제 일괄 작업 — 어느 탭에서든 보이도록 상단 행에 둔다 */}
+                        <div className="row" style={{ gap: 6 }}>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                onClick={undoHistory}
+                                disabled={historyDepth === 0}
+                                title="Ctrl+Z"
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>undo</span>
+                                {t.undo}{historyDepth > 0 ? ` (${historyDepth})` : ''}
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                onClick={selectAllFrames}
+                                disabled={selectedFrameIds.size === frames.length}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>select_all</span>
+                                {t.selectAll}
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                onClick={clearFrameSelection}
+                                disabled={selectedFrameIds.size === 0}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>deselect</span>
+                                {t.clearSelection}
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
+                                onClick={deleteSelectedFrames}
+                                disabled={selectedFrameIds.size === 0}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                                {t.deleteSelected}
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
+                                onClick={deleteUnselectedFrames}
+                                disabled={selectedFrameIds.size === 0 || selectedFrameIds.size === frames.length}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete_sweep</span>
+                                {t.deleteUnselected}
+                            </button>
+                        </div>
                         <div className="row" style={{ marginLeft: 12, gap: 6, width: 120 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--text-muted)' }}>grid_view</span>
                             <input
@@ -1809,7 +2144,98 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                                 {dedupResult === 'error' && (
                                    <span style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>{t.dedupError}</span>
                                 )}
+                                <button
+                                   className="btn btn-secondary"
+                                   onClick={analyzeQuality}
+                                   disabled={frames.length < 2 || isAnalyzing}
+                                   style={{ whiteSpace: 'nowrap' }}
+                                   title={t.qualityHint}
+                                >
+                                   <span className="material-symbols-outlined">query_stats</span>
+                                   {isAnalyzing ? t.analyzing : t.analyzeQuality}
+                                </button>
+                                {/* 분석이 보여주는 흔들림을 실제로 잡는 조치 — 분석 없이도 쓸 수 있게 옆에 둔다 */}
+                                <div className="row" style={{ gap: 0 }} title={t.alignModeHint}>
+                                    <button
+                                        className={`btn ${alignMode === 'stable' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '6px 0 0 6px', padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                        onClick={() => setAlignMode('stable')}
+                                    >{t.alignModeStable}</button>
+                                    <button
+                                        className={`btn ${alignMode === 'feet' ? '' : 'btn-secondary'}`}
+                                        style={{ borderRadius: '0 6px 6px 0', padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                        onClick={() => setAlignMode('feet')}
+                                    >{t.alignModeFeet}</button>
+                                </div>
+                                <button
+                                   className="btn btn-secondary"
+                                   onClick={applyAnchorAlignment}
+                                   disabled={frames.length === 0 || isAligning}
+                                   style={{ whiteSpace: 'nowrap' }}
+                                   title={t.applyAlignHint}
+                                >
+                                   <span className="material-symbols-outlined">align_vertical_bottom</span>
+                                   {isAligning ? t.processing : t.applyAlign}
+                                </button>
                             </div>
+                            <div className="row" style={{ gap: 12, marginTop: 8 }}>
+                                <div className="control-group" style={{ marginBottom: 0, width: 240 }}>
+                                    <label>{t.reduceFrames} ({reduceTarget})</label>
+                                    <input
+                                       type="range"
+                                       min="2"
+                                       max="60"
+                                       value={reduceTarget}
+                                       onChange={(e) => setReduceTarget(Number(e.target.value))}
+                                    />
+                                </div>
+                                <button
+                                   className="btn btn-secondary"
+                                   onClick={reduceFramesByMotion}
+                                   disabled={frames.length <= reduceTarget || isLoading}
+                                   style={{ whiteSpace: 'nowrap' }}
+                                   title={t.reduceFramesHint}
+                                >
+                                   <span className="material-symbols-outlined">compress</span>
+                                   {t.reduceFrames}
+                                </button>
+                                <button
+                                   className="btn btn-secondary"
+                                   onClick={keepLoopRange}
+                                   disabled={frames.length < 3 || isLoading}
+                                   style={{ whiteSpace: 'nowrap' }}
+                                   title={t.keepLoopHint}
+                                >
+                                   <span className="material-symbols-outlined">repeat</span>
+                                   {t.keepLoop}
+                                </button>
+                                {loopNotice && (
+                                   <span role="alert" style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>{t.loopNotFound}</span>
+                                )}
+                            </div>
+                            {quality && (
+                               <div className="row" style={{ gap: 10, marginTop: 8, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                  {/* 발/중심 흔들림이 2px를 넘으면 정렬이 필요하다는 신호로 강조한다 */}
+                                  <span className="badge" style={quality.baselineDriftPx > 2 ? { color: 'var(--danger)' } : undefined} title={quality.baselineDriftPx > 2 ? t.qualityCheck : t.qualityGood}>
+                                     {t.qualityBaselineDrift}: {quality.baselineDriftPx}px
+                                  </span>
+                                  {/* 중심(전체 픽셀 평균)은 팔·꼬리 흔들림에도 움직이므로 발보다 느슨하게 본다 */}
+                                  <span className="badge" style={quality.centroidDriftPx > 4 ? { color: 'var(--danger)' } : undefined} title={quality.centroidDriftPx > 4 ? t.qualityCheck : t.qualityGood}>
+                                     {t.qualityCentroidDrift}: {quality.centroidDriftPx}px
+                                  </span>
+                                  <span className="badge">{t.qualityHeightVar}: {quality.heightVarPx}px</span>
+                                  <span className="badge">{t.qualityLoopDiff}: {quality.loopDiff}</span>
+                                  <span className="badge" style={quality.worstBgPurity < 0.98 ? { color: 'var(--danger)' } : undefined} title={quality.worstBgPurity < 0.98 ? t.qualityCheck : t.qualityGood}>
+                                     {t.qualityBgPurity}: {Math.round(quality.worstBgPurity * 100)}%
+                                  </span>
+                                  {loopSeam && (
+                                     <span className="badge">{t.loopSeamFound}: {loopSeam.i}~{loopSeam.j}</span>
+                                  )}
+                               </div>
+                            )}
+                            {alignNotice && (
+                               <span role="alert" style={{ display: 'block', marginTop: 6, fontSize: '0.8rem', color: 'var(--danger)' }}>{t.alignNeedsAlpha}</span>
+                            )}
                             <div className="row" style={{ gap: 12, marginTop: 8 }}>
                                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.frameSize}</label>
                                 <div className="row" style={{ gap: 0 }}>
@@ -1886,46 +2312,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                                     </div>
                                 )}
 
-                                {/* 선택/삭제 일괄 작업 */}
-                                <div className="flex-grow"></div>
-                                <div className="row" style={{ gap: 6 }}>
-                                    <button
-                                        className="btn btn-secondary"
-                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-                                        onClick={selectAllFrames}
-                                        disabled={selectedFrameIds.size === frames.length}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>select_all</span>
-                                        {t.selectAll}
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-                                        onClick={clearFrameSelection}
-                                        disabled={selectedFrameIds.size === 0}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>deselect</span>
-                                        {t.clearSelection}
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
-                                        onClick={deleteSelectedFrames}
-                                        disabled={selectedFrameIds.size === 0}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
-                                        {t.deleteSelected}
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        style={{ padding: '6px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap', color: 'var(--danger)' }}
-                                        onClick={deleteUnselectedFrames}
-                                        disabled={selectedFrameIds.size === 0 || selectedFrameIds.size === frames.length}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete_sweep</span>
-                                        {t.deleteUnselected}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -1973,13 +2359,9 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                                             onChange={(e) => setBgRemoveTolerance(Number(e.target.value))} />
                                     </div>
                                 )}
-                                <button className="btn btn-secondary" onClick={bgMode === 'chroma' ? applyChromaKeyRemoval : applyBgRemoval} disabled={frames.length === 0 || hasBgBackup}>
+                                <button className="btn btn-secondary" onClick={bgMode === 'chroma' ? applyChromaKeyRemoval : applyBgRemoval} disabled={frames.length === 0 || isLoading}>
                                     <span className="material-symbols-outlined">auto_fix</span>
                                     {t.bgRemoveApply}
-                                </button>
-                                <button className="btn btn-secondary" onClick={undoBgRemoval} disabled={!hasBgBackup}>
-                                    <span className="material-symbols-outlined">undo</span>
-                                    {t.bgRemoveUndo}
                                 </button>
                             </div>
                         </div>
@@ -2080,11 +2462,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                                     <span className="material-symbols-outlined" style={{ fontSize: 16 }}>refresh</span>
                                     {t.adjustReset}
                                 </button>
-                                <button className="btn btn-secondary" onClick={undoAdjustment} disabled={!hasAdjustBackup} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>undo</span>
-                                    {t.adjustUndo}
-                                </button>
-                                <button className="btn" onClick={applyAdjustment} disabled={frames.length === 0 || hasAdjustBackup || (adjustFilterStr === '' && adjustSharpen === 0)} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                                <button className="btn" onClick={applyAdjustment} disabled={frames.length === 0 || isLoading || (adjustFilterStr === '' && adjustSharpen === 0)} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check</span>
                                     {t.adjustApply}
                                 </button>
@@ -2283,16 +2661,28 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                     </div>
                 </div>
                 {chromaColor && (
-                    <div className="control-group">
-                        <label>{t.tolerance} ({chromaTolerance}%)</label>
-                        <input 
-                            type="range" 
-                            min="1" 
-                            max="50" 
-                            value={chromaTolerance} 
-                            onChange={(e) => setChromaTolerance(Number(e.target.value))} 
-                        />
-                    </div>
+                    <>
+                        <div className="control-group">
+                            <label>{t.tolerance} ({chromaTolerance}%)</label>
+                            <input
+                                type="range"
+                                min="1"
+                                max="50"
+                                value={chromaTolerance}
+                                onChange={(e) => setChromaTolerance(Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="control-group">
+                            <label>{t.despillLabel} ({Math.round(despillStrength * 100)}%)</label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(despillStrength * 100)}
+                                onChange={(e) => setDespillStrength(Number(e.target.value) / 100)}
+                            />
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -2307,6 +2697,16 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                         onChange={(e) => setExportColumns(Number(e.target.value))}
                         style={{ width: '100%', padding: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'white', borderRadius: 4 }} 
                     />
+                </div>
+                <div className="control-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} title={t.anchorAlignHint}>
+                        <input
+                            type="checkbox"
+                            checked={anchorAlign}
+                            onChange={(e) => setAnchorAlign(e.target.checked)}
+                        />
+                        {t.anchorAlign}
+                    </label>
                 </div>
                 <div className="control-group">
                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 8 }}>
@@ -2431,11 +2831,8 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                 style={{ flex: 1, background: 'var(--danger)' }}
                 autoFocus
                 onClick={() => {
+                  clearHistory([]);
                   frames.forEach(f => URL.revokeObjectURL(f.url));
-                  bgBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
-                  bgBackupRef.current = [];
-                  adjustBackupRef.current.forEach(b => URL.revokeObjectURL(b.url));
-                  adjustBackupRef.current = [];
                   setFrames([]);
                   setSelectedFrameIds(new Set());
                   setIsLoading(false);
@@ -2449,8 +2846,6 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                   setOnionSkinEnabled(false);
                   setOnionSkinOpacity(40);
                   setIsExportingGif(false);
-                  setHasBgBackup(false);
-                  setHasAdjustBackup(false);
                   resetAdjustSliders();
                   setActiveTab('default');
                   setTrimStart(0);
@@ -2547,7 +2942,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
                     <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem', padding: '6px 8px' }}
                       onClick={undoEditBgRemoval} disabled={!editBgApplied}>
                       <span className="material-symbols-outlined" style={{ fontSize: 16 }}>undo</span>
-                      {t.bgRemoveUndo}
+                      {t.undo}
                     </button>
                   </div>
                 </div>

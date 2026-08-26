@@ -64,6 +64,15 @@ npm install
 npm run dev
 ```
 
+## Third-Party Code
+
+`lib/sprite-analysis.ts` ports the keyframe selection, loop-seam detection,
+chroma-key despill and foot-anchor alignment algorithms from
+[gary149/h3-game-sprites](https://github.com/gary149/h3-game-sprites)
+(`sprite_cut.py`, `build_atlas.py`).
+
+> MIT License — Copyright (c) 2026 Victor Mustar
+
 ## License
 
 This project is licensed under the [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)](./LICENSE).
