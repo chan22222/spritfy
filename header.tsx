@@ -86,6 +86,10 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang }) => {
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>movie</span>
           <span className="nav-label">{t.navSprite}</span>
         </NavLink>
+        <NavLink to={lp('/pixelforge')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navPixelforge}>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>grain</span>
+          <span className="nav-label">{t.navPixelforge}</span>
+        </NavLink>
         <NavLink to={lp('/converter')} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} aria-label={t.navConverter}>
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>swap_horiz</span>
           <span className="nav-label">{t.navConverter}</span>

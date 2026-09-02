@@ -36,6 +36,14 @@ Draw pixel art, extract sprite sheets from video, and convert image formats — 
 - Batch processing support
 - All processing happens locally in the browser
 
+### Image Pixelizer (PixelForge)
+- Node-graph pipeline: downscale → palette → dither → cleanup → effects
+- 10 downscaling methods (Box, DPID, Bilateral, SSIM, SLIC, Nearest, Median, Lanczos, Bicubic)
+- 25 Lospec palettes, automatic palette extraction (Orchard-Bouman PCA / k-means / median cut), 8 dithering modes
+- Pixel-art cleanup: Pixel Snap, Grid Restore, AA Removal, 1px Cleanup, Bresenham (Zingl) outlines
+- Animated GIF processing, noise-driven animation generator, de-flicker, presets (built-in + import/export)
+- Runs entirely in a Web Worker in the browser
+
 ### Community Gallery
 - Share your pixel art with the community
 - Like, comment, and discover artworks

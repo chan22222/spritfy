@@ -1,3 +1,5 @@
+import { pfI18n } from './pixelforge/pf-i18n.ts';
+
 export type Lang = 'ko' | 'en' | 'ja';
 
 export const i18n: Record<Lang, Record<string, string>> = {
@@ -48,6 +50,11 @@ export const i18n: Record<Lang, Record<string, string>> = {
     dropFileHere: '여기에 파일을 놓으세요',
     processing: '동영상 처리 중...',
     preview: '미리보기',
+    previewZoomIn: '확대',
+    previewZoomOut: '축소',
+    previewFit: '원래 크기',
+    previewZoomHint: '휠: 확대/축소 · 드래그: 이동 · 더블클릭: 원래대로 · 아래 손잡이: 높이 조절 (보기 전용, 저장에는 영향 없음)',
+    previewResize: '미리보기 높이 조절',
     pickingColor: '색상 선택 중...',
     noFrames: '프레임 없음',
     selfDedup: 'Self Deduplicate',
@@ -776,6 +783,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     converterInfo_a2: '네, 여러 이미지를 한 번에 추가해 일괄 변환할 수 있습니다.',
     converterInfo_q3: '투명 배경도 유지되나요?',
     converterInfo_a3: 'PNG, WebP, ICO 등 투명도를 지원하는 포맷으로 변환하면 투명 배경이 그대로 유지됩니다.',
+    ...pfI18n.ko,
   },
   en: {
     // Navigation
@@ -824,6 +832,11 @@ export const i18n: Record<Lang, Record<string, string>> = {
     dropFileHere: 'Drop file here',
     processing: 'Processing Video...',
     preview: 'Preview',
+    previewZoomIn: 'Zoom in',
+    previewZoomOut: 'Zoom out',
+    previewFit: 'Fit',
+    previewZoomHint: 'Wheel: zoom · drag: pan · double-click: reset · bottom handle: height (view only, does not affect export)',
+    previewResize: 'Resize preview height',
     pickingColor: 'Picking Color...',
     noFrames: 'No frames selected',
     selfDedup: 'Self Deduplicate',
@@ -1544,6 +1557,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     converterInfo_a2: 'Yes, you can add multiple images and convert them all in one batch.',
     converterInfo_q3: 'Is transparency preserved?',
     converterInfo_a3: 'When you convert to a format that supports transparency such as PNG, WebP, or ICO, the transparent background is preserved.',
+    ...pfI18n.en,
   },
   ja: {
     // Navigation
@@ -1592,6 +1606,11 @@ export const i18n: Record<Lang, Record<string, string>> = {
     dropFileHere: 'ここにファイルをドロップ',
     processing: '動画処理中...',
     preview: 'プレビュー',
+    previewZoomIn: '拡大',
+    previewZoomOut: '縮小',
+    previewFit: '元のサイズ',
+    previewZoomHint: 'ホイール: 拡大/縮小 · ドラッグ: 移動 · ダブルクリック: リセット · 下のハンドル: 高さ調整（表示のみ、保存には影響しません）',
+    previewResize: 'プレビューの高さを調整',
     pickingColor: '色を選択中...',
     noFrames: 'フレームなし',
     selfDedup: 'Self Deduplicate',
@@ -2312,6 +2331,7 @@ export const i18n: Record<Lang, Record<string, string>> = {
     converterInfo_a2: 'はい、複数の画像を一度に追加してまとめて変換できます。',
     converterInfo_q3: '透明な背景も保持されますか？',
     converterInfo_a3: 'PNG、WebP、ICOなど透明度に対応したフォーマットに変換すれば、透明な背景はそのまま保持されます。',
+    ...pfI18n.ja,
   },
 };
 

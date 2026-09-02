@@ -415,7 +415,10 @@ const stampBrush = (
 };
 
 // ===== Main Component =====
-export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang, t }) => {
+export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string>; active?: boolean }> = ({ lang, t, active = true }) => {
+  // 탭 유지(keep-alive)로 숨겨져 있는 동안에는 전역 단축키·재생·SEO를 멈춘다
+  const activeRef = useRef(active);
+  activeRef.current = active;
   // Canvas dimensions
   const [panelsOpen, setPanelsOpen] = useState(false);
   const [canvasWidth, setCanvasWidth] = useState(32);
@@ -786,7 +789,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   framesLenRef.current = frames.length;
 
   useEffect(() => {
-    if (!isPlaying || frames.length <= 1) return;
+    if (!isPlaying || frames.length <= 1 || !active) return;
     let lastTime = performance.now();
     let rafId: number;
     const animate = (time: number) => {
@@ -799,7 +802,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     };
     rafId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId);
-  }, [isPlaying, frames.length]);
+  }, [isPlaying, frames.length, active]);
 
   // ===== Pixel Coordinate Conversion =====
   const getPixelCoord = useCallback((e: React.MouseEvent): { x: number; y: number } => {
@@ -1171,6 +1174,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
   // ===== Keyboard Shortcuts =====
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.code === 'Space' && !e.repeat) {
@@ -1227,6 +1231,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
       if (e.code === 'Space') spaceHeldRef.current = false;
     };
 
@@ -1572,7 +1577,9 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  const blocker = useBlocker(isDirty);
+  // 도구 페이지는 탭을 오가도 마운트가 유지되므로(app.tsx KeepAliveTools) 앱 내 이동은 막지 않는다.
+  // 페이지를 닫거나 새로고침할 때의 경고는 위 beforeunload 가드가 담당한다.
+  const blocker = useBlocker(false);
 
   // ===== New Canvas =====
   const handleNewCanvas = useCallback(() => {
@@ -1662,7 +1669,7 @@ export const PixelEditor: React.FC<{ lang: Lang; t: Record<string, string> }> = 
 
   return (
     <div className="editor-container">
-      <SEO title={t.seoEditorTitle} description={t.seoEditorDesc} path="/editor" lang={lang} />
+      {active && <SEO title={t.seoEditorTitle} description={t.seoEditorDesc} path="/editor" lang={lang} />}
       <div className="editor-main">
         {/* LEFT AD */}
         <div className="side-rail side-rail-left" />

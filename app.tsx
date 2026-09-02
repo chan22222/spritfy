@@ -14,6 +14,7 @@ import { AuthModal } from '@/auth/auth-modal.tsx';
 const PixelEditor = lazy(() => import('@/editor.tsx').then(m => ({ default: m.PixelEditor })));
 const SpritePage = lazy(() => import('@/sprite-page.tsx').then(m => ({ default: m.SpritePage })));
 const ConverterPage = lazy(() => import('@/converter.tsx').then(m => ({ default: m.ConverterPage })));
+const PixelForgePage = lazy(() => import('@/pixelforge/pixelforge-page.tsx').then(m => ({ default: m.PixelForgePage })));
 const PrivacyPage = lazy(() => import('@/privacy.tsx').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('@/terms.tsx').then(m => ({ default: m.TermsPage })));
 const AboutPage = lazy(() => import('@/about.tsx').then(m => ({ default: m.AboutPage })));
@@ -45,6 +46,35 @@ const LangRedirect = () => {
   return <Navigate to={`/${lang}/`} replace />;
 };
 
+// 탭을 오가도 작업 내용이 사라지지 않도록 마운트를 유지하는 도구 페이지들.
+// 한 번 방문한 도구는 언마운트하지 않고 display:none 으로만 숨긴다.
+type ToolKey = 'editor' | 'sprite' | 'pixelforge';
+const TOOL_KEYS: readonly ToolKey[] = ['editor', 'sprite', 'pixelforge'];
+
+const KeepAliveTools = ({ lang, t, current }: { lang: Lang; t: Record<string, string>; current: ToolKey | null }) => {
+  const [visited, setVisited] = useState<ToolKey[]>(() => (current ? [current] : []));
+  useEffect(() => {
+    if (current && !visited.includes(current)) setVisited((v) => [...v, current]);
+  }, [current, visited]);
+
+  return (
+    <>
+      {visited.map((tool) => {
+        const active = tool === current;
+        return (
+          <div key={tool} className="tool-keepalive" hidden={!active} inert={!active}>
+            <LazyWrapper t={t}>
+              {tool === 'editor' && <PixelEditor lang={lang} t={t} active={active} />}
+              {tool === 'sprite' && <SpritePage lang={lang} t={t} active={active} />}
+              {tool === 'pixelforge' && <PixelForgePage lang={lang} t={t} active={active} />}
+            </LazyWrapper>
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
 const LangLayout = () => {
   const { lang: urlLang } = useParams<{ lang: string }>();
   const navigate = useNavigate();
@@ -62,6 +92,9 @@ const LangLayout = () => {
     document.documentElement.lang = validLang;
   }, [validLang]);
 
+  const firstSegment = location.pathname.replace(/^\/(ko|en|ja)\/?/, '').split('/')[0];
+  const currentTool: ToolKey | null = TOOL_KEYS.includes(firstSegment as ToolKey) ? (firstSegment as ToolKey) : null;
+
   if (!VALID_LANGS.includes(urlLang as Lang)) {
     return <Navigate to={`/${detectLang()}/`} replace />;
   }
@@ -70,6 +103,7 @@ const LangLayout = () => {
     <LangContext.Provider value={{ lang: validLang, t, setLang }}>
       <Header lang={validLang} setLang={setLang} />
       <main id="main-content">
+        <KeepAliveTools lang={validLang} t={t} current={currentTool} />
         <Outlet />
       </main>
       <AuthModal />
@@ -77,25 +111,14 @@ const LangLayout = () => {
   );
 };
 
+/** 도구 라우트는 KeepAliveTools 가 렌더하므로 라우트 자체는 비워 둔다 */
+const ToolRoute = () => null;
+
 const LazyWrapper = ({ children, t }: { children: React.ReactNode; t?: Record<string, string> }) => (
   <ErrorBoundary t={t}>
     <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
   </ErrorBoundary>
 );
-
-const SpriteWrapper = () => {
-  const { lang: urlLang } = useParams<{ lang: string }>();
-  const validLang: Lang = toValidLang(urlLang);
-  const t = i18n[validLang];
-  return <LazyWrapper t={t}><SpritePage lang={validLang} t={t} /></LazyWrapper>;
-};
-
-const EditorWrapper = () => {
-  const { lang: urlLang } = useParams<{ lang: string }>();
-  const validLang: Lang = toValidLang(urlLang);
-  const t = i18n[validLang];
-  return <LazyWrapper t={t}><PixelEditor lang={validLang} t={t} /></LazyWrapper>;
-};
 
 const LandingWrapper = () => {
   const { lang: urlLang } = useParams<{ lang: string }>();
@@ -251,9 +274,10 @@ const router = createBrowserRouter([
     element: <LangLayout />,
     children: [
       { index: true, element: <LandingWrapper /> },
-      { path: 'sprite', element: <SpriteWrapper /> },
-      { path: 'editor', element: <EditorWrapper /> },
+      { path: 'sprite', element: <ToolRoute /> },
+      { path: 'editor', element: <ToolRoute /> },
       { path: 'converter', element: <ConverterWrapper /> },
+      { path: 'pixelforge', element: <ToolRoute /> },
       { path: 'privacy', element: <PrivacyWrapper /> },
       { path: 'terms', element: <TermsWrapper /> },
       { path: 'about', element: <AboutWrapper /> },

@@ -46,7 +46,10 @@ const applySharpenKernel = (ctx: CanvasRenderingContext2D, w: number, h: number,
   ctx.putImageData(imageData, 0, 0);
 };
 
-export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = ({ lang, t }) => {
+export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string>; active?: boolean }> = ({ lang, t, active = true }) => {
+  // 탭 유지(keep-alive)로 숨겨져 있는 동안에는 전역 단축키·재생·SEO를 멈춘다
+  const activeRef = useRef(active);
+  activeRef.current = active;
 
   // State
   const [frames, setFrames] = useState<Frame[]>([]);
@@ -164,6 +167,84 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
+
+  // --- 미리보기 확대/이동/높이 (보기 전용 — 내보내기 크기에는 영향 없음) ---
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewPan, setPreviewPan] = useState({ x: 0, y: 0 });
+  const [previewHeight, setPreviewHeight] = useState<number | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const previewZoomRef = useRef(1);
+  previewZoomRef.current = previewZoom;
+  const previewPanRef = useRef({ x: 0, y: 0 });
+  previewPanRef.current = previewPan;
+  const previewDragRef = useRef<{ sx: number; sy: number; px: number; py: number; moved: boolean } | null>(null);
+  const previewSuppressClickRef = useRef(false);
+
+  /** 배율을 바꾸되 (cx, cy)가 컨테이너 중심 기준 좌표이면 그 지점을 고정한 채 확대한다 */
+  const applyPreviewZoom = useCallback((next: number, cx?: number, cy?: number) => {
+    const z = Math.min(16, Math.max(1, next));
+    const prev = previewZoomRef.current;
+    const p = previewPanRef.current;
+    let pan = p;
+    if (z === 1) pan = { x: 0, y: 0 };
+    else if (cx !== undefined && cy !== undefined) {
+      const r = z / prev;
+      pan = { x: cx - (cx - p.x) * r, y: cy - (cy - p.y) * r };
+    }
+    previewZoomRef.current = z;
+    previewPanRef.current = pan;
+    setPreviewZoom(z);
+    setPreviewPan(pan);
+  }, []);
+
+  const resetPreviewView = useCallback(() => applyPreviewZoom(1), [applyPreviewZoom]);
+
+  useEffect(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      applyPreviewZoom(previewZoomRef.current * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX - rect.left - rect.width / 2, e.clientY - rect.top - rect.height / 2);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [applyPreviewZoom]);
+
+  const onPreviewPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || previewZoomRef.current <= 1) return;
+    if ((e.target as HTMLElement).closest('.preview-resize-grip, button')) return;
+    previewDragRef.current = { sx: e.clientX, sy: e.clientY, px: previewPanRef.current.x, py: previewPanRef.current.y, moved: false };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+  };
+  const onPreviewPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = previewDragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+    if (d.moved) {
+      const pan = { x: d.px + dx, y: d.py + dy };
+      previewPanRef.current = pan;
+      setPreviewPan(pan);
+    }
+  };
+  const onPreviewPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = previewDragRef.current;
+    previewDragRef.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+    if (d?.moved) previewSuppressClickRef.current = true; // 끌기 뒤의 click은 스포이드로 취급하지 않는다
+  };
+  const onPreviewGripDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = previewContainerRef.current;
+    if (!el) return;
+    const startY = e.clientY, startH = el.getBoundingClientRect().height;
+    const onMove = (ev: PointerEvent) => setPreviewHeight(Math.min(900, Math.max(160, Math.round(startH + (ev.clientY - startY)))));
+    const onUp = () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
   const isDraggingRef = useRef(false);
 
   // --- Helper: Get export frame dimensions ---
@@ -272,6 +353,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   // Keyboard arrow navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
       if (activeFrames.length === 0) return;
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -296,7 +378,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   fpsRef.current = fps;
 
   useEffect(() => {
-    if (!isPlaying || activeFrames.length === 0) {
+    if (!isPlaying || activeFrames.length === 0 || !active) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       return;
     }
@@ -317,7 +399,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [isPlaying, activeFrames]);
+  }, [isPlaying, activeFrames, active]);
 
   // --- Image Adjustment Filter String ---
   const adjustFilterStr = useMemo(() => {
@@ -599,6 +681,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   undoRef.current = undoHistory;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!activeRef.current) return;
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || e.shiftKey) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
@@ -1624,6 +1707,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
   };
 
   const handlePreviewClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (previewSuppressClickRef.current) { previewSuppressClickRef.current = false; return; }
     if (!isPickingColor && !isBgPickingColor) return;
 
     const canvas = previewCanvasRef.current;
@@ -1953,7 +2037,7 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
 
   return (
     <>
-      <SEO title={t.seoSpriteTitle} description={t.seoSpriteDesc} path="/sprite" lang={lang} />
+      {active && <SEO title={t.seoSpriteTitle} description={t.seoSpriteDesc} path="/sprite" lang={lang} />}
       <div className="main-workspace">
         {/* LEFT AD */}
         <div className="side-rail side-rail-left" />
@@ -2572,13 +2656,39 @@ export const SpritePage: React.FC<{ lang: Lang; t: Record<string, string> }> = (
         <div className={`sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: sidebarWidth }}>
             <div className="sidebar-section">
                 <h3>{t.preview}</h3>
-                <div 
-                    className={`preview-container ${isPickingColor || isBgPickingColor ? 'picking' : ''}`}
+                <div
+                    ref={previewContainerRef}
+                    className={`preview-container ${isPickingColor || isBgPickingColor ? 'picking' : ''}${previewZoom > 1 ? ' zoomed' : ''}`}
+                    style={previewHeight ? { height: previewHeight, aspectRatio: 'auto' } : undefined}
                     onClick={handlePreviewClick}
+                    onDoubleClick={resetPreviewView}
+                    onPointerDown={onPreviewPointerDown}
+                    onPointerMove={onPreviewPointerMove}
+                    onPointerUp={onPreviewPointerUp}
+                    onPointerCancel={onPreviewPointerUp}
                 >
-                    {activeFrames.length > 0 && <canvas ref={previewCanvasRef} />}
+                    {activeFrames.length > 0 && (
+                      <canvas
+                        ref={previewCanvasRef}
+                        style={{ transform: `translate(${previewPan.x}px, ${previewPan.y}px) scale(${previewZoom})`, imageRendering: previewZoom > 1 ? 'pixelated' : undefined }}
+                      />
+                    )}
                     {(isPickingColor || isBgPickingColor) && <div className="eyedropper-active-indicator">{t.pickingColor}</div>}
                     {activeFrames.length === 0 && <span style={{ color: 'var(--text-muted)' }}>{t.noFrames}</span>}
+                    <div className="preview-resize-grip" onPointerDown={onPreviewGripDown} title={t.previewResize} aria-hidden="true" />
+                </div>
+                <div className="row" style={{ marginTop: 8 }} title={t.previewZoomHint}>
+                    <button className="btn btn-icon btn-secondary" onClick={() => applyPreviewZoom(previewZoomRef.current / 1.25)} disabled={previewZoom <= 1} aria-label={t.previewZoomOut} title={t.previewZoomOut}>
+                        <span className="material-symbols-outlined">zoom_out</span>
+                    </button>
+                    <span className="badge" style={{ minWidth: 54, textAlign: 'center' }}>{Math.round(previewZoom * 100)}%</span>
+                    <button className="btn btn-icon btn-secondary" onClick={() => applyPreviewZoom(previewZoomRef.current * 1.25)} disabled={previewZoom >= 16} aria-label={t.previewZoomIn} title={t.previewZoomIn}>
+                        <span className="material-symbols-outlined">zoom_in</span>
+                    </button>
+                    <button className="btn btn-icon btn-secondary" onClick={resetPreviewView} disabled={previewZoom === 1 && previewPan.x === 0 && previewPan.y === 0} aria-label={t.previewFit} title={t.previewFit}>
+                        <span className="material-symbols-outlined">fit_screen</span>
+                    </button>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.previewZoomHint}</span>
                 </div>
                 
                 <div className="row" style={{ marginTop: 16 }}>

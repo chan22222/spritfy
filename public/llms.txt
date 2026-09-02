@@ -22,6 +22,10 @@ Convert video and GIF files to sprite sheets. Features include frame extraction,
 Convert images between PNG, JPG, WebP, GIF, BMP, and ICO formats. Batch conversion supported. All processing done client-side.
 - URL: https://spritfy.xyz/en/converter
 
+### Image Pixelizer (PixelForge)
+Convert photos, illustrations and AI-generated images into pixel art with a node graph: 10 downscaling methods (Box, DPID, Bilateral, SSIM, SLIC, Lanczos...), automatic palette extraction, 25 Lospec palettes, 8 dithering modes, pixel-grid cleanup (Pixel Snap, Grid Restore, AA Removal, 1px Cleanup, Bresenham outlines), post effects, animated GIF processing and presets. All processing runs in a browser web worker.
+- URL: https://spritfy.xyz/en/pixelforge
+
 ## Guides
 
 ### Sprite Sheet Guide

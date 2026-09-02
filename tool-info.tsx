@@ -3,7 +3,7 @@ import '@/tool-info.css';
 
 interface ToolInfoProps {
   t: Record<string, string>;
-  toolKey: 'editor' | 'sprite' | 'converter';
+  toolKey: 'editor' | 'sprite' | 'converter' | 'pixelforge';
 }
 
 /**

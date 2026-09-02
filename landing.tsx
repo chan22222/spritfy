@@ -128,6 +128,20 @@ export const LandingPage: React.FC<LandingProps> = ({ lang, t }) => {
             <span className="material-symbols-outlined">arrow_forward</span>
           </Link>
         </div>
+
+        <div className="landing-feature-card pixel-border">
+          <div className="feature-card-corner tl" /><div className="feature-card-corner tr" />
+          <div className="feature-card-corner bl" /><div className="feature-card-corner br" />
+          <div className="landing-feature-icon">
+            <span className="material-symbols-outlined">grain</span>
+          </div>
+          <h2>{t.featurePixelforgeTitle}</h2>
+          <p>{t.featurePixelforgeBullet1} / {t.featurePixelforgeBullet2} / {t.featurePixelforgeBullet3}</p>
+          <Link to={lp('/pixelforge')} className="feature-cta-link">
+            {t.ctaPixelforge}
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </Link>
+        </div>
       </section>
 
       {/* Pixel Divider */}

@@ -198,6 +198,18 @@ main {
   flex-direction: column;
 }
 
+/* 도구 페이지(에디터/스프라이트/픽셀화)는 탭을 오가도 상태가 유지되도록 마운트를 유지하고
+   보이지 않을 때만 display:none 으로 숨긴다 */
+.tool-keepalive {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.tool-keepalive[hidden] {
+  display: none;
+}
+
 /* 이미지 전역 상한 — body가 overflow:hidden이라 넘치면 스크롤 없이 잘린다 */
 img {
   max-width: 100%;
@@ -551,6 +563,45 @@ img {
 .preview-container canvas {
   max-width: 100%;
   max-height: 100%;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* 미리보기 확대/이동 (보기 전용) */
+.preview-container {
+  touch-action: none;
+}
+.preview-container.zoomed {
+  cursor: grab;
+}
+.preview-container.zoomed:active {
+  cursor: grabbing;
+}
+.preview-container.picking,
+.preview-container.picking.zoomed {
+  cursor: crosshair;
+}
+.preview-resize-grip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12px;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.preview-resize-grip::before {
+  content: '';
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.preview-resize-grip:hover::before {
+  background: var(--primary);
 }
 
 .preview-container.picking {

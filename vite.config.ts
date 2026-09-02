@@ -19,13 +19,14 @@ interface RouteMeta {
   hreflangAlternates: Array<{ lang: string; url: string }>;
 }
 
-const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms', '/faq', '/contact', '/guidelines', '/blog', '/board', '/sounds'];
+const BASE_ROUTES = ['/', '/editor', '/sprite', '/converter', '/pixelforge', '/gallery', '/guide/sprite-sheet', '/guide/pixel-art', '/about', '/privacy', '/terms', '/faq', '/contact', '/guidelines', '/blog', '/board', '/sounds'];
 
 const ROUTE_PRIORITY: Record<string, { priority: string; changefreq: string }> = {
   '/': { priority: '1.0', changefreq: 'weekly' },
   '/editor': { priority: '1.0', changefreq: 'weekly' },
   '/sprite': { priority: '0.8', changefreq: 'weekly' },
   '/converter': { priority: '0.8', changefreq: 'weekly' },
+  '/pixelforge': { priority: '0.9', changefreq: 'weekly' },
   '/gallery': { priority: '0.7', changefreq: 'daily' },
   '/guide/sprite-sheet': { priority: '0.7', changefreq: 'monthly' },
   '/guide/pixel-art': { priority: '0.7', changefreq: 'monthly' },
@@ -57,6 +58,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/converter': {
       title: '이미지 포맷 변환기 - 스프릿파이 | PNG, JPG, WebP, ICO 변환',
       description: 'PNG, JPG, WebP, GIF, BMP, ICO 등 다양한 이미지 포맷을 무료로 변환하세요. 브라우저에서 바로 변환, 설치 불필요.',
+    },
+    '/pixelforge': {
+      title: '이미지 픽셀화 PixelForge - 스프릿파이 | 사진을 도트 그림으로 변환',
+      description: '사진, 일러스트, AI 이미지를 픽셀 아트로 변환하세요. 노드 그래프 기반 다운스케일, 팔레트 추출, 디더링, 외곽선, GIF 애니메이션 지원. 브라우저에서 무료로 처리.',
     },
     '/gallery': {
       title: '커뮤니티 갤러리 - 스프릿파이 | 픽셀 아트 공유',
@@ -124,6 +129,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
       title: 'Image Format Converter - Spritfy | PNG, JPG, WebP, ICO',
       description: 'Convert images between PNG, JPG, WebP, GIF, BMP, ICO formats for free. Convert directly in your browser, no installation needed.',
     },
+    '/pixelforge': {
+      title: 'Image Pixelizer PixelForge - Spritfy | Convert Photos to Pixel Art',
+      description: 'Convert photos, illustrations and AI images into pixel art. Node-graph downscaling, palette extraction, dithering, outlines and GIF animation support. Free, runs in your browser.',
+    },
     '/gallery': {
       title: 'Community Gallery - Spritfy | Pixel Art Showcase',
       description: 'Browse and share pixel art and sprite sheets created by the community. Free online pixel art gallery.',
@@ -189,6 +198,10 @@ const SEO_META: Record<string, Record<string, { title: string; description: stri
     '/converter': {
       title: '画像フォーマット変換ツール - Spritfy | PNG、JPG、WebP、ICO 変換',
       description: 'PNG、JPG、WebP、GIF、BMP、ICOなどの画像フォーマットを無料で変換。ブラウザ上で直接変換、インストール不要。',
+    },
+    '/pixelforge': {
+      title: '画像ドット化 PixelForge - Spritfy | 写真をピクセルアートに変換',
+      description: '写真、イラスト、AI画像をピクセルアートに変換。ノードグラフによる縮小、パレット抽出、ディザリング、輪郭線、GIFアニメーション対応。ブラウザで無料処理。',
     },
     '/gallery': {
       title: 'コミュニティギャラリー - Spritfy | ピクセルアート共有',
@@ -491,22 +504,25 @@ function buildStructuredData(lang: string, route: string): string {
   }
 
   // 도구 페이지: SoftwareApplication
-  if (route === '/editor' || route === '/sprite' || route === '/converter') {
+  if (route === '/editor' || route === '/sprite' || route === '/converter' || route === '/pixelforge') {
     const toolData: Record<string, Record<string, { name: string; category: string }>> = {
       ko: {
         '/editor': { name: '스프릿파이 픽셀 아트 에디터', category: 'DesignApplication' },
         '/sprite': { name: '스프릿파이 스프라이트 시트 생성기', category: 'MultimediaApplication' },
         '/converter': { name: '스프릿파이 이미지 포맷 변환기', category: 'MultimediaApplication' },
+        '/pixelforge': { name: '스프릿파이 PixelForge 이미지 픽셀화', category: 'DesignApplication' },
       },
       en: {
         '/editor': { name: 'Spritfy Pixel Art Editor', category: 'DesignApplication' },
         '/sprite': { name: 'Spritfy Sprite Sheet Generator', category: 'MultimediaApplication' },
         '/converter': { name: 'Spritfy Image Format Converter', category: 'MultimediaApplication' },
+        '/pixelforge': { name: 'Spritfy PixelForge Image Pixelizer', category: 'DesignApplication' },
       },
       ja: {
         '/editor': { name: 'Spritfy ドット絵エディター', category: 'DesignApplication' },
         '/sprite': { name: 'Spritfy スプライトシート生成ツール', category: 'MultimediaApplication' },
         '/converter': { name: 'Spritfy 画像フォーマット変換ツール', category: 'MultimediaApplication' },
+        '/pixelforge': { name: 'Spritfy PixelForge 画像ドット化', category: 'DesignApplication' },
       },
     };
 
@@ -573,6 +589,12 @@ function buildStructuredData(lang: string, route: string): string {
         position: 7,
         name: lang === 'ko' ? '게시판' : lang === 'ja' ? '掲示板' : 'Board',
         item: `${BASE_URL}/${lang}/board`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 8,
+        name: lang === 'ko' ? '이미지 픽셀화' : lang === 'ja' ? '画像ドット化' : 'Image Pixelizer',
+        item: `${BASE_URL}/${lang}/pixelforge`,
       },
     ];
 
